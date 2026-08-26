@@ -1,0 +1,17 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: '*.{js,jsx,ts,tsx,json,jsonc,css}'
+      run: bun x biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+
+pre-push:
+  commands:
+    typecheck:
+      run: bun run typecheck
+
+commit-msg:
+  commands:
+    conventional:
+      run: sh scripts/check-commit-message.sh {1}

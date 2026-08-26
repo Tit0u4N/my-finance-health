@@ -1,0 +1,21 @@
+{
+  "name": "@repo/vitest-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./node": "./src/node.ts",
+    "./jsdom": "./src/jsdom.ts",
+    "./dom": "./src/dom.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "jsdom": "^30.0.1",
+    "vitest": "^4.1.11"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}

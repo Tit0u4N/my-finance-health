@@ -208,7 +208,7 @@ Keep this section only if the project ships a native app.
 
 ## 8. Monorepo (Turborepo + Bun)
 
-- Shared packages must be **built** before apps see the changes. After modifying a package, run the filtered build before testing in an app.
+- Shared packages are **never built**. They expose their TypeScript sources and each app transpiles them with its own toolchain, so a change is visible immediately, without any prior build command (`docs/start-roadmap.md` §7).
 - Any dependency used by multiple apps goes in a shared package, never duplicated app by app.
 - An app never imports a source file from another app: sharing goes through a package.
 - Path resolution: bundlers configured with a root at the monorepo level resolve from there, not from the app folder.
@@ -216,8 +216,8 @@ Keep this section only if the project ships a native app.
 ```bash
 bun install
 bun turbo dev --filter=<app>
-bun turbo build --filter=<package>   # mandatory after modifying a shared package
-bun turbo test --filter=<app>
+bun turbo typecheck --filter=<package>
+bun turbo test --filter=<package>
 bun run lint
 bun run format
 ```
@@ -323,7 +323,7 @@ Always motivate the exception, never silent suppression.
 | Business logic in the `.tsx` | move to the ViewModel |
 | HTTP call in a component | go through the service layer |
 | App importing another app's source | go through a shared package |
-| Testing an app without rebuilding the modified package | `bun turbo build --filter=<package>` first |
+| Adding a build step to a shared package | packages expose their sources, apps transpile them |
 
 ---
 
@@ -336,5 +336,5 @@ Always motivate the exception, never silent suppression.
 5. View / ViewModel split is respected.
 6. No lint rule disabled without a written reason.
 7. No dependency added without explicit mention in the response.
-8. Shared package modified: filtered build run before testing.
+8. Shared package modified: `bun turbo typecheck` and `bun turbo test` run on it and on its consumers.
 9. Commit message follows Conventional Commits.

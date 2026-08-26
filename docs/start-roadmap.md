@@ -102,7 +102,6 @@ These five rules drive the whole structure. Violating any one of them compromise
 │   ├── routes/                  <- level 3, DOM route tree
 │   ├── router/                  <- level 3, DOM router factory
 │   ├── typescript-config/
-│   ├── biome-config/
 │   └── vitest-config/
 ├── turbo.json
 ├── biome.json
@@ -160,7 +159,7 @@ The mobile application consumes none of these three packages.
 
 ### Configuration packages
 
-`@repo/typescript-config`, `@repo/biome-config`, and `@repo/vitest-config` provide the base configurations inherited by all others. They provide distinct variants for the DOM context and the native context.
+`@repo/typescript-config` and `@repo/vitest-config` provide the base configurations inherited by all others. They provide distinct variants for the DOM context and the native context. Biome is not packaged: a single `biome.json` at the root holds the rules and carries the per-directory `overrides` that materialize the matrix in section 6.
 
 ### Applications
 

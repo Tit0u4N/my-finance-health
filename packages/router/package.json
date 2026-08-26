@@ -1,0 +1,33 @@
+{
+  "name": "@repo/router",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": [
+      "./src/*.ts",
+      "./src/*.tsx"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/domain": "workspace:*",
+    "@repo/platform": "workspace:*",
+    "@repo/i18n": "workspace:*",
+    "@repo/app-core": "workspace:*",
+    "@repo/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "vitest": "^4.1.11",
+    "@types/react": "catalog:dom",
+    "react": "catalog:dom"
+  }
+}

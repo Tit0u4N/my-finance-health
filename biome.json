@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -42,8 +42,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-
+      "preset": "recommended",
       "a11y": {
         "noSvgWithoutTitle": "warn",
         "useMediaCaption": "warn",
@@ -51,7 +50,6 @@
         "useKeyWithMouseEvents": "off",
         "noLabelWithoutControl": "off"
       },
-
       "complexity": {
         "noExcessiveCognitiveComplexity": {
           "level": "warn",
@@ -63,27 +61,24 @@
         "noVoid": "off",
         "useSimplifiedLogicExpression": "warn"
       },
-
       "correctness": {
         "noUnusedImports": "error",
         "noUnusedVariables": "error",
         "noUnusedFunctionParameters": "warn",
         "noUndeclaredVariables": "error",
         "useExhaustiveDependencies": "warn",
-        "useHookAtTopLevel": "error"
+        "useHookAtTopLevel": "error",
+        "noUndeclaredDependencies": "error"
       },
-
       "performance": {
         "noAccumulatingSpread": "warn",
         "noDelete": "warn",
         "noBarrelFile": "off"
       },
-
       "security": {
         "noGlobalEval": "error",
         "noDangerouslySetInnerHtml": "warn"
       },
-
       "style": {
         "useNodejsImportProtocol": "off",
         "useConst": "error",
@@ -114,26 +109,33 @@
             "strictCase": false,
             "conventions": [
               {
-                "selector": { "kind": "variable" },
+                "selector": {
+                  "kind": "variable"
+                },
                 "formats": ["camelCase", "PascalCase", "CONSTANT_CASE"]
               },
               {
-                "selector": { "kind": "function" },
+                "selector": {
+                  "kind": "function"
+                },
                 "formats": ["camelCase", "PascalCase"]
               },
               {
-                "selector": { "kind": "typeLike" },
+                "selector": {
+                  "kind": "typeLike"
+                },
                 "formats": ["PascalCase"]
               },
               {
-                "selector": { "kind": "enumMember" },
+                "selector": {
+                  "kind": "enumMember"
+                },
                 "formats": ["PascalCase", "CONSTANT_CASE"]
               }
             ]
           }
         }
       },
-
       "suspicious": {
         "noDebugger": "error",
         "noConsole": "warn",
@@ -147,12 +149,11 @@
         "noExportsInTest": "error",
         "noFocusedTests": "error",
         "noSkippedTests": "warn",
-        "useAwait": "error"
+        "useAwait": "error",
+        "noShadow": "warn"
       },
-
       "nursery": {
         "noFloatingPromises": "error",
-        "noShadow": "warn",
         "useSortedClasses": {
           "level": "warn",
           "fix": "safe",
@@ -216,6 +217,634 @@
         "rules": {
           "suspicious": {
             "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/platform, @repo/design-tokens."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/platform/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/domain",
+                      "@repo/domain/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/design-tokens."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/design-tokens/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/domain",
+                      "@repo/domain/**",
+                      "@repo/platform",
+                      "@repo/platform/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: nothing — design tokens are the only artefact shared between the DOM world and the native world, so they depend on neither."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/data/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/design-tokens",
+                      "@repo/design-tokens/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/i18n/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/platform",
+                      "@repo/platform/**",
+                      "@repo/design-tokens",
+                      "@repo/design-tokens/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "The React binding of i18next belongs to @repo/app-core, level 2 (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/platform-web/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/design-tokens",
+                      "@repo/design-tokens/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/platform-tauri/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/design-tokens",
+                      "@repo/design-tokens/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform, @tauri-apps/*."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/platform-expo/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/design-tokens",
+                      "@repo/design-tokens/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform, expo-*."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "message": "Level 0 and level 1 packages are pure TypeScript: no React (docs/start-roadmap.md §5)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/app-core/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/design-tokens",
+                      "@repo/design-tokens/**",
+                      "@repo/ui",
+                      "@repo/ui/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform, @repo/data, @repo/i18n, react."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": [
+                      "react-dom",
+                      "react-dom/**",
+                      "react-native",
+                      "react-native/**",
+                      "react-native-*",
+                      "react-native-*/**"
+                    ],
+                    "message": "This package must stay renderer-agnostic: no react-dom, no react-native (docs/start-roadmap.md §5, level 2)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/domain",
+                      "@repo/domain/**",
+                      "@repo/platform",
+                      "@repo/platform/**",
+                      "@repo/data",
+                      "@repo/data/**",
+                      "@repo/i18n",
+                      "@repo/i18n/**",
+                      "@repo/app-core",
+                      "@repo/app-core/**",
+                      "@repo/routes",
+                      "@repo/routes/**",
+                      "@repo/router",
+                      "@repo/router/**"
+                    ],
+                    "message": "@repo/ui knows neither the platform nor the application state: everything arrives via props (docs/start-roadmap.md §6, structural ban 2). Allowed here: @repo/design-tokens."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/routes/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@repo/design-tokens", "@repo/design-tokens/**", "@repo/data", "@repo/data/**"],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform, @repo/i18n, @repo/app-core, @repo/ui, @repo/router."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/router/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@repo/design-tokens", "@repo/design-tokens/**", "@repo/data", "@repo/data/**"],
+                    "message": "Forbidden by the dependency matrix of docs/start-roadmap.md §6. Allowed here: @repo/domain, @repo/platform, @repo/i18n, @repo/app-core, @repo/ui, @repo/routes."
+                  },
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
           }
         }
       }

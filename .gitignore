@@ -94,6 +94,7 @@ CLAUDE.md
 # --- Misc ---
 *.log
 *.lock
+!bun.lock
 *.tgz
 *.zip
 *.bak

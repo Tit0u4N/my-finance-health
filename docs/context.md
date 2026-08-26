@@ -42,7 +42,7 @@ packages/
   level 1    data, i18n, platform-web/-tauri/-expo    implementations
   level 2    app-core                                 React without DOM or native
   level 3    ui, routes, router                       DOM, web and desktop only
-  config     typescript-config, biome-config, vitest-config
+  config     typescript-config, vitest-config
 ```
 
 Shared packages are not built: they expose their TypeScript sources, and each app transpiles them with its own toolchain.

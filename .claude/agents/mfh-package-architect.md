@@ -31,7 +31,7 @@ When a capability could be implemented identically in two adapters, it does not 
 Shared packages are **not built**. They expose their TypeScript sources directly. Each consuming application transpiles them with its own toolchain (Vite or Metro). Consequences:
 
 - No `dist/` directory, no build step for shared packages.
-- `package.json` → `exports` field must point to the `.ts` source files.
+- `package.json` → `exports` field must point to the `.ts` source files, as a subpath pattern and never as a single `.` entry: `{ "./*": "./src/*.ts" }`, or `{ "./*": ["./src/*.ts", "./src/*.tsx"] }` for a package containing JSX. Consumers import `@repo/domain/result`, so each symbol keeps its own file and no barrel can exist.
 - Each app's bundler configuration must include the shared package paths in its transform scope. For Vite: `optimizeDeps.include` and `resolve.alias`. For Metro: `watchFolders`, `resolver.nodeModulesPaths`, `resolver.disableHierarchicalLookup: true`.
 - Hot reload works across package boundaries without a rebuild step.
 
@@ -57,7 +57,7 @@ Never add `react` to `dependencies` in a shared package. Two React runtimes coex
 Every new package should extend the shared configuration packages:
 
 - **TypeScript**: extend `@repo/typescript-config/base.json` (or `dom.json` / `native.json` for level 3 and mobile)
-- **Biome**: extend `@repo/biome-config`
+- **Biome**: nothing to extend — the single root `biome.json` covers every package. A new package only needs its own `overrides` entry there, declaring the imports its level forbids.
 - **Tests** (if applicable): extend `@repo/vitest-config`
 
 ## Scaffolding Workflow
@@ -68,7 +68,7 @@ Every new package should extend the shared configuration packages:
 4. **Create `tsconfig.json`** — extend the right config from `@repo/typescript-config`.
 5. **Register in root `package.json`** — add to the Bun workspaces array.
 6. **Add to `turbo.json`** — declare inputs, outputs, and which tasks apply.
-7. **Create `src/index.ts`** (no barrel re-exports — export each symbol from its own file).
+7. **Create the first module under `src/`** — one file per symbol, no `index.ts`, no barrel. The subpath `exports` pattern makes each file directly importable.
 8. **Update consuming apps** — add the new package to their `package.json` and include its path in their bundler transform scope.
 9. **Run typecheck** across the workspace to confirm no circular dependencies.
 
