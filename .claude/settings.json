@@ -1,0 +1,16 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bun run lint)",
+      "Bash(bun run test:*)",
+      "Bash(bun run typecheck)",
+      "Bash(bun x turbo run *)",
+      "Bash(git diff:*)",
+      "Bash(git status)",
+      "Bash(git log:*)"
+    ]
+  }
+}
