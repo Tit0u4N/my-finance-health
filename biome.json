@@ -811,6 +811,72 @@
       }
     },
     {
+      "includes": ["apps/web/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/platform-tauri",
+                      "@repo/platform-tauri/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "An application knows its own platform adapter only: apps/web may import @repo/platform-web (docs/start-roadmap.md §6)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: @tauri-apps/* only in @repo/platform-tauri and apps/desktop, expo-* only in @repo/platform-expo and apps/mobile (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/desktop/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@repo/platform-web",
+                      "@repo/platform-web/**",
+                      "@repo/platform-expo",
+                      "@repo/platform-expo/**"
+                    ],
+                    "message": "An application knows its own platform adapter only: apps/desktop may import @repo/platform-tauri (docs/start-roadmap.md §6)."
+                  },
+                  {
+                    "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
+                    "message": "react-native is installed only in apps/mobile (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["expo", "expo/**", "expo-*", "expo-*/**"],
+                    "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile (docs/start-roadmap.md §6, structural ban 3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/router/**"],
       "linter": {
         "rules": {

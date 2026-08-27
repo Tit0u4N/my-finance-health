@@ -32,6 +32,7 @@
   "dependencies": {},
   "devDependencies": {
     "@biomejs/biome": "2.5.10",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.10.1",
     "lefthook": "^2.1.10",
     "turbo": "^2.10.12",

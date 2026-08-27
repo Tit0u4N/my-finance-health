@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@repo/ui/styles/theme.css";
+
+/* Shared packages are consumed as sources: their JSX must be scanned or their classes are absent from the bundle. */
+@source "../../../../packages/ui/src";

@@ -1,0 +1,12 @@
+{
+  "extends": "@repo/typescript-config/dom.json",
+  "compilerOptions": {
+    "types": ["node", "@testing-library/jest-dom/vitest"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "vitest.config.ts"],
+  "exclude": ["node_modules", "dist", "src-tauri"]
+}

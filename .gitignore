@@ -91,10 +91,15 @@ graphify-out/
 CLAUDE.md
 .mcp.json
 
+# --- Rust / Tauri ---
+target/
+**/src-tauri/gen/
+
 # --- Misc ---
 *.log
 *.lock
 !bun.lock
+!apps/desktop/src-tauri/Cargo.lock
 *.tgz
 *.zip
 *.bak
