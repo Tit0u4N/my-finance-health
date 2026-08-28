@@ -5,13 +5,13 @@
   "tasks": {
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "inputs": ["src/**", "tsconfig.json", "package.json", "vite.config.ts", "vitest.config.ts"],
+      "inputs": ["src/**", "tsconfig.json", "package.json", "vite.config.ts", "vitest.config.ts", "app.json"],
       "outputs": [],
       "env": []
     },
     "test": {
       "dependsOn": ["^typecheck"],
-      "inputs": ["src/**", "vitest.config.ts", "vitest.setup.ts", "package.json"],
+      "inputs": ["src/**", "vitest.config.ts", "vitest.setup.ts", "jest.config.js", "babel.config.js", "package.json"],
       "outputs": [],
       "env": []
     },

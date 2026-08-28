@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "my finance health",
+    "slug": "my-finance-health",
+    "version": "0.0.0",
+    "scheme": "myfinancehealth",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.myfinancehealth.mobile"
+    },
+    "android": {
+      "package": "app.myfinancehealth.mobile"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "reactCompiler": true,
+      "typedRoutes": true
+    }
+  }
+}
