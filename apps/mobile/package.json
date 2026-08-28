@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
@@ -29,15 +29,15 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@testing-library/react-native": "^14.0.1",
     "@types/react": "catalog:native",
     "babel-preset-expo": "~57.0.9",
-    "jest": "^29.7.0",
-    "jest-expo": "~57.0.5",
-    "test-renderer": "^1.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11",
+    "vitest-native": "^0.13.0"
   },
   "expo": {
     "install": {

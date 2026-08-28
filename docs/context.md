@@ -27,7 +27,7 @@ Web and desktop share their UI. Mobile shares **no component** with them and has
 
 **Desktop**: Tauri 2, dedicated Rust module for SQLCipher-encrypted SQLite, system keyring via the `keyring` library, WebdriverIO and tauri-driver.
 
-**Mobile**: Expo SDK, Metro, Expo Router, React Native StyleSheet fed by design tokens, `expo-sqlite` with SQLCipher, `expo-secure-store`, `expo-file-system`, jest-expo, Maestro.
+**Mobile**: Expo SDK, Metro, Expo Router, React Native StyleSheet fed by design tokens, `expo-sqlite` with SQLCipher, `expo-secure-store`, `expo-file-system`, Vitest with `vitest-native`, Maestro.
 
 **Deliberately dropped**: the official Tauri SQL plugin, which does not support SQLCipher. The Stronghold plugin, deprecated. Any styling layer on top of React Native on mobile.
 
@@ -96,7 +96,7 @@ Shared logic is tested only once, in the packages. App tests cover only composit
 |---|---|
 | Domain, data, journal, app core | Vitest |
 | DOM components | Vitest and Testing Library |
-| Native components | jest-expo |
+| Native components | Vitest with `vitest-native` |
 | End-to-end | Playwright, WebdriverIO, Maestro |
 
 Known limitation: desktop end-to-end tests do not work on macOS — the system WebView exposes no driver.

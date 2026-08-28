@@ -1,6 +1,6 @@
-import { describe, expect, it } from '@jest/globals';
 import { colorTokens } from '@repo/design-tokens/colors';
 import { spacingTokens } from '@repo/design-tokens/spacing';
+import { describe, expect, it } from 'vitest';
 import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from './tokens';
 
 // The DOM side has `theme.test.ts` in @repo/ui for the same purpose: catch a token drifting away from its

@@ -1,5 +1,5 @@
-import { describe, expect, it } from '@jest/globals';
 import { render, screen, userEvent } from '@testing-library/react-native';
+import { describe, expect, it } from 'vitest';
 import { useLandingScreen } from '@/screens/landing/useLandingScreen';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { LandingPage } from './LandingPage';

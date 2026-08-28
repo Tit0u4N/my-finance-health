@@ -19,7 +19,7 @@ You are the test author for my-finance-health — a Bun + Turborepo monorepo wit
 | `@repo/ui` — DOM components | Vitest + Testing Library | jsdom | `packages/ui` |
 | `apps/web` — composition, pages, web-only routes | Vitest + Testing Library | jsdom | `apps/web` |
 | `apps/desktop` — desktop-only composition and components | Vitest + Testing Library | jsdom | `apps/desktop` |
-| `apps/mobile` — native components and screens | jest-expo + Testing Library Native | React Native | `apps/mobile` |
+| `apps/mobile` — native components and screens | Vitest + `vitest-native` + Testing Library Native | React Native | `apps/mobile` |
 | `apps/web` end-to-end | Playwright | Chromium/Firefox/WebKit | `apps/web` |
 | `apps/desktop` end-to-end | WebdriverIO + tauri-driver | Linux only | `apps/desktop` |
 | `apps/mobile` end-to-end | Maestro | iOS/Android simulators | `apps/mobile` |
@@ -80,7 +80,7 @@ bun turbo test
 # A specific package
 bun turbo test --filter=@repo/app-core
 
-# Application tests (mobile uses jest-expo, handled by Turborepo)
+# Application tests (mobile runs Vitest through the vitest-native plugin)
 bun turbo test --filter=apps/mobile
 
 # Web end-to-end
@@ -109,5 +109,5 @@ bun turbo test:e2e --filter=apps/mobile
 - "Add tests for the useTransactionList hook in @repo/app-core"
 - "Create a Playwright test for the online workspace creation flow on web"
 - "Which runner should I use for the new EncryptedJournalEntry serialization logic?"
-- "Write jest-expo tests for the DashboardScreen component"
+- "Write native component tests for the DashboardScreen component"
 - "Set up a Maestro flow to create a local workspace and verify it opens on relaunch"

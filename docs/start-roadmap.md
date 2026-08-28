@@ -72,7 +72,7 @@ These five rules drive the whole structure. Violating any one of them compromise
 | Available modes | online only | local or online | local or online |
 | Secrets vault | none | system keyring via the `keyring` library | `expo-secure-store` |
 | File system | not available | Tauri `fs` and `dialog` plugins | `expo-file-system`, `expo-document-picker` |
-| UI tests | Vitest + Testing Library | Vitest + Testing Library | jest-expo + Testing Library Native |
+| UI tests | Vitest + Testing Library | Vitest + Testing Library | Vitest + `vitest-native` + Testing Library Native |
 | End-to-end tests | Playwright | WebdriverIO + tauri-driver | Maestro |
 | Distribution | Static CDN | Signed bundles + Tauri updater | EAS Build and EAS Update |
 
@@ -514,7 +514,7 @@ Constraint to respect on the Tailwind v4 side: source scanning must explicitly i
 | Domain, data, i18n | Vitest, Node environment | in each package |
 | React app core | Vitest, jsdom environment | in `app-core` |
 | DOM components | Vitest and Testing Library | in `ui` and DOM apps |
-| Native components | jest-expo and Testing Library Native | in `apps/mobile` |
+| Native components | Vitest, `vitest-native` plugin, and Testing Library Native | in `apps/mobile` |
 | Web end-to-end | Playwright | in `apps/web` |
 | Desktop end-to-end | WebdriverIO and tauri-driver | in `apps/desktop` |
 | Mobile end-to-end | Maestro | in `apps/mobile` |
@@ -522,7 +522,7 @@ Constraint to respect on the Tailwind v4 side: source scanning must explicitly i
 Two structural points:
 
 - Shared logic is tested **only once**, in the packages. App tests cover only composition and presentation. This is the main benefit of the architecture.
-- The mobile test runner is different from the rest of the repo, as the React Native ecosystem is not reliable under Vitest. Turborepo hides this difference behind a single task.
+- The mobile target runs on the same runner as the rest of the repo. The `vitest-native` plugin loads the real React Native JavaScript and mocks only the native boundary, so `@repo/vitest-config` stays the single source of test configuration. The plugin is still young: if it breaks on a React Native upgrade, falling back to jest-expo affects `apps/mobile` alone.
 - Shared-logic tests rely on the fake platform provided by `@repo/platform` and on an in-memory SQLite database for the local variant of repositories. No shared test starts Tauri or a simulator.
 
 Known limitation: desktop end-to-end tests do not work on macOS — the system WebView does not expose a WebDriver. Plan this execution on Linux only.

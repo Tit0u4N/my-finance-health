@@ -6,7 +6,8 @@
   "exports": {
     "./node": "./src/node.ts",
     "./jsdom": "./src/jsdom.ts",
-    "./dom": "./src/dom.ts"
+    "./dom": "./src/dom.ts",
+    "./native": "./src/native.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
