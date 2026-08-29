@@ -12,5 +12,8 @@
       "Bash(git status)",
       "Bash(git log:*)"
     ]
+  },
+  "enabledPlugins": {
+    "agent-teams@claude-code-workflows": true
   }
 }
