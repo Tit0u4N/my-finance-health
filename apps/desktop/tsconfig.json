@@ -1,8 +1,7 @@
 {
   "extends": "@repo/typescript-config/dom.json",
   "compilerOptions": {
-    "types": ["node", "@testing-library/jest-dom/vitest"],
-    "baseUrl": ".",
+    "types": ["node", "vite/client", "@testing-library/jest-dom/vitest"],
     "paths": {
       "@/*": ["./src/*"]
     }

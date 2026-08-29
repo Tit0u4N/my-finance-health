@@ -34,14 +34,14 @@
     "@testing-library/react-native": "^14.0.1",
     "@types/react": "catalog:native",
     "babel-preset-expo": "~57.0.9",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vite": "^8.2.2",
     "vitest": "^4.1.11",
     "vitest-native": "^0.13.0"
   },
   "expo": {
     "install": {
-      "//": "TypeScript is pinned once for the whole monorepo; SDK 57 would pull a major on this app alone.",
+      "//": "TypeScript is pinned once for the whole monorepo on 7.x; SDK 57 would pull it back down to 5.x on this app alone.",
       "exclude": [
         "typescript"
       ]
