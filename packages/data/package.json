@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@repo/domain": "workspace:*",
-    "@repo/platform": "workspace:*"
+    "@repo/platform": "workspace:*",
+    "ky": "^2.1.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
