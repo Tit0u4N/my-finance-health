@@ -1,6 +1,6 @@
 # Decisions log
 
-> **Status: resolved.** This file was "open questions" during the first spec pass; every item below now carries a decision. Kept as a log — `domain-model.md`, `repository-contracts.md`, and `app-core-inventory.md` reference these by number rather than re-arguing them. Two follow-on decisions (9a, 9b) were forced open by the answers to #2 and #7/#8 and are recorded at the end.
+> **Status: resolved.** This file was "open questions" during the first spec pass; every item below now carries a decision. Kept as a log — `domain-model.md`, `repository-contracts.md`, and `app-core-inventory.md` reference these by number rather than re-arguing them. Four follow-on decisions (9a–9d) were forced open — 9a and 9b by the answers to #2 and #7/#8 during the spec pass, 9c and 9d by `domain-model.md`'s own remaining open points once the first `@repo/domain`/`@repo/data`/`@repo/app-core` implementation pass landed — and are recorded at the end.
 
 ---
 
@@ -63,3 +63,11 @@ Decision 2 requires a rate to convert non-base-currency account balances with. D
 ### 9b. Workspace settings as a real thing
 
 Decisions 3 and 4 both attach a fact to "the workspace" that isn't `Account`/`Category`/etc. data: `timezone` (immutable) and `baseCurrency` (mutable). Formalized as a `WorkspaceSettings` record in `domain-model.md`, with its own narrow repository in `repository-contracts.md`.
+
+### 9c. Account balance storage — **maintained running total**
+
+`domain-model.md` left open whether `Account.balance` is a stored running total or derived on read from `Transaction` rows. Decided, during the first `@repo/domain`/`@repo/data`/`@repo/app-core` implementation pass: **stored**, updated atomically inside the same `gateway.batch()` as every transaction create/update/delete. Deriving on read was rejected — the closed gateway operation set has no aggregate/sum primitive, so every balance read would mean fetching every transaction on the account first, which is exactly the round-trip-chaining failure mode §9 warns online mode against. `AccountRepository.getBalanceHistory` still derives its bounded series on read, by replaying transactions backward from this maintained balance (`@repo/data/repositories/balanceHistory.ts`) — only the current balance itself is a stored field.
+
+### 9d. Exchange rate fixed-point convention — **1e6 scale**
+
+`domain-model.md` left `ExchangeRate.rateToBase`'s fixed-point convention "TBD". Decided: integer scaled by `RATE_SCALE = 1_000_000` (6 decimal places) — e.g. 1 USD = 0.923400 EUR is stored as `923400`. Six decimals are enough precision for account-level totals without float drift; `@repo/domain/primitives/rate.ts` exposes `rateFromDecimal`/`rateToDecimal` to convert to and from the decimal a settings form displays.

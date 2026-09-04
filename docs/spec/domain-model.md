@@ -34,7 +34,7 @@ One financial account the user tracks (bank account, cash, brokerage).
 | `icon` | string | icon key; redundant with `type`-derived icon in the shell (`ACC_ICON`) — mock sets both, only `type`-derived is actually used on desktop |
 | `last4` | string, optional | last 4 digits of a card/account number, cosmetic only |
 
-**Invariant**: `balance` must always equal the sum of all `Transaction.amount` for this account (mock does not enforce this — it hand-authors both independently). The real repository must decide: `balance` is either a maintained running total (updated transactionally on every write) or fully derived on read. See `repository-contracts.md`.
+**Invariant**: `balance` must always equal the sum of all `Transaction.amount` for this account (mock does not enforce this — it hand-authors both independently). **Decided** (first `@repo/data` implementation pass): `balance` is a **maintained running total**, not derived on read. Every `TransactionRepository.create`/`update`/`delete` composes the transaction write with a `balance` adjustment into the same `gateway.batch()` — one atomic operation, never two round trips. Deriving on read was rejected: the closed gateway operation set (`repository-contracts.md`) has no aggregate/sum primitive, so it would mean fetching every transaction on an account just to render its balance, which is exactly the round-trip-chaining failure mode §9 warns online mode against. `AccountRepository.getBalanceHistory` still derives its series on read, by replaying transactions backward from this maintained balance — see "Account balance history" below; only the current balance itself is stored.
 
 ---
 
@@ -45,7 +45,7 @@ The manually-entered conversion rate used to bring a non-base-currency account i
 | Field | Type | Notes |
 |---|---|---|
 | `currency` | `'EUR' \| 'USD' \| 'GBP'` | the non-base currency this rate converts *from*; acts as the record's key — one current rate per currency, not a history |
-| `rateToBase` | integer, minor units, fixed-point convention TBD | how many minor units of `baseCurrency` one minor unit of `currency` is worth. User-entered, no external source (`open-questions.md` #9a). |
+| `rateToBase` | integer, scaled by `RATE_SCALE = 1_000_000` (6 decimal places) | how many units of `baseCurrency` one unit of `currency` is worth. **Decided** (first `@repo/data` implementation pass): integer fixed-point at 1e6, e.g. 1 USD = 0.923400 EUR is stored as `923400`. Six decimals give enough precision for account-level conversion without float drift; `rateFromDecimal`/`rateToDecimal` in `@repo/domain/primitives/rate.ts` convert to and from the decimal a settings form displays. User-entered, no external source (`open-questions.md` #9a). |
 | `updatedAt` | timestamp | when the user last entered/confirmed this rate |
 
 Deliberately **not** a time series: this only serves live aggregate totals (dashboard total balance, etc.), not historical restatement of past periods in a different rate. No `Account`/`Transaction` conversion happens at write time — conversion is applied only at read time, in the base-currency-conversion selector (`app-core-inventory.md` §6). If a workspace never holds a non-base-currency account, no `ExchangeRate` record is ever needed.
