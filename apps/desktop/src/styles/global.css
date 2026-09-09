@@ -3,3 +3,4 @@
 
 /* Shared packages are consumed as sources: their JSX must be scanned or their classes are absent from the bundle. */
 @source "../../../../packages/ui/src";
+@source "../../../../packages/routes/src";

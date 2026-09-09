@@ -1,5 +1,6 @@
 import { colorTokens } from '@repo/design-tokens/colors';
 import { spacingTokens } from '@repo/design-tokens/spacing';
+import { textStyleTokens } from '@repo/design-tokens/typography';
 import { describe, expect, it } from 'vitest';
 import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from './tokens';
 
@@ -27,17 +28,23 @@ describe('native theme', () => {
     expect(BORDER_RADIUS.full).toBe(9999);
   });
 
-  it('scales the typographic ramp from the same root size', () => {
-    expect(FONT_SIZE.base).toBe(16);
-    expect(FONT_SIZE.display).toBe(44);
+  it('scales the named text styles from the same root size', () => {
+    expect(FONT_SIZE.body).toBe(15);
+    expect(FONT_SIZE.heading).toBe(20);
+  });
+
+  it('covers every named text style exposed by the package', () => {
+    expect(Object.keys(FONT_SIZE).sort()).toEqual(Object.keys(textStyleTokens).sort());
   });
 
   it('exposes both schemes as hexadecimal colours React Native can parse', () => {
     for (const scheme of ['light', 'dark'] as const) {
       expect(Object.keys(COLORS[scheme]).sort()).toEqual(Object.keys(colorTokens[scheme]).sort());
 
+      // 8-digit hex (RGB + alpha) for the roles whose oklch token carries a `/ alpha` component
+      // (overlay, and posSoft/negSoft in dark mode) — 6-digit for every opaque role.
       for (const value of Object.values(COLORS[scheme])) {
-        expect(value).toMatch(/^#[0-9a-f]{6}$/);
+        expect(value).toMatch(/^#[0-9a-f]{6}([0-9a-f]{2})?$/);
       }
     }
   });

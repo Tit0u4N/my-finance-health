@@ -9,15 +9,36 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --mfh-background: oklch(0.99 0.005 250);
-  --mfh-foreground: oklch(0.21 0.02 260);
-  --mfh-muted: oklch(0.96 0.008 250);
-  --mfh-muted-foreground: oklch(0.52 0.02 260);
-  --mfh-border: oklch(0.9 0.01 250);
-  --mfh-primary: oklch(0.58 0.16 250);
-  --mfh-primary-foreground: oklch(0.99 0.005 250);
-  --mfh-accent: oklch(0.72 0.13 165);
-  --mfh-accent-foreground: oklch(0.21 0.02 260);
+  --mfh-background: oklch(0.9726 0.0026 106.45);
+  --mfh-surface: oklch(1 0 0);
+  --mfh-surface-alt: oklch(0.9848 0.0013 106.42);
+  --mfh-elevated: oklch(1 0 0);
+  --mfh-border: oklch(0.9362 0.004 106.48);
+  --mfh-border-strong: oklch(0.8842 0.0054 106.51);
+  --mfh-foreground: oklch(0.1689 0.0021 286.18);
+  --mfh-muted: oklch(0.5477 0.0046 106.55);
+  --mfh-subtle: oklch(0.6918 0.0043 106.51);
+  --mfh-chip-bg: oklch(0.9573 0.004 106.47);
+  --mfh-pos: oklch(0.5273 0.1371 150.07);
+  --mfh-neg: oklch(0.5054 0.1905 27.52);
+  --mfh-pos-soft: oklch(0.9624 0.0434 156.74);
+  --mfh-neg-soft: oklch(0.9356 0.0309 17.72);
+  --mfh-overlay: oklch(0.1689 0.0021 286.18 / 0.45);
+
+  /* Fixed brand accent — same value in light and dark, no runtime accent switching. */
+  --mfh-accent: oklch(0.5784 0.2346 278.29);
+  --mfh-accent-soft: oklch(0.5784 0.2346 278.29 / 0.1);
+  --mfh-accent-strong: oklch(0.5106 0.2301 276.97);
+
+  /* Categorical palette — user-assigned Category/Account/Investment colours, same in both themes. */
+  --mfh-categorical-1: oklch(0.5784 0.2346 278.29);
+  --mfh-categorical-2: oklch(0.6959 0.1491 162.48);
+  --mfh-categorical-3: oklch(0.7148 0.1257 215.22);
+  --mfh-categorical-4: oklch(0.7681 0.2044 130.85);
+  --mfh-categorical-5: oklch(0.7686 0.1647 70.08);
+  --mfh-categorical-6: oklch(0.6559 0.2118 354.31);
+  --mfh-categorical-7: oklch(0.6056 0.2189 292.72);
+  --mfh-categorical-8: oklch(0.6368 0.2078 25.33);
 
   --mfh-spacing-xs: 0.25rem;
   --mfh-spacing-sm: 0.5rem;
@@ -27,49 +48,103 @@
   --mfh-spacing-gutter: 1.25rem;
   --mfh-spacing-section: 4rem;
 
-  --mfh-radius-sm: 0.375rem;
+  --mfh-radius-sm: 0.5rem;
   --mfh-radius-md: 0.625rem;
-  --mfh-radius-lg: 1rem;
-  --mfh-radius-xl: 1.5rem;
+  --mfh-radius-lg: 0.875rem;
+  --mfh-radius-xl: 1.125rem;
   --mfh-radius-full: 9999px;
 
-  --mfh-font-sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  --mfh-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mfh-font-sans: "Geist", -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mfh-font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mfh-font-weight-medium: 540;
 
-  --mfh-text-xs: 0.75rem;
-  --mfh-text-sm: 0.875rem;
-  --mfh-text-base: 1rem;
-  --mfh-text-lg: 1.125rem;
-  --mfh-text-xl: 1.375rem;
-  --mfh-text-display: 2.75rem;
+  /* Named text styles (design-system.md §4) — size/weight/letter-spacing, not a bare size scale. */
+  --mfh-text-caption-size: 0.6875rem;
+  --mfh-text-caption-weight: 600;
+  --mfh-text-caption-tracking: 0.35px;
+  --mfh-text-label-size: 0.75rem;
+  --mfh-text-label-weight: 540;
+  --mfh-text-label-tracking: -0.05px;
+  --mfh-text-body-sm-size: 0.8125rem;
+  --mfh-text-body-sm-weight: 440;
+  --mfh-text-body-sm-tracking: -0.1px;
+  --mfh-text-body-size: 0.9375rem;
+  --mfh-text-body-weight: 440;
+  --mfh-text-body-tracking: -0.1px;
+  --mfh-text-label-strong-size: 0.84375rem;
+  --mfh-text-label-strong-weight: 600;
+  --mfh-text-label-strong-tracking: -0.15px;
+  --mfh-text-heading-sm-size: 1.0625rem;
+  --mfh-text-heading-sm-weight: 600;
+  --mfh-text-heading-sm-tracking: -0.3px;
+  --mfh-text-heading-size: 1.25rem;
+  --mfh-text-heading-weight: 600;
+  --mfh-text-heading-tracking: -0.4px;
+  --mfh-text-value-size: clamp(19px, 1.8vw, 25px);
+  --mfh-text-value-weight: 600;
+  --mfh-text-value-tracking: -0.9px;
+  --mfh-text-value-hero-size: clamp(21px, 2.1vw, 30px);
+  --mfh-text-value-hero-weight: 600;
+  --mfh-text-value-hero-tracking: -0.9px;
 
-  --mfh-duration-fast: 120ms;
+  --mfh-duration-fast: 150ms;
   --mfh-duration-base: 200ms;
   --mfh-duration-slow: 320ms;
+  --mfh-ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --mfh-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --mfh-shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.07);
+  --mfh-shadow-md: 0 18px 44px rgba(0, 0, 0, 0.18);
+  --mfh-shadow-lg: 0 30px 70px rgba(0, 0, 0, 0.28);
 }
 
 .dark {
-  --mfh-background: oklch(0.18 0.02 260);
-  --mfh-foreground: oklch(0.96 0.008 250);
-  --mfh-muted: oklch(0.25 0.02 260);
-  --mfh-muted-foreground: oklch(0.72 0.02 260);
-  --mfh-border: oklch(0.32 0.02 260);
-  --mfh-primary: oklch(0.7 0.14 250);
-  --mfh-primary-foreground: oklch(0.18 0.02 260);
-  --mfh-accent: oklch(0.78 0.12 165);
-  --mfh-accent-foreground: oklch(0.18 0.02 260);
+  --mfh-background: oklch(0.15 0.0021 286.14);
+  --mfh-surface: oklch(0.1921 0.004 286.02);
+  --mfh-surface-alt: oklch(0.1693 0.0041 285.95);
+  --mfh-elevated: oklch(0.2234 0.0058 285.92);
+  --mfh-border: oklch(0.2702 0.0073 285.9);
+  --mfh-border-strong: oklch(0.3274 0.0105 285.81);
+  --mfh-foreground: oklch(0.9699 0.0013 106.42);
+  --mfh-muted: oklch(0.6358 0.0044 106.52);
+  --mfh-subtle: oklch(0.4845 0.0047 106.57);
+  --mfh-chip-bg: oklch(0.2234 0.0058 285.92);
+  --mfh-pos: oklch(0.7729 0.1535 163.22);
+  --mfh-neg: oklch(0.7106 0.1661 22.22);
+  --mfh-pos-soft: oklch(0.7729 0.1535 163.22 / 0.14);
+  --mfh-neg-soft: oklch(0.7106 0.1661 22.22 / 0.14);
+  --mfh-overlay: oklch(0 0 0 / 0.55);
 }
 
 @theme inline {
   --color-background: var(--mfh-background);
+  --color-surface: var(--mfh-surface);
+  --color-surface-alt: var(--mfh-surface-alt);
+  --color-elevated: var(--mfh-elevated);
+  --color-border: var(--mfh-border);
+  --color-border-strong: var(--mfh-border-strong);
   --color-foreground: var(--mfh-foreground);
   --color-muted: var(--mfh-muted);
-  --color-muted-foreground: var(--mfh-muted-foreground);
-  --color-border: var(--mfh-border);
-  --color-primary: var(--mfh-primary);
-  --color-primary-foreground: var(--mfh-primary-foreground);
+  --color-subtle: var(--mfh-subtle);
+  --color-chip-bg: var(--mfh-chip-bg);
+  --color-pos: var(--mfh-pos);
+  --color-neg: var(--mfh-neg);
+  --color-pos-soft: var(--mfh-pos-soft);
+  --color-neg-soft: var(--mfh-neg-soft);
+  --color-overlay: var(--mfh-overlay);
+
   --color-accent: var(--mfh-accent);
-  --color-accent-foreground: var(--mfh-accent-foreground);
+  --color-accent-soft: var(--mfh-accent-soft);
+  --color-accent-strong: var(--mfh-accent-strong);
+
+  --color-categorical-1: var(--mfh-categorical-1);
+  --color-categorical-2: var(--mfh-categorical-2);
+  --color-categorical-3: var(--mfh-categorical-3);
+  --color-categorical-4: var(--mfh-categorical-4);
+  --color-categorical-5: var(--mfh-categorical-5);
+  --color-categorical-6: var(--mfh-categorical-6);
+  --color-categorical-7: var(--mfh-categorical-7);
+  --color-categorical-8: var(--mfh-categorical-8);
 
   --spacing-xs: var(--mfh-spacing-xs);
   --spacing-sm: var(--mfh-spacing-sm);
@@ -87,15 +162,14 @@
 
   --font-sans: var(--mfh-font-sans);
   --font-mono: var(--mfh-font-mono);
-
-  --text-xs: var(--mfh-text-xs);
-  --text-sm: var(--mfh-text-sm);
-  --text-base: var(--mfh-text-base);
-  --text-lg: var(--mfh-text-lg);
-  --text-xl: var(--mfh-text-xl);
-  --text-display: var(--mfh-text-display);
+  /* Overrides Tailwind's built-in `font-medium` (default 500) to the design's workhorse weight. */
+  --font-weight-medium: var(--mfh-font-weight-medium);
 
   --default-transition-duration: var(--mfh-duration-base);
+
+  /* Literal, not var()-indirected: Tailwind resolves breakpoints at build time to emit @media rules. */
+  --breakpoint-half: 900px;
+  --breakpoint-panel: 1180px;
 }
 
 @layer base {
@@ -103,5 +177,70 @@
     background-color: var(--mfh-background);
     color: var(--mfh-foreground);
     font-family: var(--mfh-font-sans);
+  }
+}
+
+@layer components {
+  .text-caption {
+    font-size: var(--mfh-text-caption-size);
+    font-weight: var(--mfh-text-caption-weight);
+    letter-spacing: var(--mfh-text-caption-tracking);
+  }
+  .text-label {
+    font-size: var(--mfh-text-label-size);
+    font-weight: var(--mfh-text-label-weight);
+    letter-spacing: var(--mfh-text-label-tracking);
+  }
+  .text-body-sm {
+    font-size: var(--mfh-text-body-sm-size);
+    font-weight: var(--mfh-text-body-sm-weight);
+    letter-spacing: var(--mfh-text-body-sm-tracking);
+  }
+  .text-body {
+    font-size: var(--mfh-text-body-size);
+    font-weight: var(--mfh-text-body-weight);
+    letter-spacing: var(--mfh-text-body-tracking);
+  }
+  .text-label-strong {
+    font-size: var(--mfh-text-label-strong-size);
+    font-weight: var(--mfh-text-label-strong-weight);
+    letter-spacing: var(--mfh-text-label-strong-tracking);
+  }
+  .text-heading-sm {
+    font-size: var(--mfh-text-heading-sm-size);
+    font-weight: var(--mfh-text-heading-sm-weight);
+    letter-spacing: var(--mfh-text-heading-sm-tracking);
+  }
+  .text-heading {
+    font-size: var(--mfh-text-heading-size);
+    font-weight: var(--mfh-text-heading-weight);
+    letter-spacing: var(--mfh-text-heading-tracking);
+  }
+  .text-value {
+    font-size: var(--mfh-text-value-size);
+    font-weight: var(--mfh-text-value-weight);
+    letter-spacing: var(--mfh-text-value-tracking);
+  }
+  .text-value-hero {
+    font-size: var(--mfh-text-value-hero-size);
+    font-weight: var(--mfh-text-value-hero-weight);
+    letter-spacing: var(--mfh-text-value-hero-tracking);
+  }
+
+  /* Layout recipes (design-system.md §8) — added one at a time as the screens that need them land. */
+  .grid-kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(226px, 1fr));
+    gap: var(--mfh-spacing-md);
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+    gap: var(--mfh-spacing-md);
+  }
+  @media (width < 1180px) {
+    .grid-2 {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }

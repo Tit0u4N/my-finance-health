@@ -4,10 +4,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./*": [
-      "./src/*.ts",
-      "./src/*.tsx"
-    ]
+    "./*": {
+      "types": [
+        "./src/*.ts",
+        "./src/*.tsx"
+      ],
+      "default": "./src/*"
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

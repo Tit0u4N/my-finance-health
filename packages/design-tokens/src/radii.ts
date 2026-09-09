@@ -1,11 +1,11 @@
 // @repo/design-tokens — level 0.
-// Corner radii.
+// Corner radii. Source: design-system.md §5.
 
 export const radiusTokens = {
-  sm: '0.375rem',
+  sm: '0.5rem',
   md: '0.625rem',
-  lg: '1rem',
-  xl: '1.5rem',
+  lg: '0.875rem',
+  xl: '1.125rem',
   full: '9999px',
 } as const;
 

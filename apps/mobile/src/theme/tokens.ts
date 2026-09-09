@@ -7,17 +7,20 @@
  * place that translates them. No screen and no component ever restates a raw value.
  */
 
-import { type ColorScheme, type ColorToken, colorTokens } from '@repo/design-tokens/colors';
+import { accentTokens, type ColorScheme, type ColorToken, colorTokens } from '@repo/design-tokens/colors';
 import { radiusTokens } from '@repo/design-tokens/radii';
 import { spacingTokens } from '@repo/design-tokens/spacing';
-import { fontSizeTokens } from '@repo/design-tokens/typography';
+import { textStyleTokens } from '@repo/design-tokens/typography';
 import { oklchToHex } from './oklch';
 
 /** React Native lengths are density-independent pixels; the DOM tokens are relative to a 16px root. */
 const ROOT_FONT_SIZE = 16;
 
 function toPixels(value: string): number {
-  const amount = Number.parseFloat(value);
+  // `value`/`valueHero` (design-system.md §4) are `clamp(minPx, ...)` for the DOM's viewport-based
+  // scaling — meaningless in React Native, so the clamp's floor is the native size.
+  const clampMatch = /^clamp\(([\d.]+)px/.exec(value);
+  const amount = Number.parseFloat(clampMatch?.[1] ?? value);
 
   if (Number.isNaN(amount)) {
     throw new Error(`Unsupported length token: ${value}.`);
@@ -43,9 +46,19 @@ function toHexPalette(tokens: Readonly<Record<ColorToken, string>>): Readonly<Re
 
 export const SPACING = toPixelScale(spacingTokens);
 
-export const FONT_SIZE = toPixelScale(fontSizeTokens);
+// Named text styles (design-system.md §4) replace the old bare size scale — only the pixel size
+// carries over here; weight and tracking stay literal per component, same as before this change.
+export const FONT_SIZE = toPixelScale(
+  Object.fromEntries(Object.entries(textStyleTokens).map(([key, style]) => [key, style.fontSize])) as Record<
+    keyof typeof textStyleTokens,
+    string
+  >,
+);
 
 export const BORDER_RADIUS = toPixelScale(radiusTokens);
+
+/** Fixed brand accent (design-system.md §2) — no runtime accent switching, same value both themes. */
+export const ACCENT = oklchToHex(accentTokens.accent);
 
 /** Touchable heights, kept above the 44dp accessibility floor of both platforms. */
 export const HEIGHT = {

@@ -8,7 +8,9 @@
  * of truth: a token edit propagates without anyone having to remember this file exists.
  */
 
-const OKLCH_PATTERN = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)$/;
+// The alpha group is optional — `overlay` and the dark-mode `posSoft`/`negSoft` tokens
+// (design-system.md §1) are the only ones that carry a `/ alpha` component.
+const OKLCH_PATTERN = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*(?:\/\s*([\d.]+)\s*)?\)$/;
 
 const DEGREES_TO_RADIANS = Math.PI / 180;
 
@@ -30,17 +32,19 @@ function toHexPair(channel: number): string {
 }
 
 /**
- * Converts an `oklch(L C H)` string — lightness in 0..1, chroma unitless, hue in degrees — into `#rrggbb`.
- * Out-of-gamut results are clipped per channel, which is what browsers do for the same tokens.
+ * Converts an `oklch(L C H)` (or `oklch(L C H / A)`) string — lightness in 0..1, chroma unitless,
+ * hue in degrees, alpha in 0..1 — into `#rrggbb` (or `#rrggbbaa`). Out-of-gamut results are
+ * clipped per channel, which is what browsers do for the same tokens. React Native's colour
+ * parser accepts 8-digit hex natively, so the alpha channel needs no separate handling downstream.
  */
 export function oklchToHex(color: string): string {
   const match = OKLCH_PATTERN.exec(color);
 
   if (match === null) {
-    throw new Error(`Unsupported colour token: ${color}. Expected the form oklch(L C H).`);
+    throw new Error(`Unsupported colour token: ${color}. Expected the form oklch(L C H) or oklch(L C H / A).`);
   }
 
-  const [, rawLightness, rawChroma, rawHue] = match;
+  const [, rawLightness, rawChroma, rawHue, rawAlpha] = match;
   const lightness = Number(rawLightness);
   const chroma = Number(rawChroma);
   const hue = Number(rawHue) * DEGREES_TO_RADIANS;
@@ -61,5 +65,7 @@ export function oklchToHex(color: string): string {
   const green = -1.2684380046 * long + 2.6097574011 * medium - 0.3413193965 * short;
   const blue = -0.0041960863 * long - 0.7034186147 * medium + 1.707614701 * short;
 
-  return `#${toHexPair(encodeGamma(red))}${toHexPair(encodeGamma(green))}${toHexPair(encodeGamma(blue))}`;
+  const alphaHex = rawAlpha === undefined ? '' : toHexPair(Number(rawAlpha));
+
+  return `#${toHexPair(encodeGamma(red))}${toHexPair(encodeGamma(green))}${toHexPair(encodeGamma(blue))}${alphaHex}`;
 }

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { BORDER_RADIUS, FONT_SIZE, HEIGHT, SPACING } from '@/theme/tokens';
+import { ACCENT, BORDER_RADIUS, FONT_SIZE, HEIGHT, SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
 
 type ButtonProps = {
@@ -21,14 +21,14 @@ export function Button({ label, tone = 'primary', onPress }: ButtonProps) {
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: isPrimary ? colors.primary : 'transparent',
+          backgroundColor: isPrimary ? ACCENT : 'transparent',
           borderColor: colors.border,
           borderWidth: isPrimary ? 0 : StyleSheet.hairlineWidth,
           opacity: pressed ? 0.9 : 1,
         },
       ]}
     >
-      <Text style={[styles.label, { color: isPrimary ? colors.primaryForeground : colors.foreground }]}>{label}</Text>
+      <Text style={[styles.label, { color: isPrimary ? '#FFFFFF' : colors.foreground }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   label: {
-    fontSize: FONT_SIZE.base,
+    fontSize: FONT_SIZE.body,
     fontWeight: '500',
   },
 });

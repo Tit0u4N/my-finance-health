@@ -10,8 +10,8 @@ export function Badge({ label }: BadgeProps) {
   const { colors } = useColor();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-      <Text style={[styles.label, { color: colors.mutedForeground }]}>{label.toUpperCase()}</Text>
+    <View style={[styles.container, { backgroundColor: colors.chipBg, borderColor: colors.border }]}>
+      <Text style={[styles.label, { color: colors.muted }]}>{label.toUpperCase()}</Text>
     </View>
   );
 }
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
   },
   label: {
-    fontSize: FONT_SIZE.xs,
+    fontSize: FONT_SIZE.caption,
     fontWeight: '500',
     letterSpacing: LETTER_SPACING.wide,
   },

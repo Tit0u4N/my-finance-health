@@ -1,26 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { App } from '@/app/App';
 
-afterEach(() => {
-  document.documentElement.classList.remove('dark');
-});
-
 describe('App', () => {
-  it('composes the shared landing page with the desktop target label', () => {
+  it('boots the mock workspace and renders the Overview screen', async () => {
     render(<App />);
 
-    expect(screen.getByRole('heading', { level: 1, name: 'my finance health' })).toBeInTheDocument();
-    expect(screen.getByText('Desktop')).toBeInTheDocument();
-  });
-
-  it('switches the document to the dark theme from the primary action', async () => {
-    render(<App />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Switch to dark theme' }));
-
-    expect(document.documentElement).toHaveClass('dark');
-    expect(screen.getByRole('button', { name: 'Switch to light theme' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument();
+    // "Everyday" legitimately repeats (the Accounts panel row + every activity row on that
+    // account) — assert presence via findAllByText rather than requiring a single match.
+    expect((await screen.findAllByText('Everyday')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Reserve')).toBeInTheDocument();
   });
 });

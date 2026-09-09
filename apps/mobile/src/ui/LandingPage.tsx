@@ -43,7 +43,7 @@ export function LandingPage({
       <View style={styles.header}>
         <Badge label={targetLabel} />
         <Text style={[styles.productName, { color: colors.foreground }]}>{productName}</Text>
-        <Text style={[styles.tagline, { color: colors.mutedForeground }]}>{tagline}</Text>
+        <Text style={[styles.tagline, { color: colors.muted }]}>{tagline}</Text>
       </View>
 
       <Text style={[styles.description, { color: colors.foreground }]}>{description}</Text>
@@ -56,7 +56,7 @@ export function LandingPage({
 
       <View style={styles.actions}>
         <Button label={primaryActionLabel} onPress={onPrimaryAction} />
-        <Text style={[styles.footnote, { color: colors.mutedForeground }]}>{footnote}</Text>
+        <Text style={[styles.footnote, { color: colors.muted }]}>{footnote}</Text>
       </View>
     </ScrollView>
   );
@@ -74,26 +74,26 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.section,
   },
   description: {
-    fontSize: FONT_SIZE.base,
-    lineHeight: FONT_SIZE.xl,
+    fontSize: FONT_SIZE.body,
+    lineHeight: FONT_SIZE.heading,
   },
   features: {
     gap: SPACING.gutter,
   },
   footnote: {
-    fontSize: FONT_SIZE.sm,
+    fontSize: FONT_SIZE.bodySm,
   },
   header: {
     gap: SPACING.md,
   },
   productName: {
-    fontSize: FONT_SIZE.display,
+    fontSize: FONT_SIZE.heading,
     fontWeight: '600',
   },
   screen: {
     flex: 1,
   },
   tagline: {
-    fontSize: FONT_SIZE.xl,
+    fontSize: FONT_SIZE.heading,
   },
 });

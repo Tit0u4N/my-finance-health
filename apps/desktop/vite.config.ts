@@ -19,7 +19,16 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Workspace packages expose TypeScript sources: they go through the app chain, never through the prebundler.
-    exclude: ['@repo/ui', '@repo/design-tokens'],
+    exclude: [
+      '@repo/ui',
+      '@repo/design-tokens',
+      '@repo/app-core',
+      '@repo/data',
+      '@repo/domain',
+      '@repo/platform',
+      '@repo/router',
+      '@repo/routes',
+    ],
   },
   clearScreen: false,
   envPrefix: ['VITE_', 'TAURI_ENV_'],

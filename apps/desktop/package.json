@@ -14,7 +14,15 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@repo/app-core": "workspace:*",
+    "@repo/data": "workspace:*",
+    "@repo/domain": "workspace:*",
+    "@repo/platform": "workspace:*",
+    "@repo/router": "workspace:*",
+    "@repo/routes": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-router": "^1.135.0",
     "react": "catalog:dom",
     "react-dom": "catalog:dom"
   },

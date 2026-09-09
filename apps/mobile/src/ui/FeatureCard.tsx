@@ -11,9 +11,9 @@ export function FeatureCard({ title, description }: FeatureCardProps) {
   const { colors } = useColor();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+    <View style={[styles.container, { backgroundColor: colors.chipBg, borderColor: colors.border }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-      <Text style={[styles.description, { color: colors.mutedForeground }]}>{description}</Text>
+      <Text style={[styles.description, { color: colors.muted }]}>{description}</Text>
     </View>
   );
 }
@@ -26,10 +26,10 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
   },
   description: {
-    fontSize: FONT_SIZE.sm,
+    fontSize: FONT_SIZE.bodySm,
   },
   title: {
-    fontSize: FONT_SIZE.lg,
+    fontSize: FONT_SIZE.headingSm,
     fontWeight: '500',
   },
 });

@@ -22,4 +22,9 @@ describe('oklchToHex', () => {
   it('rejects a token that is not expressed in oklch', () => {
     expect(() => oklchToHex('#ffffff')).toThrow('Unsupported colour token');
   });
+
+  it('appends an alpha channel for the `oklch(L C H / A)` form', () => {
+    expect(oklchToHex('oklch(1 0 0 / 0.5)')).toBe('#ffffff80');
+    expect(oklchToHex('oklch(0 0 0 / 0)')).toBe('#00000000');
+  });
 });

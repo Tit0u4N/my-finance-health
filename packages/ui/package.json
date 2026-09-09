@@ -5,17 +5,31 @@
   "type": "module",
   "exports": {
     "./styles/theme.css": "./src/styles/theme.css",
-    "./components/*": "./src/components/*.tsx",
-    "./*": "./src/*.ts"
+    "./components/*": {
+      "types": [
+        "./src/components/*.tsx",
+        "./src/components/*.ts"
+      ],
+      "default": "./src/components/*"
+    },
+    "./*": {
+      "types": [
+        "./src/*.ts",
+        "./src/*.tsx"
+      ],
+      "default": "./src/*"
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@base-ui-components/react": "^1.0.0-beta.3",
     "@repo/design-tokens": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.545.0",
     "tailwind-merge": "^3.6.0"
   },
   "peerDependencies": {
