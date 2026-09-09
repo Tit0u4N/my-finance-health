@@ -56,7 +56,7 @@ Ported near-verbatim from `charts.jsx` — no charting library dependency, consi
 | `LineChart` | `{ day: number, value: number }[]`, with hover | §4 `useAccountBalanceHistory` / `useInvestmentValueHistory` | Account detail, Investments portfolio trend, Investment detail |
 | `Donut` | `{ id, name, value, color }[]` | §6 Category breakdown selector (Overview) / Allocation selector (Investments) — "same shape, different source" per §6's own note | Overview spending breakdown, Investments allocation |
 | `Sankey` | `{ nodes: {id,label,value,color,side}[], links: {source,target,value}[] }` | §6 Cashflow graph selector | Overview cashflow panel |
-| `MiniBar` | `number[]` (short recent-values series) | **No backing selector exists yet** — the mock's `incomeBars`/`expenseBars` in `DeskDashboard` are synthetic noise (`Array.from` + `Math.sin`), not derived from real transactions. Flagged as a gap: `app-core-inventory.md` §6 needs a "recent period trend" selector (daily income/expense buckets, N days) before this chart has real data. | Overview `StatTile` sparklines (income/spending KPIs) |
+| `MiniBar` | `number[]` (short recent-values series) | §6 Recent period trend selector — daily income/expense buckets, trailing 30 days, clipped to the earliest transaction if history is shorter (`open-questions.md` #17) | Overview `StatTile` sparklines (income/spending KPIs) |
 | `ProgressBar` | `{ value, max, label?, right? }` | — | **Unused**: declared in `charts.jsx` but no screen in `screens.md` consumes it. Keep out of the v1 port; revisit if a future screen needs a bounded-progress visual. |
 
 ## 4. Rendering-boundary rules (restated with this design's traps)

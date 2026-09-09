@@ -117,6 +117,7 @@ One held position (a security, tracked by average cost and current price rather 
 | `avg` | integer, minor units | average cost per unit — cost basis is `qty * avg` |
 | `current` | integer, minor units | current price per unit — value is `qty * current` |
 | `color` | string (hex) | |
+| `note` | string, optional | free-text description, edited via the Investment detail panel's `RichNote` (`open-questions.md` #15, now resolved — field added here); stored as the raw markup `RichNote`'s controlled `value` produces, format tied to whatever toolbar mechanism replaces `document.execCommand` at implementation time |
 
 ### InvestmentValueSnapshot
 

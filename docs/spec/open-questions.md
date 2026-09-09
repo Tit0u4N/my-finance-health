@@ -108,8 +108,22 @@ Decided: the mock's `AreaChart`/`Donut`/`Sankey`/`LineChart`/`MiniBar` are custo
 
 Decided: the mock's `RichNote` (Investment detail description panel) writes `window.localStorage` directly and uses `document.execCommand` for formatting commands. Per the rendering-boundary rule, `@repo/ui`'s `RichNote` becomes fully controlled (`value`/`onChange`) with no storage of its own.
 
-**Flagged, not decided**: (a) `domain-model.md`'s `Investment` has no `note` field yet — the mock's panel has nothing real to persist to; adding one is a `@repo/domain` decision, not a rendering one. (b) `document.execCommand` is deprecated; its replacement (a minimal manual toolbar, or a small controlled-rich-text library) is an implementation-time call, not fixed here.
+**(a) Resolved (2026-09-09)**: `Investment.note`, string, optional, added to `domain-model.md`. Persisted through the ordinary `useUpdateInvestment()` mutation hook (`app-core-inventory.md` §5) — no new repository operation needed, `note` is just another field on the existing `update(id, patch)`.
+
+**Still flagged, not decided**: (b) `document.execCommand` is deprecated; its replacement (a minimal manual toolbar, or a small controlled-rich-text library) is an implementation-time call, not fixed here.
 
 ### 16. Route/search-param addressability — **range and ledger filters are search params; scope, hidden-toggle, and modals are not**
 
 Decided (`routes.md` §3): `range` on Account/Investment detail and the Transactions ledger's `search`/`type`/`category`/`sort` become typed TanStack Router search params — real filtered views worth bookmarking or sharing. Account scope (`accSel`) stays the `app-core-inventory.md` §3 Zustand store (already decided there as ephemeral, non-persisted — restated, not reopened); the amounts-hidden toggle stays the preferences store; the three creation modals stay local component state, not routes — transient drafts with no deep-link use case, and CLAUDE.md's anti-over-engineering guidance argues against a route for "is this dialog open."
+
+---
+
+## Second-pass follow-on decisions (2026-09-09)
+
+### 17. Recent-period-trend selector (`MiniBar` data gap) — **30-day daily buckets, clipped to first transaction**
+
+`app-core-inventory.md` §6 flagged a gap: the Overview `StatTile` income/spending sparklines (`MiniBar`, `ui-inventory.md` §3) had no backing selector — the mock's `incomeBars`/`expenseBars` are synthetic `Math.sin` noise, not derived data.
+
+Decided: a new selector, **Recent period trend**, computes daily income and expense buckets (sum of positive-amount / negative-amount transactions per day) for the trailing 30 days, bounded by `WorkspaceSettings.timezone` (same timezone rule as every other period boundary, decision #3). If the account/workspace has fewer than 30 days of transaction history, the window starts at the earliest transaction's date instead of padding with empty leading days — the bucket count shrinks, it never shows fabricated zero-days before real data begins.
+
+Added to `app-core-inventory.md` §6 as a new selector row and to `ui-inventory.md` §3's `MiniBar` row, replacing the "no backing selector exists yet" flag.
