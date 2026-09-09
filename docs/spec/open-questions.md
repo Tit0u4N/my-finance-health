@@ -71,3 +71,45 @@ Decisions 3 and 4 both attach a fact to "the workspace" that isn't `Account`/`Ca
 ### 9d. Exchange rate fixed-point convention — **1e6 scale**
 
 `domain-model.md` left `ExchangeRate.rateToBase`'s fixed-point convention "TBD". Decided: integer scaled by `RATE_SCALE = 1_000_000` (6 decimal places) — e.g. 1 USD = 0.923400 EUR is stored as `923400`. Six decimals are enough precision for account-level totals without float drift; `@repo/domain/primitives/rate.ts` exposes `rateFromDecimal`/`rateToDecimal` to convert to and from the decimal a settings form displays.
+
+---
+
+## UI-pass decisions (2026-09-04)
+
+Forced by the second design read, scoped to `design-system.md`, `ui-inventory.md`, and `routes.md` — the rendering-layer pass `README.md` originally deferred.
+
+### 10. Design-token source of truth — **the mock's palette replaces the current scaffold**
+
+Decided: `packages/design-tokens/src/*.ts` currently holds generic placeholder values (a minimal oklch palette, a 6-step type ramp, 4 radii) never tied to any design. The mock's `THEMES`/`ACCENTS` in `ui.jsx` and `desktop-style.css` become canonical (`design-system.md`). The package's existing **oklch** format is kept — the mock's hex/rgba values are converted losslessly at implementation time (`culori` or `colorjs.io`), not hand-converted, since oklch is a re-encoding of the same colors, not a re-decision.
+
+**Flagged, not decided**: `design-tokens` also feeds `apps/mobile`'s native `StyleSheet` (`start-roadmap.md` §12), which can't consume oklch strings directly. Whether the package exports a conversion helper or a dual web/native shape is deferred to the mobile UI spec pass (`design-system.md` §10) — recorded here so it isn't silently assumed away.
+
+### 11. Theming scope — **theme mode only, no accent presets, no density**
+
+Decided: of the mock's three theming axes (light/dark/system, 4 switchable accents, comfortable/compact density), only theme mode ships as a real product feature. One fixed brand accent (the mock's `indigo` preset), one fixed (comfortable) density.
+
+**Why**: the other two axes exist in the mock as `TweaksPanel` — the design tool's own prototype-editing scaffolding (`README.md`'s "Not part of the product" note on `tweaks-panel.jsx`) — not as evidenced product requirements. Shipping them would mean a runtime CSS-variable-swapping layer and a density scale threaded through every spacing/row-height value in `@repo/ui`, for a feature nobody asked for.
+
+**Consequence**: `app-core-inventory.md` §3's preferences store drops `accent` and `density`; `screens.md`'s Settings → Preferences row drops the accent-picker and density-picker sub-rows; `design-system.md` has no accent-preset or density-scale tokens.
+
+### 12. `@repo/ui` primitives — **shadcn/ui (base-ui), not a port of the mock's components**
+
+Decided: `start-roadmap.md` §12 already specifies `@repo/ui` as "shadcn/ui primitives... Tailwind theme sheet fed by design tokens" — this resolves a latent conflict between that line and the mock, which ships its own hand-rolled `Button`/`Field`/`Select`/`Switch`/`Modal`/`Table`/`Tabs` with no primitive library underneath (no focus trap on `Modal`, no `role="switch"` on `Switch`, outside-click hand-rolled on `AccountFilter`). The roadmap wins: `ui-inventory.md` §1 maps each mock primitive onto its shadcn equivalent, restyled with `design-system.md` tokens, rather than transcribing the mock's version. Primitive library is **base-ui** (MUI's headless library), not Radix — shadcn's CLI supports both; base-ui is the pick for this project.
+
+### 13. Icon set — **`lucide-react`, not the mock's inline SVGs**
+
+Decided: CLAUDE.md already mandates `lucide-react-native` (never `lucide-react`) on mobile, implying the reverse convention on DOM. The mock hand-draws ~50 icons as inline SVG paths in `ui.jsx`'s `Icon` component; `ui-inventory.md` §4 gives the full name mapping onto `lucide-react` equivalents.
+
+### 14. Chart library — **none; hand-rolled SVG, ported from `charts.jsx`**
+
+Decided: the mock's `AreaChart`/`Donut`/`Sankey`/`LineChart`/`MiniBar` are custom SVG with no charting library dependency — worth keeping rather than introducing one, since a Sankey in particular has no first-class support in most lightweight chart libraries and would force a heavier dependency just for that one panel. `ui-inventory.md` §3 ports these near-verbatim, each pinned to the `app-core-inventory.md` §6 selector that produces its input shape. `ProgressBar` is declared in `charts.jsx` but consumed by no screen — excluded from the v1 port.
+
+### 15. `RichNote` — **controlled component; persistence and rich-text mechanism both deferred**
+
+Decided: the mock's `RichNote` (Investment detail description panel) writes `window.localStorage` directly and uses `document.execCommand` for formatting commands. Per the rendering-boundary rule, `@repo/ui`'s `RichNote` becomes fully controlled (`value`/`onChange`) with no storage of its own.
+
+**Flagged, not decided**: (a) `domain-model.md`'s `Investment` has no `note` field yet — the mock's panel has nothing real to persist to; adding one is a `@repo/domain` decision, not a rendering one. (b) `document.execCommand` is deprecated; its replacement (a minimal manual toolbar, or a small controlled-rich-text library) is an implementation-time call, not fixed here.
+
+### 16. Route/search-param addressability — **range and ledger filters are search params; scope, hidden-toggle, and modals are not**
+
+Decided (`routes.md` §3): `range` on Account/Investment detail and the Transactions ledger's `search`/`type`/`category`/`sort` become typed TanStack Router search params — real filtered views worth bookmarking or sharing. Account scope (`accSel`) stays the `app-core-inventory.md` §3 Zustand store (already decided there as ephemeral, non-persisted — restated, not reopened); the amounts-hidden toggle stays the preferences store; the three creation modals stay local component state, not routes — transient drafts with no deep-link use case, and CLAUDE.md's anti-over-engineering guidance argues against a route for "is this dialog open."

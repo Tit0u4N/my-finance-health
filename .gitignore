@@ -91,6 +91,7 @@ _bmad/
 graphify-out/
 CLAUDE.md
 .mcp.json
+.claude/skills/shadcn/
 
 # --- Rust / Tauri ---
 target/

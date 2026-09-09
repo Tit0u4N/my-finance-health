@@ -25,11 +25,13 @@ Files read, in the order they informed this spec:
 | `tweaks-panel.jsx` | **Not part of the product.** Design-tool scaffolding for live-editing the prototype inside Claude Design (`postMessage` protocol to the design host). Its *concept* — a bundle of display preferences (theme, accent, density, currency) — is real; its mechanism is not. See `app-core-inventory.md`. |
 | `My Finance Health - Desktop.html` | Composition root; confirms script load order and screen inventory |
 
-Not read: `app.jsx`, `ios-frame.jsx`, `onboarding.jsx`, `screens-*.jsx`, `style.css`, `My Finance Health.html` — the project's mobile/legacy variants, out of scope for this pass (desktop only, per the design URL given).
+Not read: `app.jsx`, `ios-frame.jsx`, `onboarding.jsx`, `screens-*.jsx`, `style.css`, `My Finance Health.html` — the project's mobile/legacy variants, out of scope for this pass (desktop only, per the design URL given) and for the second pass below (mobile screens get their own pass later, by decision).
+
+**Second read, 2026-09-04**: the same 11 desktop files re-read for the rendering layer this folder originally deferred — colors/type/spacing (`ui.jsx`'s `THEMES`/`ACCENTS`, `desktop-style.css`), every component (`ui.jsx`, `desktop-shell.jsx`, `charts.jsx`), and the navigation state `desktop-app.jsx` hand-rolls (`tab`/`stack`/`modal`), now formalized as a real route tree.
 
 ## Scope of this pass
 
-Covers the **domain model** and the **`@repo/app-core` work inventory**. Deliberately excludes: `@repo/ui` component mapping, the DOM route tree, mobile screens, and design-token adjustments — those are a separate pass once the domain and app-core contracts below are settled.
+Covers the **domain model**, the **`@repo/app-core` work inventory**, the **`@repo/design-tokens` values**, the **`@repo/ui` component inventory**, and the **DOM route tree** (`@repo/routes`/`@repo/router`). Still excludes mobile screens — `apps/mobile` shares no component with web/desktop (CLAUDE.md) and needs its own design read; that stays a separate future pass.
 
 ## How to read this folder
 
@@ -37,4 +39,7 @@ Covers the **domain model** and the **`@repo/app-core` work inventory**. Deliber
 2. **`screens.md`** — one row per screen: purpose, data read, data written, derived values. The bridge between the design and everything downstream.
 3. **`repository-contracts.md`** — repository interfaces and the persistence-gateway operation set, sized so each screen costs one round trip in online mode.
 4. **`app-core-inventory.md`** — the answer to "what has to be built in `@repo/app-core`": providers, the bootstrap-stage hook, store factories, query/mutation hooks, selectors — each traced back to a screen.
-5. **`open-questions.md`** — decisions the design implies but doesn't settle. Read before any domain type lands; the answers change field types.
+5. **`design-system.md`** — color/type/spacing/radius/shadow/motion tokens for `@repo/design-tokens`, replacing its current scaffold placeholders.
+6. **`ui-inventory.md`** — the answer to "what has to be built in `@repo/ui`": shadcn primitives, bespoke composites, and the hand-rolled SVG charts, each traced back to a screen and (for charts) to the app-core selector that feeds it.
+7. **`routes.md`** — the DOM route tree and the `@repo/router` factory contract, replacing the mock's `tab`/`stack` navigation state with real URLs.
+8. **`open-questions.md`** — decisions the design implies but doesn't settle. Read before any domain type lands; the answers change field types.
