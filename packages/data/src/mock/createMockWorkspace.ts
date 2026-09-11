@@ -5,12 +5,12 @@
 // tests (createMemoryGateway, createFakePlatform). Delete this whole folder once real workspace
 // opening lands; nothing outside apps/desktop references it.
 
-import { createMemoryGateway } from '@repo/data/gateway/memoryGateway';
-import { createRepositorySet } from '@repo/data/repositories/createRepositorySet';
 import { timezoneSchema } from '@repo/domain/primitives/dateTime';
 import type { RepositorySet } from '@repo/domain/repositories/repositorySet';
 import { createFakePlatform } from '@repo/platform/fakePlatform';
 import type { Platform } from '@repo/platform/platform';
+import { createMemoryGateway } from '../gateway/memoryGateway';
+import { createRepositorySet } from '../repositories/createRepositorySet';
 import { MOCK_NOW, mockSeed } from './seedData';
 
 export type MockWorkspace = {

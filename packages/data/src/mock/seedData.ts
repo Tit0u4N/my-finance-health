@@ -5,13 +5,13 @@
 // `startDate` instead of a stored `next` (open-questions.md #7). Every record is built through the
 // entity's own zod schema, the same construction path a repository `create` call would take.
 
-import type { MemoryGatewaySeed } from '@repo/data/gateway/memoryGateway';
-import { WORKSPACE_SETTINGS_ID } from '@repo/data/repositories/workspaceSettingsRepository';
 import { accountSchema } from '@repo/domain/entities/account';
 import { categorySchema } from '@repo/domain/entities/category';
 import { recurringRuleSchema } from '@repo/domain/entities/recurringRule';
 import { transactionSchema } from '@repo/domain/entities/transaction';
 import { workspaceSettingsSchema } from '@repo/domain/entities/workspaceSettings';
+import type { MemoryGatewaySeed } from '../gateway/memoryGateway';
+import { WORKSPACE_SETTINGS_ID } from '../repositories/workspaceSettingsRepository';
 
 // The fixed anchor the fake platform's clock reports as "now" (createMockWorkspace.ts) — every
 // relative date below ("9 days from now", "3 days ago") is written against this same anchor.
