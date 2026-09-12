@@ -243,4 +243,28 @@
       grid-template-columns: minmax(0, 1fr);
     }
   }
+  .grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: var(--mfh-spacing-md);
+  }
+  .grid-half {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--mfh-spacing-md);
+    align-items: start;
+  }
+  .grid-settings {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: var(--mfh-spacing-md);
+    align-items: start;
+  }
+  /* Literal 900px, matching --breakpoint-half above — first real consumer of that token. */
+  @media (width < 900px) {
+    .grid-half,
+    .grid-settings {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
 }

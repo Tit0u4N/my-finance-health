@@ -258,6 +258,103 @@ describe('repository set — end-to-end over the memory gateway', () => {
     expect(isOk(history) && history.value).toEqual([{ date: '2026-03-14T00:00:00.000Z', price: 45_000 }]);
   });
 
+  it('getValueHistory includes a snapshot recorded earlier today, even for the narrowest range', async () => {
+    // Regression for F1: dateRange bounds are date-only ('2026-03-15') but a snapshot's date is
+    // a full instant ('2026-03-15T09:00:00.000Z'), which sorts *after* a bare date lexicographically
+    // — a same-day snapshot must not be silently dropped from every range, including '7d'.
+    const { repositories } = ctx;
+    const investment = await repositories.investments.create({
+      name: 'World ETF (CW8)',
+      ticker: 'CW8',
+      qty: 10,
+      avg: 40_000 as never,
+      current: 40_000 as never,
+      color: '#6366f1',
+    });
+    if (isErr(investment)) {
+      throw new Error('setup failed');
+    }
+
+    await repositories.investments.recordValueSnapshot(investment.value.id, {
+      date: '2026-03-15T09:00:00.000Z' as never,
+      price: 41_000 as never,
+    });
+
+    const history = await repositories.investments.getValueHistory(investment.value.id, '7d');
+    expect(isOk(history) && history.value).toEqual([{ date: '2026-03-15T09:00:00.000Z', price: 41_000 }]);
+  });
+
+  it('a backdated snapshot is recorded without moving Investment.current, but a newer one still advances it', async () => {
+    // Regression for F2: recordValueSnapshot used to overwrite `current` unconditionally, so a
+    // forgotten price logged after the fact would silently rewrite a more recent price.
+    const { repositories } = ctx;
+    const investment = await repositories.investments.create({
+      name: 'World ETF (CW8)',
+      ticker: 'CW8',
+      qty: 10,
+      avg: 40_000 as never,
+      current: 40_000 as never,
+      color: '#6366f1',
+    });
+    if (isErr(investment)) {
+      throw new Error('setup failed');
+    }
+    const id = investment.value.id;
+
+    await repositories.investments.recordValueSnapshot(id, {
+      date: '2026-03-14T00:00:00.000Z' as never,
+      price: 45_000 as never,
+    });
+
+    const backdated = await repositories.investments.recordValueSnapshot(id, {
+      date: '2026-03-10T00:00:00.000Z' as never,
+      price: 30_000 as never,
+    });
+    expect(isOk(backdated)).toBe(true);
+    const afterBackdated = await repositories.investments.getById(id);
+    expect(isOk(afterBackdated) && afterBackdated.value.current).toBe(45_000);
+
+    const newest = await repositories.investments.recordValueSnapshot(id, {
+      date: '2026-03-15T00:00:00.000Z' as never,
+      price: 50_000 as never,
+    });
+    expect(isOk(newest)).toBe(true);
+    const afterNewest = await repositories.investments.getById(id);
+    expect(isOk(afterNewest) && afterNewest.value.current).toBe(50_000);
+
+    const history = await repositories.investments.getValueHistory(id, 'all');
+    expect(isOk(history) && history.value).toHaveLength(3);
+  });
+
+  it('deleting an investment cascades to every one of its value snapshots', async () => {
+    const { repositories, gateway } = ctx;
+    const investment = await repositories.investments.create({
+      name: 'World ETF (CW8)',
+      ticker: 'CW8',
+      qty: 10,
+      avg: 40_000 as never,
+      current: 40_000 as never,
+      color: '#6366f1',
+    });
+    if (isErr(investment)) {
+      throw new Error('setup failed');
+    }
+    const id = investment.value.id;
+    await repositories.investments.recordValueSnapshot(id, {
+      date: '2026-03-14T00:00:00.000Z' as never,
+      price: 45_000 as never,
+    });
+
+    const deleted = await repositories.investments.delete(id);
+    expect(isOk(deleted)).toBe(true);
+
+    expect(isErr(await repositories.investments.getById(id))).toBe(true);
+    const remainingSnapshots = await gateway.readCollection('investmentValueSnapshot', {
+      filter: { investmentId: id },
+    });
+    expect(isOk(remainingSnapshots) && remainingSnapshots.value).toEqual([]);
+  });
+
   it('the recurring-rule active toggle is an ordinary patch', async () => {
     const { repositories } = ctx;
     const account = await repositories.accounts.create({

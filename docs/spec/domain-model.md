@@ -117,7 +117,9 @@ One held position (a security, tracked by average cost and current price rather 
 | `avg` | integer, minor units | average cost per unit — cost basis is `qty * avg` |
 | `current` | integer, minor units | current price per unit — value is `qty * current` |
 | `color` | string (hex) | |
-| `note` | string, optional | free-text description, edited via the Investment detail panel's `RichNote` (`open-questions.md` #15, now resolved — field added here); stored as the raw markup `RichNote`'s controlled `value` produces, format tied to whatever toolbar mechanism replaces `document.execCommand` at implementation time |
+| `note` | string, optional | free-text description, edited via the Investment detail panel's Notes field. **Implemented** as plain text, not rich text (`open-questions.md` #15, fully resolved on implementation — `RichNote`/`document.execCommand` dropped from v1 in favour of a plain `Textarea`, closing the part of #15 left open by the previous pass) |
+
+**Implemented**: `InvestmentRepository.delete(id)` also exists, cascading to every `InvestmentValueSnapshot` for that position in the same batch (`repository-contracts.md`) — a position can be created and edited per the original contract, and, per the implementation pass's full-CRUD decision (matching decision #19 for Transactions/Recurring), removed as well.
 
 ### InvestmentValueSnapshot
 
@@ -130,7 +132,7 @@ A user-entered, point-in-time price record, confirmed manual-only by `open-quest
 | `date` | ISO datetime | |
 | `price` | integer, minor units | per-unit price at that date |
 
-Recording a snapshot is expected to also update `Investment.current` to the same value — the two are the same fact at two points in the data model (a running "current" field for cheap reads, a history for the trend chart), not independent state.
+Recording a snapshot is expected to also update `Investment.current` to the same value — the two are the same fact at two points in the data model (a running "current" field for cheap reads, a history for the trend chart), not independent state. **Implemented refinement**: this only holds when the recorded snapshot is the newest one on record for that position — a backdated snapshot (an entry logged after the fact, for a date earlier than the latest existing one) is still written, but does **not** move `current`, so a forgotten price entered late can never silently overwrite a more recent one.
 
 ---
 

@@ -20,6 +20,10 @@ export const investmentSchema = z.object({
   /** Current price per unit. Value is qty * current. */
   current: moneySchema,
   color: hexColorSchema,
+  /** Free-text description, edited via the Investment detail panel. Plain text, not rich text
+   * (open-questions.md #15b — document.execCommand's replacement was resolved by dropping rich
+   * text from v1 rather than reimplementing it). */
+  note: z.string().optional(),
   ...auditFieldsSchema.shape,
 });
 export type Investment = z.infer<typeof investmentSchema>;

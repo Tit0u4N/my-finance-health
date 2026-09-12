@@ -7,6 +7,9 @@
 
 import { accountSchema } from '@repo/domain/entities/account';
 import { categorySchema } from '@repo/domain/entities/category';
+import { investmentSchema } from '@repo/domain/entities/investment';
+import type { InvestmentValueSnapshot } from '@repo/domain/entities/investmentValueSnapshot';
+import { investmentValueSnapshotSchema } from '@repo/domain/entities/investmentValueSnapshot';
 import { recurringRuleSchema } from '@repo/domain/entities/recurringRule';
 import { transactionSchema } from '@repo/domain/entities/transaction';
 import { workspaceSettingsSchema } from '@repo/domain/entities/workspaceSettings';
@@ -151,6 +154,80 @@ const recurringRules = [
   recurringRuleInput('r5', 'Gym — Basic Fit', -2_990, 'Monthly', 'c-hlt', 'a1', '2026-09-21', false),
 ];
 
+const investmentInput = (
+  id: string,
+  name: string,
+  ticker: string,
+  qty: number,
+  avg: number,
+  current: number,
+  color: string,
+) =>
+  investmentSchema.parse({
+    id,
+    name,
+    ticker,
+    qty,
+    avg,
+    current,
+    color,
+    createdAt: AUDIT_TIMESTAMP,
+    updatedAt: AUDIT_TIMESTAMP,
+  });
+
+// [offset from MOCK_NOW in days, per-unit price in minor units]. Every series shares the same
+// offsets so 7d/1m/3m/1y/all each return a visibly different slice rather than collapsing to the
+// same handful of points; offset 0's price must equal the position's own `current` above.
+type PricePoint = readonly [offset: number, price: number];
+const SNAPSHOT_OFFSETS: readonly number[] = [
+  -365, -180, -90, -60, -45, -28, -21, -14, -10, -7, -6, -5, -4, -3, -2, -1, 0,
+];
+
+function snapshotSeries(investmentId: string, prices: readonly number[]): InvestmentValueSnapshot[] {
+  const points: PricePoint[] = SNAPSHOT_OFFSETS.map((offset, index) => [offset, prices[index] as number]);
+  return points.map(([offset, price], index) =>
+    investmentValueSnapshotSchema.parse({
+      id: `${investmentId}-s${index}`,
+      investmentId,
+      date: daysFromAnchor(offset),
+      price,
+      createdAt: AUDIT_TIMESTAMP,
+      updatedAt: AUDIT_TIMESTAMP,
+    }),
+  );
+}
+
+// Fractional qty (open-questions.md #1: "not a minor-unit money field, fractional units are
+// plausible") — a rising position.
+const i1Prices = [
+  15_200, 16_500, 18_700, 19_500, 20_100, 20_800, 21_000, 21_200, 21_300, 21_350, 21_370, 21_390, 21_400, 21_410,
+  21_420, 21_430, 21_450,
+];
+const i2Prices = [
+  4_200, 4_600, 5_000, 5_300, 5_450, 5_600, 5_650, 5_700, 5_720, 5_740, 5_745, 5_750, 5_755, 5_760, 5_765, 5_770, 5_780,
+];
+// Deliberately loss-making: current (82.50) sits below avg cost (90.00).
+const i3Prices = [
+  9_800, 9_600, 9_200, 9_000, 8_800, 8_600, 8_500, 8_400, 8_350, 8_320, 8_310, 8_300, 8_290, 8_280, 8_270, 8_260, 8_250,
+];
+const i4Prices = [
+  5_800, 6_000, 6_200, 6_300, 6_350, 6_420, 6_450, 6_480, 6_500, 6_510, 6_515, 6_520, 6_525, 6_530, 6_535, 6_540, 6_550,
+];
+
+const investments = [
+  investmentInput('i1', 'World ETF (CW8)', 'CW8', 12.5, 18_000, i1Prices[i1Prices.length - 1] as number, '#3B82F6'),
+  investmentInput('i2', 'Tech Growth Fund', 'TGF', 40, 5_200, i2Prices[i2Prices.length - 1] as number, '#8B5CF6'),
+  investmentInput('i3', 'Emerging Markets ETF', 'EMEM', 25, 9_000, i3Prices[i3Prices.length - 1] as number, '#EF4444'),
+  investmentInput('i4', 'Gold ETC', 'GLDE', 18, 6_500, i4Prices[i4Prices.length - 1] as number, '#F59E0B'),
+];
+
+const investmentValueSnapshots = [
+  ...snapshotSeries('i1', i1Prices),
+  ...snapshotSeries('i2', i2Prices),
+  ...snapshotSeries('i3', i3Prices),
+  ...snapshotSeries('i4', i4Prices),
+];
+
 export const mockSeed: MemoryGatewaySeed = {
   workspaceSettings,
   account: accounts,
@@ -158,6 +235,6 @@ export const mockSeed: MemoryGatewaySeed = {
   transaction: transactions,
   recurringRule: recurringRules,
   exchangeRate: [],
-  investment: [],
-  investmentValueSnapshot: [],
+  investment: investments,
+  investmentValueSnapshot: investmentValueSnapshots,
 };

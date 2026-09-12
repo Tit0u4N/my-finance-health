@@ -92,6 +92,8 @@ Decided: of the mock's three theming axes (light/dark/system, 4 switchable accen
 
 **Consequence**: `app-core-inventory.md` §3's preferences store drops `accent` and `density`; `screens.md`'s Settings → Preferences row drops the accent-picker and density-picker sub-rows; `design-system.md` has no accent-preset or density-scale tokens.
 
+**Implemented** (Accounts + Settings pass): `createPreferencesStore.ts` no longer carries `accent`/`density` at all — `Density` is gone as a type, `PersistedPreferences`/`PreferencesState` have no field or setter for either, and `hydratePreferencesStore` only picks the three fields that remain (`themeMode`, `sidebarMode`, `amountsHidden`) out of a persisted blob, so a legacy value written by an older build can't reintroduce them. `SidebarMode` was narrowed from three values to two (`'expanded' | 'collapsed'`) at the same time — the mock's third state, `'hidden'`, had no control, no screen, and no consumer, the same "not an evidenced product feature" reasoning this decision already applies to accent/density. Settings → Preferences ships Theme (3-way) and Sidebar (2-way) as `OptionGrid`s, and Base currency (3-way) + per-currency exchange-rate inputs under a "Regional" panel.
+
 ### 12. `@repo/ui` primitives — **shadcn/ui (base-ui), not a port of the mock's components**
 
 Decided: `start-roadmap.md` §12 already specifies `@repo/ui` as "shadcn/ui primitives... Tailwind theme sheet fed by design tokens" — this resolves a latent conflict between that line and the mock, which ships its own hand-rolled `Button`/`Field`/`Select`/`Switch`/`Modal`/`Table`/`Tabs` with no primitive library underneath (no focus trap on `Modal`, no `role="switch"` on `Switch`, outside-click hand-rolled on `AccountFilter`). The roadmap wins: `ui-inventory.md` §1 maps each mock primitive onto its shadcn equivalent, restyled with `design-system.md` tokens, rather than transcribing the mock's version. Primitive library is **base-ui** (MUI's headless library), not Radix — shadcn's CLI supports both; base-ui is the pick for this project.
@@ -110,7 +112,7 @@ Decided: the mock's `RichNote` (Investment detail description panel) writes `win
 
 **(a) Resolved (2026-09-09)**: `Investment.note`, string, optional, added to `domain-model.md`. Persisted through the ordinary `useUpdateInvestment()` mutation hook (`app-core-inventory.md` §5) — no new repository operation needed, `note` is just another field on the existing `update(id, patch)`.
 
-**Still flagged, not decided**: (b) `document.execCommand` is deprecated; its replacement (a minimal manual toolbar, or a small controlled-rich-text library) is an implementation-time call, not fixed here.
+**(b) Resolved (2026-09-12, fourth pass — see #20)**: rich text dropped from v1 entirely. `RichNote`/`document.execCommand` are never built; the note field is a plain `Textarea`, sidestepping the deprecated-API question rather than answering it.
 
 ### 16. Route/search-param addressability — **range and ledger filters are search params; scope, hidden-toggle, and modals are not**
 
@@ -127,3 +129,46 @@ Decided (`routes.md` §3): `range` on Account/Investment detail and the Transact
 Decided: a new selector, **Recent period trend**, computes daily income and expense buckets (sum of positive-amount / negative-amount transactions per day) for the trailing 30 days, bounded by `WorkspaceSettings.timezone` (same timezone rule as every other period boundary, decision #3). If the account/workspace has fewer than 30 days of transaction history, the window starts at the earliest transaction's date instead of padding with empty leading days — the bucket count shrinks, it never shows fabricated zero-days before real data begins.
 
 Added to `app-core-inventory.md` §6 as a new selector row and to `ui-inventory.md` §3's `MiniBar` row, replacing the "no backing selector exists yet" flag.
+
+---
+
+## Third-pass follow-on decisions (2026-09-12)
+
+### 18. Recurring "monthly committed" KPI — **normalized monthly average, not calendar-month occurrences**
+
+`screens.md`'s Recurring row wants "monthly committed in/out/net across active rules," but nothing in the spec set defines how a `Daily`/`Weekly`/`Yearly` rule converts to a monthly figure.
+
+Decided: a new selector, **Monthly commitment**, normalizes every active rule's amount by a fixed occurrence-per-month factor (Daily ×30.44, Weekly ×4.348, Monthly ×1, Yearly ÷12 — each rounded to the nearest minor unit individually, then summed, so the per-row "Monthly" column always adds up to the KPI exactly). Rejected alternative: counting only occurrences that actually land in the current calendar month — correct in the moment, but a Yearly rule would then read €0 for eleven months out of twelve, understating real commitment and making the KPI jump discontinuously as months turn over. The normalized average is stable and every active rule always contributes something.
+
+Added to `app-core-inventory.md` §6 as `computeMonthlyCommitment`/`toMonthlyAmount`.
+
+### 19. Transactions/Recurring write scope — **full CRUD on both screens**
+
+`screens.md` lists only "toggle active" as a Recurring write and leaves the ledger's row edit/delete icons unwired in the mock — but all six create/update/delete mutation hooks (transactions and recurring rules both) already existed unused in `@repo/app-core` from an earlier pass.
+
+Decided: both screens ship full CRUD — a creation modal, a per-row edit dialog, and a per-row delete confirm, in addition to the Recurring active toggle — consistent with the Accounts/Settings pass's "wire every write for real" decision. Row actions are grouped behind a new `DropdownMenu` (`ui-inventory.md`'s already-reserved row) rather than left as bare icon buttons. A transaction edit that changes category across income/expense always re-derives and re-sends the amount's sign from the newly picked category, never trusting the previous sign — otherwise `checkAmountMatchesCategoryKind` rejects the patch.
+
+---
+
+## Fourth-pass follow-on decisions (2026-09-12)
+
+### 20. Investment note field — **plain text, not rich text**
+
+The Investment detail description panel needed a real editor (`RichNote`'s persistence half was resolved in #15(a); the rich-text mechanism, #15(b), stayed open pending an implementation-time call).
+
+Decided: plain multi-line text via a new `Textarea` primitive, not a `contentEditable` toolbar. No deprecated `document.execCommand` call to replace, no stored-markup rendering (so no XSS surface from rendering a user's own note back), no new dependency. Closes #15(b). Revisit only if a future pass has a concrete need for bold/lists/etc. in a note field.
+
+### 21. `InvestmentRepository` write scope — **add `delete`**
+
+`repository-contracts.md`'s original `InvestmentRepository` row had no `delete` — positions could be created and edited but never removed, unlike every other entity (`Category`/`Transaction`/`RecurringRule` all have one).
+
+Decided: add `delete(id)`, cascading to every `InvestmentValueSnapshot` for that position in the same `gateway.batch(...)` call — a position can never outlive or underlive its own value history. Consistent with #19's full-CRUD precedent for Transactions/Recurring. Amends `repository-contracts.md` and `domain-model.md`.
+
+### 22. Two data-layer bugs, found and fixed while wiring the first real consumers
+
+`InvestmentRepository` (`packages/data`) had zero consumers before this pass — its bugs were unreachable, but both would have surfaced immediately once real screens called it.
+
+- **Same-day snapshot silently dropped from every range.** `getValueHistory` passed `rangeFor`'s date-only bounds (`'2026-09-12'`) straight into the gateway's date-range filter, which compares them lexicographically against a snapshot's full instant (`'2026-09-12T09:00:00.000Z'`) — `'...T09:00:00.000Z' <= '2026-09-12'` is `false`, so a snapshot recorded earlier the same day never appeared in any range, including "all." Fixed by widening the bounds to day boundaries (`T00:00:00.000Z` / `T23:59:59.999Z`) inside `investmentRepository.ts`, not the gateway (the gateway's comparison is correct for `IsoDateTime`-only callers; only this repository was passing it a bare `IsoDate`).
+- **Backdated snapshot silently overwrote a more recent price.** `recordValueSnapshot` unconditionally set `Investment.current` to the new snapshot's price, even when the snapshot's date was earlier than the latest one already on record. Fixed: `current` only advances when the new snapshot is the newest on record; a backdated entry is still written (nothing about *recording* a value ever fails), it just doesn't move `current`. Refines, doesn't contradict, `domain-model.md`'s "one fact, two rows" framing of `recordValueSnapshot`.
+
+Both are covered by new integration tests in `repositories.integration.test.ts`.

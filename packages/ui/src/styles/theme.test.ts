@@ -90,4 +90,18 @@ describe('theme.css', () => {
     expect(theme).toContain(`--breakpoint-half: ${breakpointTokens.half};`);
     expect(theme).toContain(`--breakpoint-panel: ${breakpointTokens.panel};`);
   });
+
+  // Not readBlock('@layer components') — its ([^}]*) capture stops at the sheet's first "}",
+  // which lands inside .text-caption, long before these recipes. Matched against the whole
+  // sheet instead.
+  it('declares the three layout recipes Accounts and Settings need', () => {
+    expect(themeCss).toContain('.grid-cards {');
+    expect(themeCss).toContain('.grid-half {');
+    expect(themeCss).toContain('.grid-settings {');
+  });
+
+  it('collapses .grid-half and .grid-settings at the --breakpoint-half value, not a re-typed literal', () => {
+    const halfPx = Number.parseInt(breakpointTokens.half, 10);
+    expect(themeCss).toContain(`@media (width < ${halfPx}px) {`);
+  });
 });

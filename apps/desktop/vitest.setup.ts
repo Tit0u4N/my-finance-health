@@ -16,6 +16,18 @@ if (!window.matchMedia) {
   }));
 }
 
+// jsdom doesn't implement ResizeObserver — the Account detail screen's LineChart measures its
+// own container. Same stub as packages/ui/vitest.setup.ts; it never fires a callback here either.
+if (!('ResizeObserver' in globalThis)) {
+  class ResizeObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  // @ts-expect-error — test-only polyfill, not a full ResizeObserver implementation
+  globalThis.ResizeObserver = ResizeObserverStub;
+}
+
 afterEach(() => {
   cleanup();
 });

@@ -22,9 +22,14 @@ export type InvestmentRepository = {
   create(input: CreateInvestmentInput): Promise<Result<Investment, DomainError>>;
   update(id: InvestmentId, patch: InvestmentPatch): Promise<Result<Investment, DomainError>>;
   getValueHistory(id: InvestmentId, range: HistoryRange): Promise<Result<readonly InvestmentValuePoint[], DomainError>>;
-  /** Also updates Investment.current to the same price — one fact, two rows (domain-model.md). */
+  /** Also updates Investment.current to the same price — one fact, two rows (domain-model.md) —
+   * but only when the snapshot is the newest on record; a backdated snapshot is recorded without
+   * moving `current`. */
   recordValueSnapshot(
     id: InvestmentId,
     snapshot: RecordValueSnapshotInput,
   ): Promise<Result<InvestmentValueSnapshot, DomainError>>;
+  /** Cascades to every InvestmentValueSnapshot for this position, in the same batch — a position
+   * can never outlive or underlive its own history. */
+  delete(id: InvestmentId): Promise<Result<true, DomainError>>;
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { IsoDate, IsoDateTime, Timezone } from '../primitives/dateTime';
-import { addFrequency, rangeFor, startOfMonthIn, todayIn } from './workspaceTime';
+import { addFrequency, historyRangeSchema, rangeFor, startOfMonthIn, todayIn } from './workspaceTime';
 
 const UTC = 'UTC' as Timezone;
 const LOS_ANGELES = 'America/Los_Angeles' as Timezone;
@@ -57,5 +57,17 @@ describe('addFrequency', () => {
 
   it('advances by one year', () => {
     expect(addFrequency('2026-02-28' as IsoDate, 'Yearly')).toBe('2027-02-28');
+  });
+});
+
+describe('historyRangeSchema', () => {
+  it('accepts every value the range picker offers', () => {
+    for (const value of ['7d', '1m', '3m', '1y', 'all']) {
+      expect(historyRangeSchema.parse(value)).toBe(value);
+    }
+  });
+
+  it('rejects a value outside the picker vocabulary', () => {
+    expect(() => historyRangeSchema.parse('30d')).toThrow();
   });
 });

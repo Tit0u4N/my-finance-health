@@ -18,7 +18,7 @@ One repository per entity family from `domain-model.md`, each exposing access ru
 | `CategoryRepository` | `list()` (both kinds), `create(input)`, `update(id, patch)`, `delete(id)` | onboarding step 2, Settings → Categories, both creation modals |
 | `TransactionRepository` | `list(criteria)` — criteria: account ids, date range, category, free-text search, sort; `create(input)`, `update(id, patch)`, `delete(id)` | Overview (recent + MTD), Transactions, Account detail |
 | `RecurringRuleRepository` | `list(criteria)` — criteria: account ids; `create(input)`, `update(id, patch)` (covers edits and the active toggle), `delete(id)` | Overview (upcoming), Recurring, New recurring modal |
-| `InvestmentRepository` | `list()`, `getById(id)`, `create(input)`, `update(id, patch)`, `getValueHistory(id, range)`, `recordValueSnapshot(id, snapshot)` | Investments, Investment detail |
+| `InvestmentRepository` | `list()`, `getById(id)`, `create(input)`, `update(id, patch)`, `getValueHistory(id, range)`, `recordValueSnapshot(id, snapshot)`, `delete(id)` | Investments, Investment detail |
 
 `TransactionRepository.list` criteria dropped `type` as a filter dimension — since `Transaction.type` no longer exists (`open-questions.md` #6), "income only" / "expense only" filtering is expressed as an amount-sign predicate instead, same criteria shape, no gateway change.
 

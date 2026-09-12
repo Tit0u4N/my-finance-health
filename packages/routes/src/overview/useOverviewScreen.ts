@@ -16,21 +16,21 @@ import { computeCashflowGraph } from '@repo/app-core/selectors/cashflowGraph';
 import { computeCategoryBreakdown } from '@repo/app-core/selectors/categoryBreakdown';
 import { sumAccountBalancesInBaseCurrency } from '@repo/app-core/selectors/convertToBaseCurrency';
 import { formatMoney } from '@repo/app-core/selectors/formatMoney';
+import { formatPercent } from '@repo/app-core/selectors/formatPercent';
 import { formatRelativeDate } from '@repo/app-core/selectors/formatRelativeDate';
 import { useRecentPeriodTrend } from '@repo/app-core/selectors/hooks/useRecentPeriodTrend';
 import { useUpcomingRecurring } from '@repo/app-core/selectors/hooks/useUpcomingRecurring';
 import { computePeriodTotals } from '@repo/app-core/selectors/periodTotals';
-import { useAccountSelectionStore } from '@repo/app-core/stores/AccountSelectionProvider';
 import { usePreferencesStore } from '@repo/app-core/stores/PreferencesProvider';
 import type { Account } from '@repo/domain/entities/account';
 import { isoDateTimeSchema } from '@repo/domain/primitives/dateTime';
-import type { AccountId } from '@repo/domain/primitives/entityId';
 import type { HistoryRange, TransactionCriteria } from '@repo/domain/repositories/criteria';
 import { startOfMonthIn, todayIn } from '@repo/domain/time/workspaceTime';
 import type { AccountFilterRow } from '@repo/ui/components/AccountFilter';
 import type { DonutSlice } from '@repo/ui/components/charts/Donut';
 import type { SankeyLink, SankeyNode } from '@repo/ui/components/charts/Sankey';
 import { useQueries } from '@tanstack/react-query';
+import { useAccountScope } from '../shared/useAccountScope';
 import { ACCOUNT_TYPE_ICON, categoryIcon } from '../shared/visuals';
 
 const BALANCE_HISTORY_RANGE: HistoryRange = '1m';
@@ -136,20 +136,20 @@ export function useOverviewScreen(): UseOverviewScreenResult {
   const ratesQuery = useExchangeRates();
   const categoriesQuery = useCategories();
 
-  const selection = useAccountSelectionStore((state) => state.selection);
-  const setSelection = useAccountSelectionStore((state) => state.setSelection);
   const hidden = usePreferencesStore((state) => state.amountsHidden);
 
-  const allAccounts = accountsQuery.data ?? [];
-  const selectedIds: readonly AccountId[] = selection === 'all' ? allAccounts.map((a) => a.id) : selection;
-  const scopedAccounts = allAccounts.filter((account) => selectedIds.includes(account.id));
+  const accounts = accountsQuery.data ?? [];
+  const scope = useAccountScope(accounts, (account) =>
+    formatMoney(account.balance, account.currency, locale, { compact: true }),
+  );
+  const scopedAccounts = accounts.filter((account) => scope.selectedIds.includes(account.id));
 
   const nowIso = isoDateTimeSchema.parse(platform.clock.now());
   const settings = settingsQuery.data;
   const today = settings ? todayIn(nowIso, settings.timezone) : undefined;
   const monthStart = settings ? startOfMonthIn(nowIso, settings.timezone) : undefined;
 
-  const scopeCriteria = selection === 'all' ? {} : { accountIds: selectedIds };
+  const scopeCriteria = scope.accountIds === undefined ? {} : { accountIds: scope.accountIds };
   const transactionsCriteria: TransactionCriteria = {
     ...scopeCriteria,
     ...(monthStart
@@ -159,7 +159,7 @@ export function useOverviewScreen(): UseOverviewScreenResult {
   };
   const transactionsQuery = useTransactions(transactionsCriteria);
   const recurringQuery = useUpcomingRecurring(scopeCriteria, UPCOMING_LIMIT);
-  const trendQuery = useRecentPeriodTrend(selection === 'all' ? undefined : selectedIds);
+  const trendQuery = useRecentPeriodTrend(scope.accountIds);
 
   const balanceHistoryQueries = useQueries({
     queries: scopedAccounts.map((account) => ({
@@ -232,7 +232,7 @@ export function useOverviewScreen(): UseOverviewScreenResult {
       name: category?.name ?? 'Other',
       color: category?.color ?? NEUTRAL_COLOR,
       valueLabel: money(entry.total),
-      percentLabel: `${Math.round(entry.share * 100)}%`,
+      percentLabel: formatPercent(entry.share, locale),
     };
   });
 
@@ -293,7 +293,7 @@ export function useOverviewScreen(): UseOverviewScreenResult {
       }))
     : [];
 
-  const accountById = new Map(allAccounts.map((account) => [account.id, account]));
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
   const activity: OverviewActivityRow[] = transactions.slice(0, RECENT_ACTIVITY_LIMIT).map((transaction) => {
     const category = categoryById.get(transaction.cat);
     const account = accountById.get(transaction.acc);
@@ -310,18 +310,9 @@ export function useOverviewScreen(): UseOverviewScreenResult {
     };
   });
 
-  const accountFilterRows: AccountFilterRow[] = allAccounts.map((account) => ({
-    id: account.id,
-    name: account.name,
-    typeLabel: account.type,
-    icon: ACCOUNT_TYPE_ICON[account.type],
-    color: account.color,
-    balanceLabel: formatMoney(account.balance, account.currency, locale, { compact: true }),
-  }));
-
   return {
     ready: true,
-    subtitle: `${scopedAccounts.length} of ${allAccounts.length} accounts in scope`,
+    subtitle: `${scopedAccounts.length} of ${accounts.length} accounts in scope`,
     hidden,
     kpis,
     cashflow: { nodes: cashflowNodes, links: cashflowLinks, legend: cashflowLegend },
@@ -335,24 +326,12 @@ export function useOverviewScreen(): UseOverviewScreenResult {
     upcoming,
     activity,
     activityCountLabel: `${transactions.length} transactions this month`,
-    accountFilter: {
-      accounts: accountFilterRows,
-      selectedIds,
-      onToggle: (id) => {
-        const idAsAccountId = id as AccountId;
-        const current = selection === 'all' ? allAccounts.map((a) => a.id) : selection;
-        const next = current.includes(idAsAccountId)
-          ? current.filter((x) => x !== idAsAccountId)
-          : [...current, idAsAccountId];
-        if (next.length > 0) {
-          setSelection(next);
-        }
-      },
-      onSelectAll: () => setSelection('all'),
-    },
+    accountFilter: scope.accountFilter,
   };
 }
 
 function monthLabel(date: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(`${date}T00:00:00.000Z`));
+  // `timeZone: 'UTC'` is load-bearing: `date` is a bare calendar day, so formatting it through
+  // the host's local timezone can shift the displayed month on a host west of UTC.
+  return new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00.000Z`));
 }

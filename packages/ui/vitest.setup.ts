@@ -6,3 +6,17 @@ import { afterEach } from 'vitest';
 afterEach(() => {
   cleanup();
 });
+
+// jsdom doesn't implement ResizeObserver — LineChart (the first @repo/ui component to measure
+// its own container) needs the constructor to exist even though this stub never fires a
+// callback. Tests cover the fluid-width path through the pure functions in lineChartMath.ts
+// instead of trying to simulate a real observed resize.
+if (!('ResizeObserver' in globalThis)) {
+  class ResizeObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  // @ts-expect-error — test-only polyfill, not a full ResizeObserver implementation
+  globalThis.ResizeObserver = ResizeObserverStub;
+}

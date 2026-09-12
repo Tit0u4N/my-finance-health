@@ -5,19 +5,28 @@
 import { usePreferencesStore } from '@repo/app-core/stores/PreferencesProvider';
 import type { SidebarNavItem } from '@repo/ui/components/Sidebar';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { ArrowLeftRight, Home, Repeat, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowLeftRight, Home, Repeat, Settings, TrendingUp, Wallet } from 'lucide-react';
 
-// Only "/" has a route this pass (routes.md §1 lists the full tree; the rest land in later
-// passes) — every other entry renders disabled rather than a dead link.
 const NAV_ITEMS: readonly SidebarNavItem[] = [
   { id: 'dashboard', label: 'Overview', icon: Home },
-  { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight, disabled: true },
-  { id: 'recurring', label: 'Recurring', icon: Repeat, disabled: true },
-  { id: 'invest', label: 'Investments', icon: TrendingUp, disabled: true },
-  { id: 'accounts', label: 'Accounts', icon: Wallet, disabled: true },
+  { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+  { id: 'recurring', label: 'Recurring', icon: Repeat },
+  { id: 'invest', label: 'Investments', icon: TrendingUp },
+  { id: 'accounts', label: 'Accounts', icon: Wallet },
 ];
 
-const ROUTE_BY_NAV_ID: Partial<Record<string, string>> = { dashboard: '/' };
+// Pinned below the main nav group, above the hide-amounts toggle — the mock's own sidebar
+// footer placement for Settings.
+const FOOTER_ITEMS: readonly SidebarNavItem[] = [{ id: 'settings', label: 'Settings', icon: Settings }];
+
+const ROUTE_BY_NAV_ID: Partial<Record<string, string>> = {
+  dashboard: '/',
+  transactions: '/transactions',
+  recurring: '/recurring',
+  invest: '/investments',
+  accounts: '/accounts',
+  settings: '/settings',
+};
 
 export type UseAppLayoutResult = {
   readonly items: readonly SidebarNavItem[];
@@ -25,19 +34,30 @@ export type UseAppLayoutResult = {
   readonly onSelect: (id: string) => void;
   readonly amountsHidden: boolean;
   readonly onToggleAmountsHidden: () => void;
+  readonly footerItems: readonly SidebarNavItem[];
+  readonly collapsed: boolean;
 };
+
+// '/' is excluded from the prefix match below — every pathname starts with it, so it would
+// swallow every other route; it falls out of the `?? 'dashboard'` default instead.
+function resolveActiveId(pathname: string): string {
+  const match = [...NAV_ITEMS, ...FOOTER_ITEMS].find((item) => {
+    const to = ROUTE_BY_NAV_ID[item.id];
+    return to !== undefined && to !== '/' && (pathname === to || pathname.startsWith(`${to}/`));
+  });
+  return match?.id ?? 'dashboard';
+}
 
 export function useAppLayout(): UseAppLayoutResult {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const amountsHidden = usePreferencesStore((state) => state.amountsHidden);
   const toggleAmountsHidden = usePreferencesStore((state) => state.toggleAmountsHidden);
-
-  const activeId = NAV_ITEMS.find((item) => ROUTE_BY_NAV_ID[item.id] === pathname)?.id ?? 'dashboard';
+  const collapsed = usePreferencesStore((state) => state.sidebarMode === 'collapsed');
 
   return {
     items: NAV_ITEMS,
-    activeId,
+    activeId: resolveActiveId(pathname),
     onSelect: (id) => {
       const to = ROUTE_BY_NAV_ID[id];
       if (to) {
@@ -46,5 +66,7 @@ export function useAppLayout(): UseAppLayoutResult {
     },
     amountsHidden,
     onToggleAmountsHidden: toggleAmountsHidden,
+    footerItems: FOOTER_ITEMS,
+    collapsed,
   };
 }

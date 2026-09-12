@@ -32,6 +32,18 @@ export const ACCOUNT_TYPE_ICON: Record<AccountType, LucideIcon> = {
   Cash: Banknote,
 };
 
+// `Account.icon` (domain-model.md: "redundant with type-derived icon... only type-derived is
+// actually used on desktop") still has to be *written* on create — accountSchema requires a
+// non-empty string. These are the same slugs desktop-shell.jsx's ACC_ICON map (and the seed data
+// ported from it) already use, so a freshly created account's stored `icon` reads the same as a
+// seeded one, even though nothing renders it.
+export const ACCOUNT_TYPE_ICON_SLUG: Record<AccountType, string> = {
+  Checking: 'landmark',
+  Savings: 'piggybank',
+  Investment: 'trending',
+  Cash: 'banknote',
+};
+
 const CATEGORY_ICON_BY_NAME: Record<string, LucideIcon> = {
   Salary: Banknote,
   Freelance: Sparkles,

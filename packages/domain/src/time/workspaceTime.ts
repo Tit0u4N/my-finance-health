@@ -7,11 +7,15 @@
 
 import type { DateDuration } from '@internationalized/date';
 import { parseAbsolute, parseDate, startOfMonth, toCalendarDate } from '@internationalized/date';
+import { z } from 'zod';
 import type { RecurringFrequency } from '../entities/recurringRule';
 import { type IsoDate, type IsoDateTime, isoDateSchema, type Timezone } from '../primitives/dateTime';
 
-/** Matches the range picker on Account detail / Investment detail (screens.md). */
-export type HistoryRange = '7d' | '1m' | '3m' | '1y' | 'all';
+/** Matches the range picker on Account detail / Investment detail (screens.md). A schema, not a
+ * bare union, so route-level `validateSearch` (routes.md §3) can parse `?range=` against the
+ * same vocabulary this module already owns, instead of redeclaring it. */
+export const historyRangeSchema = z.enum(['7d', '1m', '3m', '1y', 'all']);
+export type HistoryRange = z.infer<typeof historyRangeSchema>;
 
 export type DateRange = {
   /** Inclusive lower bound. Absent for "all" — there is no meaningful start to bound by. */

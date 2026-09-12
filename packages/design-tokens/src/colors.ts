@@ -65,3 +65,18 @@ export const categoricalPalette = [
   'oklch(0.6056 0.2189 292.72)',
   'oklch(0.6368 0.2078 25.33)',
 ] as const;
+
+// Same 8 swatches as `categoricalPalette`, index-aligned, but in the hex form
+// `hexColorSchema` requires on the records users actually colour (Category.color,
+// Account.color, Investment.color — domain-model.md). Hex is the *persisted* form; oklch
+// above is the *render* form. Authoritative source: design-system.md §3.
+export const categoricalPaletteHex = [
+  '#635BFF',
+  '#10B981',
+  '#06B6D4',
+  '#84CC16',
+  '#F59E0B',
+  '#EC4899',
+  '#8B5CF6',
+  '#EF4444',
+] as const;
