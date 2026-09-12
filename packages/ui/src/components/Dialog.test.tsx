@@ -6,7 +6,7 @@ import { Dialog } from './Dialog';
 describe('Dialog', () => {
   it('renders nothing when closed', () => {
     render(
-      <Dialog open={false} onOpenChange={() => undefined} title="New account">
+      <Dialog open={false} onOpenChange={() => undefined} title="New account" closeLabel="Close">
         Body
       </Dialog>,
     );
@@ -21,6 +21,7 @@ describe('Dialog', () => {
         onOpenChange={() => undefined}
         title="New account"
         subtitle="Balances update as you record transactions"
+        closeLabel="Close"
       >
         Body content
       </Dialog>,
@@ -34,7 +35,7 @@ describe('Dialog', () => {
   it('calls onOpenChange(false) on Escape', async () => {
     const onOpenChange = vi.fn();
     render(
-      <Dialog open onOpenChange={onOpenChange} title="New account">
+      <Dialog open onOpenChange={onOpenChange} title="New account" closeLabel="Close">
         Body
       </Dialog>,
     );

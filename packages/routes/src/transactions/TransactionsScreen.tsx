@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Transactions (ledger) screen (screens.md) — JSX and @repo/ui composition only,
-// all data and handlers come from useTransactionsScreen.
+// all data and handlers come from useTransactionsScreen. useTranslation is allowed here for
+// static copy — everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { TransactionSortKey } from '@repo/domain/repositories/criteria';
 import { AccountFilter } from '@repo/ui/components/AccountFilter';
 import { AmountValue } from '@repo/ui/components/AmountValue';
@@ -31,10 +33,15 @@ const KPI_ICON_COLOR: Record<string, string> = {
 };
 
 export function TransactionsScreen() {
+  const { t } = useTranslation();
   const screen = useTransactionsScreen();
 
   if (!screen.ready) {
-    return <div className="flex flex-1 items-center justify-center text-body text-muted">Loading your workspace…</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-body text-muted">
+        {t('common:state.loadingWorkspace')}
+      </div>
+    );
   }
 
   const { hidden, subtitle, isFiltering, kpis, filters, rows, rowCountLabel, onEdit, onDelete, form, deleteDialog } =
@@ -43,13 +50,13 @@ export function TransactionsScreen() {
   return (
     <>
       <PageHeader
-        title="Transactions"
+        title={t('transactions:list.title')}
         subtitle={subtitle}
         actions={
           <>
             <AccountFilter {...screen.accountFilter} hidden={hidden} />
             <Button tone="primary" size="sm" icon={Plus} onClick={screen.onCreate}>
-              New transaction
+              {t('transactions:list.addTransaction')}
             </Button>
           </>
         }
@@ -68,14 +75,14 @@ export function TransactionsScreen() {
         </div>
 
         <Panel
-          title="All transactions"
+          title={t('transactions:list.panelTitle')}
           subtitle={rowCountLabel}
           bodyClassName="p-1 pt-3"
           right={
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Input
                 icon={Search}
-                placeholder="Search description…"
+                placeholder={t('transactions:list.searchPlaceholder')}
                 className="h-8.5 w-52"
                 value={filters.searchValue}
                 onChange={(event) => filters.onSearchChange(event.target.value)}
@@ -84,18 +91,18 @@ export function TransactionsScreen() {
                 value={filters.type}
                 onValueChange={filters.onTypeChange}
                 options={filters.typeOptions}
-                ariaLabel="Type"
+                ariaLabel={t('transactions:list.typeAriaLabel')}
                 className="h-8.5 w-32"
               />
               <Select
                 value={filters.category}
                 onValueChange={filters.onCategoryChange}
                 options={filters.categoryOptions}
-                ariaLabel="Category"
+                ariaLabel={t('transactions:list.categoryAriaLabel')}
                 className="h-8.5 w-40"
               />
               <Button tone="ghost" size="sm" onClick={filters.onReset} disabled={!filters.isFiltered}>
-                Reset
+                {t('transactions:list.reset')}
               </Button>
             </div>
           }
@@ -103,20 +110,20 @@ export function TransactionsScreen() {
           {rows.length === 0 ? (
             <EmptyState
               icon={Receipt}
-              title="No transactions match"
-              subtitle="Try a different search, type or category filter."
+              title={t('transactions:list.emptyTitle')}
+              subtitle={t('transactions:list.emptySubtitle')}
             />
           ) : (
             <div className={isFiltering ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
               <Table<TransactionSortKey>
                 minWidth={720}
                 head={[
-                  { label: 'Description' },
-                  { label: 'Category', width: 150 },
-                  { label: 'Account', width: 120 },
-                  { label: 'Date', width: 110, sortKey: 'date' },
-                  { label: 'Amount', align: 'right', width: 130, sortKey: 'amount' },
-                  { label: 'Actions', srOnly: true, width: 44 },
+                  { label: t('common:column.description') },
+                  { label: t('common:column.category'), width: 150 },
+                  { label: t('transactions:list.columnAccount'), width: 120 },
+                  { label: t('common:column.date'), width: 110, sortKey: 'date' },
+                  { label: t('common:column.amount'), align: 'right', width: 130, sortKey: 'amount' },
+                  { label: t('transactions:list.columnActions'), srOnly: true, width: 44 },
                 ]}
                 sortKey={filters.sortKey}
                 sortDirection={filters.sortDirection}
@@ -145,18 +152,18 @@ export function TransactionsScreen() {
                       <Td align="right">
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger
-                            aria-label={`Actions — ${row.desc}`}
+                            aria-label={row.actionsAriaLabel}
                             className="flex h-7 w-7 items-center justify-center rounded-sm text-subtle hover:bg-chip-bg"
                           >
                             <MoreVertical size={14} />
                           </DropdownMenu.Trigger>
                           <DropdownMenu.Content>
                             <DropdownMenu.Item icon={Pencil} onClick={() => onEdit(row.id)}>
-                              Edit
+                              {t('common:action.edit')}
                             </DropdownMenu.Item>
                             <DropdownMenu.Separator className="my-1 h-px bg-border" />
                             <DropdownMenu.Item icon={Trash2} tone="destructive" onClick={() => onDelete(row.id)}>
-                              Delete
+                              {t('common:action.delete')}
                             </DropdownMenu.Item>
                           </DropdownMenu.Content>
                         </DropdownMenu.Root>
@@ -173,62 +180,68 @@ export function TransactionsScreen() {
       <Dialog
         open={form.isOpen}
         onOpenChange={form.onClose}
-        title={form.mode === 'create' ? 'New transaction' : 'Edit transaction'}
+        title={form.dialogTitle}
+        closeLabel={t('common:action.close')}
         width={560}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={form.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={form.onSubmit} disabled={!form.canSubmit}>
-              {form.mode === 'create' ? 'Create transaction' : 'Save changes'}
+              {form.submitLabel}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
-          <Tabs value={form.kind} onValueChange={form.onKindChange} items={form.kindOptions} ariaLabel="Type" />
+          <Tabs
+            value={form.kind}
+            onValueChange={form.onKindChange}
+            items={form.kindOptions}
+            ariaLabel={t('transactions:dialog.typeAriaLabel')}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Amount"
+              label={t('transactions:dialog.amountLabel')}
               placeholder="0.00"
               inputMode="decimal"
               value={form.amount}
               onChange={(event) => form.onAmountChange(event.target.value)}
             />
             <Input
-              label="Date"
+              label={t('transactions:dialog.dateLabel')}
               type="date"
               value={form.date}
               onChange={(event) => form.onDateChange(event.target.value)}
             />
           </div>
           <Input
-            label="Description"
-            placeholder="e.g. Carrefour Market"
+            label={t('transactions:dialog.descLabel')}
+            placeholder={t('transactions:dialog.descPlaceholder')}
             value={form.desc}
             onChange={(event) => form.onDescChange(event.target.value)}
           />
           <div>
-            <span className="text-label text-muted">Category</span>
+            <span className="text-label text-muted">{t('transactions:dialog.categoryLabel')}</span>
             <div className="mt-2">
               <CategoryChips
                 items={form.categoryChips}
                 value={form.categoryId}
                 onChange={form.onCategoryChange}
-                ariaLabel="Category"
+                ariaLabel={t('transactions:dialog.categoryLabel')}
               />
             </div>
           </div>
           <Select
-            label="Account"
+            label={t('transactions:dialog.accountLabel')}
             value={form.accountId}
             onValueChange={form.onAccountChange}
             options={form.accountOptions}
           />
           <Input
-            label="Note (optional)"
-            placeholder="Add a note"
+            label={t('transactions:dialog.noteLabel')}
+            placeholder={t('transactions:dialog.notePlaceholder')}
             value={form.note}
             onChange={(event) => form.onNoteChange(event.target.value)}
           />
@@ -239,9 +252,10 @@ export function TransactionsScreen() {
       <ConfirmDialog
         open={deleteDialog.isOpen}
         onOpenChange={deleteDialog.onClose}
-        title={`Delete "${deleteDialog.desc}"?`}
-        description={`This transaction (${deleteDialog.amountLabel}) will be permanently removed and the account balance updated.`}
-        confirmLabel="Delete"
+        title={deleteDialog.title}
+        description={deleteDialog.description}
+        confirmLabel={t('common:action.delete')}
+        cancelLabel={t('common:action.cancel')}
         onConfirm={deleteDialog.onConfirm}
         isPending={deleteDialog.isSubmitting}
       />

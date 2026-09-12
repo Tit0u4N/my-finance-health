@@ -3,6 +3,7 @@
 // Recurring — the Zustand selection store projected into criteria plus AccountFilter props.
 // Extracted once a third screen needed the exact idiom useOverviewScreen.ts already had inline.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useAccountSelectionStore } from '@repo/app-core/stores/AccountSelectionProvider';
 import type { Account } from '@repo/domain/entities/account';
 import type { AccountId } from '@repo/domain/primitives/entityId';
@@ -19,6 +20,9 @@ export type AccountScope = {
     readonly selectedIds: readonly string[];
     readonly onToggle: (id: string) => void;
     readonly onSelectAll: () => void;
+    readonly triggerLabel: string;
+    readonly groupLabel: string;
+    readonly selectAllLabel: string;
   };
 };
 
@@ -29,20 +33,30 @@ export function useAccountScope(
   accounts: readonly Account[],
   balanceLabel: (account: Account) => string,
 ): AccountScope {
+  const { t } = useTranslation();
   const selection = useAccountSelectionStore((state) => state.selection);
   const setSelection = useAccountSelectionStore((state) => state.setSelection);
 
   const selectedIds: readonly AccountId[] = selection === 'all' ? accounts.map((a) => a.id) : selection;
   const accountIds = selection === 'all' ? undefined : selectedIds;
+  const allSelected = selection === 'all';
 
   const accountFilterRows: AccountFilterRow[] = accounts.map((account) => ({
     id: account.id,
     name: account.name,
-    typeLabel: account.type,
+    typeLabel: t(`common:accountType.${account.type}`),
     icon: ACCOUNT_TYPE_ICON[account.type],
     color: account.color,
     balanceLabel: balanceLabel(account),
   }));
+
+  // Exactly one account selected shows that account's own name, not a "1 account" count — only
+  // the fallback (data inconsistency: a selected id no longer in `accounts`) uses the count form.
+  const singleSelectionName =
+    selectedIds.length === 1 ? accounts.find((account) => account.id === selectedIds[0])?.name : undefined;
+  const triggerLabel = allSelected
+    ? t('common:accountFilter.allAccounts')
+    : (singleSelectionName ?? t('common:accountFilter.count', { count: selectedIds.length }));
 
   return {
     accountIds,
@@ -61,6 +75,9 @@ export function useAccountScope(
         }
       },
       onSelectAll: () => setSelection('all'),
+      triggerLabel,
+      groupLabel: t('common:accountFilter.groupLabel'),
+      selectAllLabel: t('common:accountFilter.selectAll'),
     },
   };
 }

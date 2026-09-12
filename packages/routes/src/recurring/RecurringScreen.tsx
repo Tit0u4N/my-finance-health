@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Recurring screen (screens.md) — JSX and @repo/ui composition only, all data and
-// handlers come from useRecurringScreen.
+// handlers come from useRecurringScreen. useTranslation is allowed here for static copy —
+// everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { AccountFilter } from '@repo/ui/components/AccountFilter';
 import { AmountValue } from '@repo/ui/components/AmountValue';
 import { Avatar } from '@repo/ui/components/Avatar';
@@ -32,10 +34,15 @@ const KPI_ICON_COLOR: Record<string, string> = {
 };
 
 export function RecurringScreen() {
+  const { t } = useTranslation();
   const screen = useRecurringScreen();
 
   if (!screen.ready) {
-    return <div className="flex flex-1 items-center justify-center text-body text-muted">Loading your workspace…</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-body text-muted">
+        {t('common:state.loadingWorkspace')}
+      </div>
+    );
   }
 
   const { hidden, subtitle, kpis, rows, rowCountLabel, onToggleActive, onEdit, onDelete, form, deleteDialog } = screen;
@@ -43,13 +50,13 @@ export function RecurringScreen() {
   return (
     <>
       <PageHeader
-        title="Recurring"
+        title={t('recurring:list.title')}
         subtitle={subtitle}
         actions={
           <>
             <AccountFilter {...screen.accountFilter} hidden={hidden} />
             <Button tone="primary" size="sm" icon={Plus} onClick={screen.onCreate}>
-              New rule
+              {t('recurring:list.addRule')}
             </Button>
           </>
         }
@@ -68,26 +75,26 @@ export function RecurringScreen() {
           ))}
         </div>
 
-        <Panel title="Rules" subtitle={rowCountLabel} bodyClassName="p-1 pt-3">
+        <Panel title={t('recurring:list.panelTitle')} subtitle={rowCountLabel} bodyClassName="p-1 pt-3">
           {rows.length === 0 ? (
             <EmptyState
               icon={Repeat}
-              title="No recurring rules"
-              subtitle="Rules on the accounts in scope will show up here."
+              title={t('recurring:list.emptyTitle')}
+              subtitle={t('recurring:list.emptySubtitle')}
             />
           ) : (
             <Table
               minWidth={840}
               head={[
-                { label: 'Rule' },
-                { label: 'Category', width: 140 },
-                { label: 'Account', width: 110 },
-                { label: 'Frequency', width: 100 },
-                { label: 'Next', width: 130 },
-                { label: 'Amount', align: 'right', width: 120 },
-                { label: 'Monthly', align: 'right', width: 110 },
-                { label: 'Active', width: 60 },
-                { label: 'Actions', srOnly: true, width: 44 },
+                { label: t('recurring:list.columnRule') },
+                { label: t('common:column.category'), width: 140 },
+                { label: t('recurring:list.columnAccount'), width: 110 },
+                { label: t('recurring:list.columnFrequency'), width: 100 },
+                { label: t('recurring:list.columnNext'), width: 130 },
+                { label: t('common:column.amount'), align: 'right', width: 120 },
+                { label: t('recurring:list.columnMonthly'), align: 'right', width: 110 },
+                { label: t('recurring:list.columnActive'), width: 60 },
+                { label: t('recurring:list.columnActions'), srOnly: true, width: 44 },
               ]}
             >
               {rows.map((row) => {
@@ -121,24 +128,24 @@ export function RecurringScreen() {
                       <Switch
                         checked={row.isActive}
                         onCheckedChange={(active) => onToggleActive(row.id, active)}
-                        aria-label={`Active — ${row.desc}`}
+                        aria-label={row.activeAriaLabel}
                       />
                     </Td>
                     <Td align="right">
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger
-                          aria-label={`Actions — ${row.desc}`}
+                          aria-label={row.actionsAriaLabel}
                           className="flex h-7 w-7 items-center justify-center rounded-sm text-subtle hover:bg-chip-bg"
                         >
                           <MoreVertical size={14} />
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Content>
                           <DropdownMenu.Item icon={Pencil} onClick={() => onEdit(row.id)}>
-                            Edit
+                            {t('common:action.edit')}
                           </DropdownMenu.Item>
                           <DropdownMenu.Separator className="my-1 h-px bg-border" />
                           <DropdownMenu.Item icon={Trash2} tone="destructive" onClick={() => onDelete(row.id)}>
-                            Delete
+                            {t('common:action.delete')}
                           </DropdownMenu.Item>
                         </DropdownMenu.Content>
                       </DropdownMenu.Root>
@@ -154,57 +161,68 @@ export function RecurringScreen() {
       <Dialog
         open={form.isOpen}
         onOpenChange={form.onClose}
-        title={form.mode === 'create' ? 'New recurring rule' : 'Edit recurring rule'}
+        title={form.dialogTitle}
+        closeLabel={t('common:action.close')}
         width={560}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={form.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={form.onSubmit} disabled={!form.canSubmit}>
-              {form.mode === 'create' ? 'Create rule' : 'Save changes'}
+              {form.submitLabel}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
-          <Tabs value={form.kind} onValueChange={form.onKindChange} items={form.kindOptions} ariaLabel="Type" />
+          <Tabs
+            value={form.kind}
+            onValueChange={form.onKindChange}
+            items={form.kindOptions}
+            ariaLabel={t('recurring:dialog.typeAriaLabel')}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Amount"
+              label={t('recurring:dialog.amountLabel')}
               placeholder="0.00"
               inputMode="decimal"
               value={form.amount}
               onChange={(event) => form.onAmountChange(event.target.value)}
             />
-            <Select label="Frequency" value={form.freq} onValueChange={form.onFreqChange} options={form.freqOptions} />
+            <Select
+              label={t('recurring:dialog.freqLabel')}
+              value={form.freq}
+              onValueChange={form.onFreqChange}
+              options={form.freqOptions}
+            />
           </div>
           <Input
-            label="Description"
-            placeholder="e.g. Rent"
+            label={t('recurring:dialog.descLabel')}
+            placeholder={t('recurring:dialog.descPlaceholder')}
             value={form.desc}
             onChange={(event) => form.onDescChange(event.target.value)}
           />
           <div>
-            <span className="text-label text-muted">Category</span>
+            <span className="text-label text-muted">{t('recurring:dialog.categoryLabel')}</span>
             <div className="mt-2">
               <CategoryChips
                 items={form.categoryChips}
                 value={form.categoryId}
                 onChange={form.onCategoryChange}
-                ariaLabel="Category"
+                ariaLabel={t('recurring:dialog.categoryLabel')}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Select
-              label="Account"
+              label={t('recurring:dialog.accountLabel')}
               value={form.accountId}
               onValueChange={form.onAccountChange}
               options={form.accountOptions}
             />
             <Input
-              label="Start date"
+              label={t('recurring:dialog.startDateLabel')}
               type="date"
               value={form.startDate}
               onChange={(event) => form.onStartDateChange(event.target.value)}
@@ -217,9 +235,10 @@ export function RecurringScreen() {
       <ConfirmDialog
         open={deleteDialog.isOpen}
         onOpenChange={deleteDialog.onClose}
-        title={`Delete "${deleteDialog.desc}"?`}
-        description="This recurring rule will be permanently removed. Existing transactions are not affected."
-        confirmLabel="Delete"
+        title={deleteDialog.title}
+        description={t('recurring:deleteDialog.description')}
+        confirmLabel={t('common:action.delete')}
+        cancelLabel={t('common:action.cancel')}
         onConfirm={deleteDialog.onConfirm}
         isPending={deleteDialog.isSubmitting}
       />

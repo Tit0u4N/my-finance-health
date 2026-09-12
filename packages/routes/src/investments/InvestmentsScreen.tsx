@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Investments (list) screen (screens.md) — JSX and @repo/ui composition only, all
-// data and handlers come from useInvestmentsScreen.
+// data and handlers come from useInvestmentsScreen. useTranslation is allowed here for static
+// copy — everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { AmountValue } from '@repo/ui/components/AmountValue';
 import { Avatar } from '@repo/ui/components/Avatar';
 import { Button } from '@repo/ui/components/Button';
@@ -30,10 +32,15 @@ const KPI_ICON_COLOR: Record<string, string> = {
 };
 
 export function InvestmentsScreen() {
+  const { t } = useTranslation();
   const screen = useInvestmentsScreen();
 
   if (!screen.ready) {
-    return <div className="flex flex-1 items-center justify-center text-body text-muted">Loading your workspace…</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-body text-muted">
+        {t('common:state.loadingWorkspace')}
+      </div>
+    );
   }
 
   const {
@@ -62,11 +69,11 @@ export function InvestmentsScreen() {
   return (
     <>
       <PageHeader
-        title="Investments"
+        title={t('investments:list.title')}
         subtitle={subtitle}
         actions={
           <Button tone="primary" size="sm" icon={Plus} onClick={screen.onCreate}>
-            Add position
+            {t('investments:list.addPosition')}
           </Button>
         }
       />
@@ -86,11 +93,15 @@ export function InvestmentsScreen() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Panel title="Portfolio trend" subtitle="Past month" className="lg:col-span-2">
+          <Panel
+            title={t('investments:list.portfolioTrendTitle')}
+            subtitle={t('investments:list.pastMonth')}
+            className="lg:col-span-2"
+          >
             <LineChart data={trend} color={trendColor} />
           </Panel>
 
-          <Panel title="Allocation">
+          <Panel title={t('investments:list.allocationTitle')}>
             <div className="flex flex-col items-center gap-4">
               <Donut data={donutData} centerLabel={donutCenterLabel} centerValue={donutCenterValue} />
               <div className="w-full space-y-2">
@@ -107,25 +118,25 @@ export function InvestmentsScreen() {
           </Panel>
         </div>
 
-        <Panel title="Positions" bodyClassName="p-1 pt-3">
+        <Panel title={t('investments:list.positionsTitle')} bodyClassName="p-1 pt-3">
           {rows.length === 0 ? (
             <EmptyState
               icon={TrendingUp}
-              title="No positions yet"
-              subtitle="Add a position to start tracking your portfolio."
+              title={t('investments:list.emptyTitle')}
+              subtitle={t('investments:list.emptySubtitle')}
             />
           ) : (
             <Table<InvestmentSortKey>
               minWidth={760}
               head={[
-                { label: 'Position' },
-                { label: 'Units', align: 'right', width: 90 },
-                { label: 'Avg cost', align: 'right', width: 100 },
-                { label: 'Current', align: 'right', width: 100 },
-                { label: 'Value', align: 'right', width: 110, sortKey: 'value' },
-                { label: 'P/L', align: 'right', width: 130, sortKey: 'profitLoss' },
-                { label: 'Allocation', align: 'right', width: 100, sortKey: 'allocation' },
-                { label: 'Actions', srOnly: true, width: 44 },
+                { label: t('investments:list.column.position') },
+                { label: t('investments:list.column.units'), align: 'right', width: 90 },
+                { label: t('investments:list.column.avgCost'), align: 'right', width: 100 },
+                { label: t('investments:list.column.current'), align: 'right', width: 100 },
+                { label: t('investments:list.column.value'), align: 'right', width: 110, sortKey: 'value' },
+                { label: t('investments:list.column.profitLoss'), align: 'right', width: 130, sortKey: 'profitLoss' },
+                { label: t('investments:list.column.allocation'), align: 'right', width: 100, sortKey: 'allocation' },
+                { label: t('investments:list.column.actions'), srOnly: true, width: 44 },
               ]}
               sortKey={sortKey}
               sortDirection={sortDirection}
@@ -172,21 +183,21 @@ export function InvestmentsScreen() {
                   <Td align="right">
                     <DropdownMenu.Root>
                       <DropdownMenu.Trigger
-                        aria-label={`Actions — ${row.name}`}
+                        aria-label={row.actionsAriaLabel}
                         className="flex h-7 w-7 items-center justify-center rounded-sm text-subtle hover:bg-chip-bg"
                       >
                         <MoreVertical size={14} />
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Content>
                         <DropdownMenu.Item icon={Pencil} onClick={() => onEdit(row.id)}>
-                          Edit
+                          {t('common:action.edit')}
                         </DropdownMenu.Item>
                         <DropdownMenu.Item icon={LineChartIcon} onClick={() => onRecordValue(row.id)}>
-                          Record value
+                          {t('investments:action.recordValue')}
                         </DropdownMenu.Item>
                         <DropdownMenu.Separator className="my-1 h-px bg-border" />
                         <DropdownMenu.Item icon={Trash2} tone="destructive" onClick={() => onDelete(row.id)}>
-                          Delete
+                          {t('common:action.delete')}
                         </DropdownMenu.Item>
                       </DropdownMenu.Content>
                     </DropdownMenu.Root>
@@ -201,15 +212,16 @@ export function InvestmentsScreen() {
       <Dialog
         open={form.isOpen}
         onOpenChange={form.onClose}
-        title={form.mode === 'create' ? 'Add position' : 'Edit position'}
+        title={form.dialogTitle}
+        closeLabel={t('common:action.close')}
         width={520}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={form.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={form.onSubmit} disabled={!form.canSubmit}>
-              {form.mode === 'create' ? 'Create position' : 'Save changes'}
+              {form.submitLabel}
             </Button>
           </>
         }
@@ -217,28 +229,28 @@ export function InvestmentsScreen() {
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Name"
-              placeholder="e.g. World ETF (CW8)"
+              label={t('investments:createDialog.nameLabel')}
+              placeholder={t('investments:createDialog.namePlaceholder')}
               value={form.name}
               onChange={(event) => form.onNameChange(event.target.value)}
             />
             <Input
-              label="Ticker"
-              placeholder="e.g. CW8"
+              label={t('investments:createDialog.tickerLabel')}
+              placeholder={t('investments:createDialog.tickerPlaceholder')}
               value={form.ticker}
               onChange={(event) => form.onTickerChange(event.target.value)}
             />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <Input
-              label="Units"
+              label={t('investments:createDialog.unitsLabel')}
               placeholder="0"
               inputMode="decimal"
               value={form.qty}
               onChange={(event) => form.onQtyChange(event.target.value)}
             />
             <Input
-              label="Avg cost"
+              label={t('investments:createDialog.avgCostLabel')}
               placeholder="0.00"
               inputMode="decimal"
               value={form.avg}
@@ -246,7 +258,7 @@ export function InvestmentsScreen() {
             />
             {form.mode === 'create' && (
               <Input
-                label="Current price"
+                label={t('investments:createDialog.currentPriceLabel')}
                 placeholder="0.00"
                 inputMode="decimal"
                 value={form.current}
@@ -255,9 +267,13 @@ export function InvestmentsScreen() {
             )}
           </div>
           <div>
-            <span className="text-label text-muted">Colour</span>
+            <span className="text-label text-muted">{t('investments:createDialog.colourLabel')}</span>
             <div className="mt-2">
-              <ColorSwatchPicker value={form.color} onChange={form.onColorChange} ariaLabel="Position colour" />
+              <ColorSwatchPicker
+                value={form.color}
+                onChange={form.onColorChange}
+                ariaLabel={t('investments:createDialog.colourAriaLabel')}
+              />
             </div>
           </div>
           {form.errorMessage && <span className="text-body-sm text-neg">{form.errorMessage}</span>}
@@ -267,12 +283,13 @@ export function InvestmentsScreen() {
       <Dialog
         open={recordValueForm.isOpen}
         onOpenChange={recordValueForm.onClose}
-        title={`Record value — ${recordValueForm.investmentName}`}
+        title={recordValueForm.dialogTitle}
+        closeLabel={t('common:action.close')}
         width={420}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={recordValueForm.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button
               tone="primary"
@@ -281,20 +298,20 @@ export function InvestmentsScreen() {
               onClick={recordValueForm.onSubmit}
               disabled={!recordValueForm.canSubmit}
             >
-              Save value
+              {t('investments:recordValueDialog.submit')}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <Input
-            label="Date"
+            label={t('investments:recordValueDialog.dateLabel')}
             type="date"
             value={recordValueForm.date}
             onChange={(event) => recordValueForm.onDateChange(event.target.value)}
           />
           <Input
-            label="Price per unit"
+            label={t('investments:recordValueDialog.priceLabel')}
             placeholder="0.00"
             inputMode="decimal"
             value={recordValueForm.price}
@@ -309,9 +326,10 @@ export function InvestmentsScreen() {
       <ConfirmDialog
         open={deleteDialog.isOpen}
         onOpenChange={deleteDialog.onClose}
-        title={`Delete "${deleteDialog.name}"?`}
-        description="This position and its entire value history will be permanently removed."
-        confirmLabel="Delete"
+        title={deleteDialog.title}
+        description={t('investments:deleteConfirm.description')}
+        confirmLabel={t('common:action.delete')}
+        cancelLabel={t('common:action.cancel')}
         onConfirm={deleteDialog.onConfirm}
         isPending={deleteDialog.isSubmitting}
       />

@@ -3,6 +3,8 @@
 // query/mutation hook and selector the screen needs, plus the two cross-screen stores (account
 // scope, amounts-hidden) — returns plain data only, never JSX, per CLAUDE.md's MVVM split.
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useRepositories } from '@repo/app-core/providers/useRepositories';
 import { queryKeys } from '@repo/app-core/queries/queryKeys';
@@ -95,6 +97,7 @@ export type OverviewCashflow = {
 export type OverviewBreakdown = {
   readonly data: readonly DonutSlice[];
   readonly centerValueLabel: string;
+  readonly panelSubtitle: string;
   readonly legend: readonly {
     readonly id: string;
     readonly name: string;
@@ -114,6 +117,7 @@ export type UseOverviewScreenResult =
       readonly cashflow: OverviewCashflow;
       readonly breakdown: OverviewBreakdown;
       readonly accountRows: readonly OverviewAccountRow[];
+      readonly accountsPanelSubtitle: string;
       readonly totalBalanceLabel: string;
       readonly upcoming: readonly OverviewUpcomingRow[];
       readonly activity: readonly OverviewActivityRow[];
@@ -123,13 +127,17 @@ export type UseOverviewScreenResult =
         readonly selectedIds: readonly string[];
         readonly onToggle: (id: string) => void;
         readonly onSelectAll: () => void;
+        readonly triggerLabel: string;
+        readonly groupLabel: string;
+        readonly selectAllLabel: string;
       };
     };
 
 export function useOverviewScreen(): UseOverviewScreenResult {
+  const { t } = useTranslation();
   const platform = usePlatform();
   const repositories = useRepositories();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
 
   const accountsQuery = useAccounts();
   const settingsQuery = useWorkspaceSettings();
@@ -199,7 +207,8 @@ export function useOverviewScreen(): UseOverviewScreenResult {
       return { id: node.id, label: '', value: node.amount, color: NEUTRAL_COLOR, column: 1, labelSide: 'none' };
     }
     const category = node.categoryId ? categoryById.get(node.categoryId) : undefined;
-    const label = node.kind === 'savings' ? 'Savings' : (category?.name ?? 'Other');
+    const label =
+      node.kind === 'savings' ? t('overview:cashflow.savings') : (category?.name ?? t('common:category.other'));
     const color = node.kind === 'savings' ? POSITIVE_COLOR : (category?.color ?? NEUTRAL_COLOR);
     return {
       id: node.id,
@@ -229,7 +238,7 @@ export function useOverviewScreen(): UseOverviewScreenResult {
     const category = categoryById.get(entry.categoryId);
     return {
       id: entry.categoryId,
-      name: category?.name ?? 'Other',
+      name: category?.name ?? t('common:category.other'),
       color: category?.color ?? NEUTRAL_COLOR,
       valueLabel: money(entry.total),
       percentLabel: formatPercent(entry.share, locale),
@@ -242,41 +251,41 @@ export function useOverviewScreen(): UseOverviewScreenResult {
   const kpis: OverviewKpi[] = [
     {
       id: 'balance',
-      label: 'Total balance',
+      label: t('overview:kpi.balance'),
       valueLabel: money(totalBalance),
-      sub: `${scopedAccounts.length} account${scopedAccounts.length === 1 ? '' : 's'} · ${settings.baseCurrency}`,
+      sub: t('overview:kpi.balanceSub', { count: scopedAccounts.length, currency: settings.baseCurrency }),
       hero: true,
     },
     {
       id: 'income',
-      label: `Income · ${monthLabel(monthStart ?? today, locale)}`,
+      label: t('overview:kpi.income', { month: monthLabel(monthStart ?? today, locale) }),
       valueLabel: money(periodTotals.income),
-      sub: 'this month',
+      sub: t('overview:kpi.thisMonth'),
       sparkData: incomeTrend,
       sparkColor: POSITIVE_COLOR,
     },
     {
       id: 'spending',
-      label: `Spending · ${monthLabel(monthStart ?? today, locale)}`,
+      label: t('overview:kpi.spending', { month: monthLabel(monthStart ?? today, locale) }),
       valueLabel: money(periodTotals.expense),
-      sub: 'this month',
+      sub: t('overview:kpi.thisMonth'),
       sparkData: expenseTrend,
       sparkColor: 'var(--mfh-neg)',
     },
     {
       id: 'net',
-      label: 'Net saved',
+      label: t('overview:kpi.net'),
       valueLabel: money(periodTotals.net),
-      deltaLabel: `${Math.round(periodTotals.rate * 100)}% rate`,
+      deltaLabel: t('overview:kpi.netRate', { percent: Math.round(periodTotals.rate * 100) }),
       deltaTone: 'accent',
-      sub: 'of income kept',
+      sub: t('overview:kpi.ofIncomeKept'),
     },
   ];
 
   const accountRows: OverviewAccountRow[] = scopedAccounts.map((account, index) => ({
     id: account.id,
     name: account.name,
-    typeLabel: account.type,
+    typeLabel: t(`common:accountType.${account.type}`),
     icon: ACCOUNT_TYPE_ICON[account.type],
     color: account.color,
     sparkline: (balanceHistoryQueries[index]?.data ?? []).map((point) => point.balance as number),
@@ -300,7 +309,7 @@ export function useOverviewScreen(): UseOverviewScreenResult {
     return {
       id: transaction.id,
       desc: transaction.desc,
-      categoryName: category?.name ?? 'Other',
+      categoryName: category?.name ?? t('common:category.other'),
       categoryColor: category?.color ?? NEUTRAL_COLOR,
       categoryIcon: categoryIcon(category?.name),
       accountName: account?.name ?? '',
@@ -312,20 +321,22 @@ export function useOverviewScreen(): UseOverviewScreenResult {
 
   return {
     ready: true,
-    subtitle: `${scopedAccounts.length} of ${accounts.length} accounts in scope`,
+    subtitle: t('overview:subtitle', { inScope: scopedAccounts.length, total: accounts.length }),
     hidden,
     kpis,
     cashflow: { nodes: cashflowNodes, links: cashflowLinks, legend: cashflowLegend },
     breakdown: {
       data: donutData,
       centerValueLabel: money(periodTotals.expense, { compact: true }),
+      panelSubtitle: t('overview:breakdown.panelSubtitle', { count: breakdownLegend.length }),
       legend: breakdownLegend,
     },
     accountRows,
+    accountsPanelSubtitle: t('overview:accounts.panelSubtitle', { count: accountRows.length }),
     totalBalanceLabel: money(totalBalance, { compact: true }),
     upcoming,
     activity,
-    activityCountLabel: `${transactions.length} transactions this month`,
+    activityCountLabel: t('overview:activity.countLabel', { count: transactions.length }),
     accountFilter: scope.accountFilter,
   };
 }

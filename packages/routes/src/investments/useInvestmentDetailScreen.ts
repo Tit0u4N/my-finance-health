@@ -4,6 +4,8 @@
 // testable ViewModel state), and the full ready screen. Every hook below runs before the
 // found:false early return.
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useDeleteInvestment } from '@repo/app-core/mutations/useDeleteInvestment';
 import { useUpdateInvestment } from '@repo/app-core/mutations/useUpdateInvestment';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
@@ -26,7 +28,7 @@ import type { RangePickerOption } from '@repo/ui/components/RangePicker';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { type LucideIcon, Scale, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useState } from 'react';
-import { HISTORY_RANGE_OPTIONS } from '../shared/historyRange';
+import { useHistoryRangeOptions } from '../shared/historyRange';
 import { investmentDetailSearchSchema } from './investmentSearch';
 import type { InvestmentFormState } from './useInvestmentForm';
 import { useInvestmentForm } from './useInvestmentForm';
@@ -59,6 +61,7 @@ export type InvestmentNoteState = {
 
 export type InvestmentDeleteState = {
   readonly isOpen: boolean;
+  readonly title: string;
   readonly onOpen: () => void;
   readonly onConfirm: () => void;
   readonly onClose: () => void;
@@ -93,8 +96,10 @@ export type UseInvestmentDetailScreenResult =
     };
 
 export function useInvestmentDetailScreen(): UseInvestmentDetailScreenResult {
+  const { t } = useTranslation();
+  const rangeOptions = useHistoryRangeOptions();
   const platform = usePlatform();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
   const navigate = useNavigate();
   const rawParams = useParams({ strict: false }) as { readonly investmentId?: string };
   const rawSearch = useSearch({ strict: false }) as { readonly range?: HistoryRange };
@@ -151,18 +156,25 @@ export function useInvestmentDetailScreen(): UseInvestmentDetailScreenResult {
   const unitProfitLoss = subtractMoney(investment.current, investment.avg);
 
   const kpis: InvestmentDetailKpi[] = [
-    { id: 'value', label: 'Position value', valueLabel: money(position.value), sub: '', hero: true, icon: Wallet },
-    { id: 'cost', label: 'Cost basis', valueLabel: money(position.cost), sub: '', icon: Scale },
+    {
+      id: 'value',
+      label: t('investments:kpi.positionValue'),
+      valueLabel: money(position.value),
+      sub: '',
+      hero: true,
+      icon: Wallet,
+    },
+    { id: 'cost', label: t('investments:kpi.costBasis'), valueLabel: money(position.cost), sub: '', icon: Scale },
     {
       id: 'profitLoss',
-      label: 'Unrealised P/L',
+      label: t('investments:kpi.profitLoss'),
       valueLabel: money(position.profitLoss),
       sub: formatPercent(position.profitLossPercent, locale, { signDisplay: 'always' }),
       icon: position.profitLoss >= 0 ? TrendingUp : TrendingDown,
     },
     {
       id: 'unitProfitLoss',
-      label: 'Unit P/L',
+      label: t('investments:kpi.unitProfitLoss'),
       valueLabel: money(unitProfitLoss),
       sub: '',
       icon: unitProfitLoss >= 0 ? TrendingUp : TrendingDown,
@@ -195,13 +207,13 @@ export function useInvestmentDetailScreen(): UseInvestmentDetailScreenResult {
     ready: true,
     found: true,
     hidden,
-    eyebrow: `Investments · ${investment.ticker}`,
+    eyebrow: t('investments:detail.eyebrow', { ticker: investment.ticker }),
     title: investment.name,
-    subtitle: `${investment.qty} units`,
+    subtitle: t('investments:detail.subtitleUnits', { count: investment.qty }),
     onBack,
     kpis,
     range,
-    rangeOptions: HISTORY_RANGE_OPTIONS,
+    rangeOptions,
     onRangeChange: (next) => {
       void navigate({
         to: '/investments/$investmentId',
@@ -221,13 +233,14 @@ export function useInvestmentDetailScreen(): UseInvestmentDetailScreenResult {
       isSubmitting: updateNote.isPending,
     },
     snapshotRows,
-    snapshotCountLabel: `${history.length} snapshot${history.length === 1 ? '' : 's'}`,
+    snapshotCountLabel: t('investments:detail.snapshotCount', { count: history.length }),
     onEdit: () => openEdit(investment),
     onRecordValue: () => openRecordValue(investment),
     form,
     recordValueForm,
     deleteDialog: {
       isOpen: isDeleteOpen,
+      title: t('investments:deleteConfirm.title', { name: investment.name }),
       onOpen: () => setDeleteOpen(true),
       onConfirm: () => {
         deleteInvestment.mutate(id, { onSuccess: () => navigate({ to: '/investments' }) });

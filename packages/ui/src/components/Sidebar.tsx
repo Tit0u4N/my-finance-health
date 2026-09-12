@@ -22,6 +22,11 @@ export type SidebarProps = {
   /** Icon-only rail — the "sidebar mode" Settings → Preferences control actually drives (was
    * dead layout space before that setting existed). */
   readonly collapsed?: boolean;
+  /** @repo/ui may not import @repo/i18n (start-roadmap.md §6) — every string below is a required
+   * prop so the caller in @repo/routes can never forget to translate one. */
+  readonly brandLabel: string;
+  readonly showAmountsLabel: string;
+  readonly hideAmountsLabel: string;
 };
 
 type NavButtonProps = {
@@ -69,12 +74,16 @@ export function Sidebar({
   onToggleAmountsHidden,
   footerItems = [],
   collapsed = false,
+  brandLabel,
+  showAmountsLabel,
+  hideAmountsLabel,
 }: SidebarProps) {
+  const amountsToggleLabel = amountsHidden ? showAmountsLabel : hideAmountsLabel;
   const hideAmountsButton = (
     <button
       type="button"
       onClick={onToggleAmountsHidden}
-      aria-label={collapsed ? (amountsHidden ? 'Show amounts' : 'Hide amounts') : undefined}
+      aria-label={collapsed ? amountsToggleLabel : undefined}
       className={cn(
         'flex h-9.5 w-full items-center gap-2.5 rounded-sm px-2.5 text-label-strong',
         collapsed && 'justify-center px-0',
@@ -82,7 +91,7 @@ export function Sidebar({
       )}
     >
       {amountsHidden ? <Eye size={18} /> : <EyeOff size={18} />}
-      {!collapsed && <span className="truncate">{amountsHidden ? 'Show amounts' : 'Hide amounts'}</span>}
+      {!collapsed && <span className="truncate">{amountsToggleLabel}</span>}
     </button>
   );
 
@@ -99,7 +108,7 @@ export function Sidebar({
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <div className="truncate text-foreground text-label-strong">My Finance Health</div>
+            <div className="truncate text-foreground text-label-strong">{brandLabel}</div>
           </div>
         )}
       </div>
@@ -134,7 +143,7 @@ export function Sidebar({
 
       <div className={cn('flex flex-col gap-0.5 pb-3', collapsed ? 'px-2.5' : 'px-3')}>
         {collapsed ? (
-          <Tooltip label={amountsHidden ? 'Show amounts' : 'Hide amounts'} side="right">
+          <Tooltip label={amountsToggleLabel} side="right">
             {hideAmountsButton}
           </Tooltip>
         ) : (

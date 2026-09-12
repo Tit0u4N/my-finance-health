@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Investment detail screen (screens.md) — JSX and @repo/ui composition only, all
-// data and handlers come from useInvestmentDetailScreen.
+// data and handlers come from useInvestmentDetailScreen. useTranslation is allowed here for
+// static copy — everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { AmountValue } from '@repo/ui/components/AmountValue';
 import { Button } from '@repo/ui/components/Button';
 import { ColorSwatchPicker } from '@repo/ui/components/ColorSwatchPicker';
@@ -28,14 +30,19 @@ const KPI_ICON_COLOR: Record<string, string> = {
 };
 
 export function InvestmentDetailScreen() {
+  const { t } = useTranslation();
   const screen = useInvestmentDetailScreen();
 
   if (!screen.ready) {
-    return <div className="flex flex-1 items-center justify-center text-body text-muted">Loading your workspace…</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-body text-muted">
+        {t('common:state.loadingWorkspace')}
+      </div>
+    );
   }
 
   if (!screen.found) {
-    return <PageHeader title="Not found" back={screen.onBack} />;
+    return <PageHeader title={t('common:state.notFound')} back={screen.onBack} />;
   }
 
   const {
@@ -65,13 +72,13 @@ export function InvestmentDetailScreen() {
         actions={
           <>
             <Button tone="secondary" size="sm" icon={Pencil} onClick={screen.onEdit}>
-              Edit
+              {t('common:action.edit')}
             </Button>
             <Button tone="secondary" size="sm" icon={CirclePlus} onClick={onRecordValue}>
-              Record value
+              {t('investments:action.recordValue')}
             </Button>
             <Button tone="destruct" size="sm" icon={Trash2} onClick={deleteDialog.onOpen}>
-              Delete position
+              {t('investments:detail.deletePosition')}
             </Button>
           </>
         }
@@ -92,44 +99,49 @@ export function InvestmentDetailScreen() {
         </div>
 
         <Panel
-          title="Price history"
+          title={t('investments:detail.priceHistoryTitle')}
           right={
-            <RangePicker value={range} onChange={onRangeChange} options={rangeOptions} ariaLabel="History range" />
+            <RangePicker
+              value={range}
+              onChange={onRangeChange}
+              options={rangeOptions}
+              ariaLabel={t('common:label.historyRange')}
+            />
           }
         >
           <LineChart data={trend} color={trendColor} />
         </Panel>
 
-        <Panel title="Notes">
+        <Panel title={t('investments:detail.notesTitle')}>
           <div className="flex flex-col gap-3">
             <Textarea
-              label="Notes"
-              placeholder="Add a note about this position…"
+              label={t('investments:detail.notesTitle')}
+              placeholder={t('investments:detail.notesPlaceholder')}
               value={note.value}
               onChange={(event) => note.onChange(event.target.value)}
             />
             <div className="flex justify-end">
               <Button tone="secondary" size="sm" onClick={note.onSave} disabled={note.isSubmitting}>
-                Save note
+                {t('investments:detail.saveNote')}
               </Button>
             </div>
           </div>
         </Panel>
 
-        <Panel title="Snapshots" subtitle={snapshotCountLabel} bodyClassName="p-1 pt-3">
+        <Panel title={t('investments:detail.snapshotsTitle')} subtitle={snapshotCountLabel} bodyClassName="p-1 pt-3">
           {snapshotRows.length === 0 ? (
             <EmptyState
               icon={History}
-              title="No recorded values yet"
-              subtitle="Record a value to start tracking this position's price history."
+              title={t('investments:detail.emptyTitle')}
+              subtitle={t('investments:detail.emptySubtitle')}
             />
           ) : (
             <Table
               minWidth={420}
               head={[
-                { label: 'Date' },
-                { label: 'Price', align: 'right', width: 120 },
-                { label: 'Change', align: 'right', width: 120 },
+                { label: t('common:column.date') },
+                { label: t('investments:detail.column.price'), align: 'right', width: 120 },
+                { label: t('investments:detail.column.change'), align: 'right', width: 120 },
               ]}
             >
               {snapshotRows.map((row) => (
@@ -151,42 +163,55 @@ export function InvestmentDetailScreen() {
       <Dialog
         open={form.isOpen}
         onOpenChange={form.onClose}
-        title="Edit position"
+        title={form.dialogTitle}
+        closeLabel={t('common:action.close')}
         width={520}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={form.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={form.onSubmit} disabled={!form.canSubmit}>
-              Save changes
+              {form.submitLabel}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Name" value={form.name} onChange={(event) => form.onNameChange(event.target.value)} />
-            <Input label="Ticker" value={form.ticker} onChange={(event) => form.onTickerChange(event.target.value)} />
+            <Input
+              label={t('investments:createDialog.nameLabel')}
+              value={form.name}
+              onChange={(event) => form.onNameChange(event.target.value)}
+            />
+            <Input
+              label={t('investments:createDialog.tickerLabel')}
+              value={form.ticker}
+              onChange={(event) => form.onTickerChange(event.target.value)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Units"
+              label={t('investments:createDialog.unitsLabel')}
               inputMode="decimal"
               value={form.qty}
               onChange={(event) => form.onQtyChange(event.target.value)}
             />
             <Input
-              label="Avg cost"
+              label={t('investments:createDialog.avgCostLabel')}
               inputMode="decimal"
               value={form.avg}
               onChange={(event) => form.onAvgChange(event.target.value)}
             />
           </div>
           <div>
-            <span className="text-label text-muted">Colour</span>
+            <span className="text-label text-muted">{t('investments:createDialog.colourLabel')}</span>
             <div className="mt-2">
-              <ColorSwatchPicker value={form.color} onChange={form.onColorChange} ariaLabel="Position colour" />
+              <ColorSwatchPicker
+                value={form.color}
+                onChange={form.onColorChange}
+                ariaLabel={t('investments:createDialog.colourAriaLabel')}
+              />
             </div>
           </div>
           {form.errorMessage && <span className="text-body-sm text-neg">{form.errorMessage}</span>}
@@ -196,28 +221,29 @@ export function InvestmentDetailScreen() {
       <Dialog
         open={recordValueForm.isOpen}
         onOpenChange={recordValueForm.onClose}
-        title={`Record value — ${recordValueForm.investmentName}`}
+        title={recordValueForm.dialogTitle}
+        closeLabel={t('common:action.close')}
         width={420}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={recordValueForm.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={recordValueForm.onSubmit} disabled={!recordValueForm.canSubmit}>
-              Save value
+              {t('investments:recordValueDialog.submit')}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <Input
-            label="Date"
+            label={t('investments:recordValueDialog.dateLabel')}
             type="date"
             value={recordValueForm.date}
             onChange={(event) => recordValueForm.onDateChange(event.target.value)}
           />
           <Input
-            label="Price per unit"
+            label={t('investments:recordValueDialog.priceLabel')}
             placeholder="0.00"
             inputMode="decimal"
             value={recordValueForm.price}
@@ -232,9 +258,10 @@ export function InvestmentDetailScreen() {
       <ConfirmDialog
         open={deleteDialog.isOpen}
         onOpenChange={deleteDialog.onClose}
-        title={`Delete "${screen.title}"?`}
-        description="This position and its entire value history will be permanently removed."
-        confirmLabel="Delete"
+        title={deleteDialog.title}
+        description={t('investments:deleteConfirm.description')}
+        confirmLabel={t('common:action.delete')}
+        cancelLabel={t('common:action.cancel')}
         onConfirm={deleteDialog.onConfirm}
         isPending={deleteDialog.isSubmitting}
       />

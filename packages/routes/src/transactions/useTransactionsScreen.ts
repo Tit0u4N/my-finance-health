@@ -3,6 +3,8 @@
 // sort are typed router search params (routes.md §3); account scope stays the cross-screen
 // Zustand store (screens.md's "selected-account filter", shared with Overview/Recurring).
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useDeleteTransaction } from '@repo/app-core/mutations/useDeleteTransaction';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
@@ -33,12 +35,6 @@ import {
 } from './transactionSearch';
 import { type TransactionFormState, useTransactionForm } from './useTransactionForm';
 
-const TYPE_OPTIONS: readonly { readonly value: LedgerType; readonly label: string }[] = [
-  { value: 'all', label: 'All types' },
-  { value: 'income', label: 'Income' },
-  { value: 'expense', label: 'Expense' },
-];
-
 export type TransactionRow = {
   readonly id: TransactionId;
   readonly desc: string;
@@ -49,6 +45,7 @@ export type TransactionRow = {
   readonly dateLabel: string;
   readonly amountLabel: string;
   readonly isPositive: boolean;
+  readonly actionsAriaLabel: string;
 };
 
 export type LedgerKpi = {
@@ -76,8 +73,8 @@ export type LedgerFilters = {
 
 export type TransactionDeleteState = {
   readonly isOpen: boolean;
-  readonly desc: string;
-  readonly amountLabel: string;
+  readonly title: string;
+  readonly description: string;
   readonly onConfirm: () => void;
   readonly onClose: () => void;
   readonly isSubmitting: boolean;
@@ -103,8 +100,9 @@ export type UseTransactionsScreenResult =
     };
 
 export function useTransactionsScreen(): UseTransactionsScreenResult {
+  const { t } = useTranslation();
   const platform = usePlatform();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
   const navigate = useNavigate();
   const rawSearch = useSearch({ strict: false }) as Partial<Record<'q' | 'type' | 'category' | 'sort', string>>;
   const search = transactionsSearchSchema.parse(rawSearch);
@@ -156,13 +154,14 @@ export function useTransactionsScreen(): UseTransactionsScreenResult {
     return {
       id: transaction.id,
       desc: transaction.desc,
-      categoryName: category?.name ?? 'Other',
+      categoryName: category?.name ?? t('common:category.other'),
       categoryColor: category?.color ?? 'var(--mfh-muted)',
       categoryIcon: categoryIcon(category?.name),
       accountName: account?.name ?? '',
       dateLabel: formatAbsoluteDate(transaction.date.slice(0, 10) as never, locale),
       amountLabel: formatMoney(transaction.amount, account?.currency ?? 'EUR', locale),
       isPositive: transaction.amount > 0,
+      actionsAriaLabel: t('transactions:list.actionsAriaLabel', { name: transaction.desc }),
     };
   });
 
@@ -170,9 +169,9 @@ export function useTransactionsScreen(): UseTransactionsScreenResult {
   const money = (amount: number) => formatMoney(amount as never, settings.baseCurrency, locale);
 
   const kpis: LedgerKpi[] = [
-    { id: 'inflow', label: 'Inflow', valueLabel: money(totals.income), icon: ArrowDownRight },
-    { id: 'outflow', label: 'Outflow', valueLabel: money(totals.expense), icon: ArrowUpRight },
-    { id: 'net', label: 'Net', valueLabel: money(totals.net), icon: Scale },
+    { id: 'inflow', label: t('common:kpi.inflow'), valueLabel: money(totals.income), icon: ArrowDownRight },
+    { id: 'outflow', label: t('common:kpi.outflow'), valueLabel: money(totals.expense), icon: ArrowUpRight },
+    { id: 'net', label: t('common:kpi.net'), valueLabel: money(totals.net), icon: Scale },
   ];
 
   const { key: sortKey, direction: sortDirection } = parseLedgerSort(search.sort);
@@ -185,7 +184,7 @@ export function useTransactionsScreen(): UseTransactionsScreenResult {
   return {
     ready: true,
     hidden,
-    subtitle: `${scope.selectedIds.length} of ${accounts.length} accounts in scope`,
+    subtitle: t('transactions:list.scopeSubtitle', { selected: scope.selectedIds.length, count: accounts.length }),
     isFiltering: transactionsQuery.isPlaceholderData,
     kpis,
     filters: {
@@ -193,11 +192,15 @@ export function useTransactionsScreen(): UseTransactionsScreenResult {
       onSearchChange: searchField.onChange,
       type: search.type,
       onTypeChange: (type) => navigateSearch({ type }),
-      typeOptions: TYPE_OPTIONS,
+      typeOptions: [
+        { value: 'all', label: t('transactions:list.typeAll') },
+        { value: 'income', label: t('common:categoryKind.income') },
+        { value: 'expense', label: t('common:categoryKind.expense') },
+      ],
       category: search.category,
       onCategoryChange: (category) => navigateSearch({ category }),
       categoryOptions: [
-        { value: 'all', label: 'All categories' },
+        { value: 'all', label: t('transactions:list.categoryAll') },
         ...categories.map((category) => ({ value: category.id, label: category.name })),
       ],
       sortKey,
@@ -212,16 +215,16 @@ export function useTransactionsScreen(): UseTransactionsScreenResult {
       isFiltered,
     },
     rows,
-    rowCountLabel: `${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`,
+    rowCountLabel: t('transactions:list.rowCount', { count: transactions.length }),
     onCreate: openCreate,
     onEdit: (id) => {
-      const transaction = transactions.find((t) => t.id === id);
+      const transaction = transactions.find((candidate) => candidate.id === id);
       if (transaction) {
         openEdit(transaction);
       }
     },
     onDelete: (id) => {
-      const transaction = transactions.find((t) => t.id === id);
+      const transaction = transactions.find((candidate) => candidate.id === id);
       if (transaction) {
         setDeleting(transaction);
       }
@@ -229,9 +232,15 @@ export function useTransactionsScreen(): UseTransactionsScreenResult {
     form,
     deleteDialog: {
       isOpen: deleting !== undefined,
-      desc: deleting?.desc ?? '',
-      amountLabel: deleting
-        ? formatMoney(deleting.amount, accountById.get(deleting.acc)?.currency ?? settings.baseCurrency, locale)
+      title: deleting ? t('transactions:deleteDialog.title', { name: deleting.desc }) : '',
+      description: deleting
+        ? t('transactions:deleteDialog.description', {
+            amount: formatMoney(
+              deleting.amount,
+              accountById.get(deleting.acc)?.currency ?? settings.baseCurrency,
+              locale,
+            ),
+          })
         : '',
       onConfirm: () => {
         if (!deleting) {

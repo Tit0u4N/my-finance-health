@@ -22,19 +22,29 @@ export type AccountFilterProps = {
   readonly onToggle: (id: string) => void;
   readonly onSelectAll: () => void;
   readonly hidden: boolean;
+  /** @repo/ui may not import @repo/i18n (start-roadmap.md §6): the caller in @repo/routes builds
+   * this from the selection (all / one account's own name / a "{{count}} accounts" plural) so
+   * translation and pluralization stay entirely on its side. */
+  readonly triggerLabel: string;
+  readonly groupLabel: string;
+  readonly selectAllLabel: string;
 };
 
 /** Account scope filter dropdown — Overview, Transactions, Recurring (ui-inventory.md §2). */
-export function AccountFilter({ accounts, selectedIds, onToggle, onSelectAll, hidden }: AccountFilterProps) {
+export function AccountFilter({
+  accounts,
+  selectedIds,
+  onToggle,
+  onSelectAll,
+  hidden,
+  triggerLabel,
+  groupLabel,
+  selectAllLabel,
+}: AccountFilterProps) {
   const { open, setOpen, allSelected } = useAccountFilter({
     totalAccounts: accounts.length,
     selectedCount: selectedIds.length,
   });
-  const label = allSelected
-    ? 'All accounts'
-    : selectedIds.length === 1
-      ? (accounts.find((account) => account.id === selectedIds[0])?.name ?? '1 account')
-      : `${selectedIds.length} accounts`;
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -47,7 +57,7 @@ export function AccountFilter({ accounts, selectedIds, onToggle, onSelectAll, hi
         )}
       >
         <Wallet size={14} />
-        <span className="max-w-37.5 truncate">{label}</span>
+        <span className="max-w-37.5 truncate">{triggerLabel}</span>
         {!allSelected && (
           <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-bold text-white text-xs">
             {selectedIds.length}
@@ -57,13 +67,13 @@ export function AccountFilter({ accounts, selectedIds, onToggle, onSelectAll, hi
       </Popover.Trigger>
       <Popover.Content>
         <div className="flex items-center justify-between border-border border-b px-3.5 pt-2.5 pb-2">
-          <span className="text-caption text-subtle">Accounts</span>
+          <span className="text-caption text-subtle">{groupLabel}</span>
           <button
             type="button"
             onClick={onSelectAll}
             className={cn('text-body-sm', allSelected ? 'text-subtle' : 'text-accent')}
           >
-            Select all
+            {selectAllLabel}
           </button>
         </div>
         <div className="max-h-73 overflow-y-auto p-1.5">

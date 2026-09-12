@@ -5,6 +5,8 @@
 // bookmark/share use case for a small, fully-fetched table's sort order — the same reasoning
 // Recurring's next-occurrence sort already relies on).
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useDeleteInvestment } from '@repo/app-core/mutations/useDeleteInvestment';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useRepositories } from '@repo/app-core/providers/useRepositories';
@@ -62,6 +64,7 @@ export type InvestmentRow = {
   readonly profitLossPercentLabel: string;
   readonly allocationLabel: string;
   readonly allocationShare: number;
+  readonly actionsAriaLabel: string;
 };
 
 export type PortfolioKpi = {
@@ -84,7 +87,7 @@ export type AllocationLegendEntry = {
 
 export type InvestmentDeleteState = {
   readonly isOpen: boolean;
-  readonly name: string;
+  readonly title: string;
   readonly onConfirm: () => void;
   readonly onClose: () => void;
   readonly isSubmitting: boolean;
@@ -125,9 +128,10 @@ function sortRows(rows: readonly InvestmentRow[], key: InvestmentSortKey, direct
 }
 
 export function useInvestmentsScreen(): UseInvestmentsScreenResult {
+  const { t } = useTranslation();
   const platform = usePlatform();
   const repositories = useRepositories();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
   const navigate = useNavigate();
 
   const investmentsQuery = useInvestments();
@@ -193,6 +197,7 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
       profitLossPercentLabel: formatPercent(position.profitLossPercent, locale, { signDisplay: 'always' }),
       allocationLabel: formatPercent(share, locale),
       allocationShare: share,
+      actionsAriaLabel: t('investments:list.actionsAriaLabel', { name: investment.name }),
     };
   });
 
@@ -217,11 +222,18 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
   }));
 
   const kpis: PortfolioKpi[] = [
-    { id: 'value', label: 'Portfolio value', valueLabel: money(totals.value), sub: '', hero: true, icon: Wallet },
-    { id: 'cost', label: 'Cost basis', valueLabel: money(totals.cost), sub: '', icon: Scale },
+    {
+      id: 'value',
+      label: t('investments:kpi.portfolioValue'),
+      valueLabel: money(totals.value),
+      sub: '',
+      hero: true,
+      icon: Wallet,
+    },
+    { id: 'cost', label: t('investments:kpi.costBasis'), valueLabel: money(totals.cost), sub: '', icon: Scale },
     {
       id: 'profitLoss',
-      label: 'Unrealised P/L',
+      label: t('investments:kpi.profitLoss'),
       valueLabel: money(totals.profitLoss),
       sub: formatPercent(totals.profitLossPercent, locale, { signDisplay: 'always' }),
       icon: totals.profitLoss >= 0 ? TrendingUp : TrendingDown,
@@ -231,12 +243,12 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
   return {
     ready: true,
     hidden,
-    subtitle: `${investments.length} position${investments.length === 1 ? '' : 's'} · ${money(totals.value)} total`,
+    subtitle: t('investments:list.subtitle', { count: investments.length, total: money(totals.value) }),
     kpis,
     trend,
     trendColor: 'var(--mfh-accent)',
     donutData,
-    donutCenterLabel: 'Total',
+    donutCenterLabel: t('investments:list.donutCenterLabel'),
     donutCenterValue: money(totals.value, { compact: true }),
     legend,
     rows: sortRows(rows, sortKey, sortDirection),
@@ -272,7 +284,7 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
     recordValueForm,
     deleteDialog: {
       isOpen: deleting !== undefined,
-      name: deleting?.name ?? '',
+      title: t('investments:deleteConfirm.title', { name: deleting?.name ?? '' }),
       onConfirm: () => {
         if (!deleting) {
           return;

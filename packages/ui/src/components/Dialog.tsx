@@ -11,12 +11,24 @@ export type DialogProps = {
   /** Pixel width — the mock sizes each modal individually (`New account` is 560), not off a fixed scale. */
   readonly width?: number;
   readonly children: ReactNode;
+  /** @repo/ui may not import @repo/i18n (start-roadmap.md §6) — the close button's accessible
+   * name comes from the caller in @repo/routes. */
+  readonly closeLabel: string;
 };
 
 /** Creation/edit modal — ui-inventory.md §1 ("New transaction/account/recurring modals", extended
  * to category create/edit here). base-ui `Dialog` gives focus trap, scroll lock and `Esc`/backdrop
  * dismissal for free — the mock hand-rolls all three. */
-export function Dialog({ open, onOpenChange, title, subtitle, actions, width = 480, children }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  title,
+  subtitle,
+  actions,
+  width = 480,
+  children,
+  closeLabel,
+}: DialogProps) {
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       <BaseDialog.Portal>
@@ -33,7 +45,7 @@ export function Dialog({ open, onOpenChange, title, subtitle, actions, width = 4
               )}
             </div>
             <BaseDialog.Close
-              aria-label="Close"
+              aria-label={closeLabel}
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm text-subtle hover:bg-chip-bg"
             >
               <X size={16} />

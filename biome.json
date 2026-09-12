@@ -476,7 +476,7 @@
                     "message": "No shared package imports a concrete platform adapter — only applications know them (docs/start-roadmap.md §6, structural ban 1)."
                   },
                   {
-                    "group": ["react", "react/**", "react-dom", "react-dom/**"],
+                    "group": ["react", "react/**", "react-dom", "react-dom/**", "react-i18next", "react-i18next/**"],
                     "message": "The React binding of i18next belongs to @repo/app-core, level 2 (docs/start-roadmap.md §5)."
                   },
                   {
@@ -761,6 +761,10 @@
                     "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
                   },
                   {
+                    "group": ["react-i18next", "react-i18next/**"],
+                    "message": "@repo/ui takes every string as a prop (docs/start-roadmap.md §6, structural ban 2) — it never calls useTranslation itself, translated or not."
+                  },
+                  {
                     "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],
                     "message": "Native imports are fenced: expo-* only in @repo/platform-expo and apps/mobile, @tauri-apps/* only in @repo/platform-tauri and apps/desktop (docs/start-roadmap.md §6, structural ban 3)."
                   }
@@ -798,6 +802,10 @@
                   {
                     "group": ["react-native", "react-native/**", "react-native-*", "react-native-*/**"],
                     "message": "react-native is installed only in apps/mobile. No shared package may import it (docs/start-roadmap.md §7)."
+                  },
+                  {
+                    "group": ["react-i18next", "react-i18next/**"],
+                    "message": "The React binding of i18next is @repo/app-core/i18n/useTranslation, not a direct react-i18next import — one binding site keeps a single instance wired (docs/start-roadmap.md §5)."
                   },
                   {
                     "group": ["@tauri-apps/*", "@tauri-apps/*/**", "expo", "expo/**", "expo-*", "expo-*/**"],

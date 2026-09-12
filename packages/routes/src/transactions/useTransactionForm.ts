@@ -5,6 +5,7 @@
 // violate `checkAmountMatchesCategoryKind` — the tab only filters which categories are offered
 // and resets the pick when it changes.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useCreateTransaction } from '@repo/app-core/mutations/useCreateTransaction';
 import { useUpdateTransaction } from '@repo/app-core/mutations/useUpdateTransaction';
 import type { Account } from '@repo/domain/entities/account';
@@ -19,14 +20,11 @@ import { useState } from 'react';
 import { parseAmountInput, toMinorUnits } from '../shared/moneyInput';
 import { categoryIcon } from '../shared/visuals';
 
-const KIND_OPTIONS: readonly TabItem<CategoryKind>[] = [
-  { value: 'expense', label: 'Expense' },
-  { value: 'income', label: 'Income' },
-];
-
 export type TransactionFormState = {
   readonly isOpen: boolean;
   readonly mode: 'create' | 'edit';
+  readonly dialogTitle: string;
+  readonly submitLabel: string;
   readonly kind: CategoryKind;
   readonly onKindChange: (kind: CategoryKind) => void;
   readonly kindOptions: readonly TabItem<CategoryKind>[];
@@ -74,6 +72,7 @@ export function useTransactionForm(
   accounts: readonly Account[],
   today: string,
 ): UseTransactionFormResult {
+  const { t } = useTranslation();
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
 
@@ -84,6 +83,12 @@ export function useTransactionForm(
   const firstOfKind = (targetKind: CategoryKind): string =>
     categories.find((category) => category.kind === targetKind)?.id ?? '';
 
+  const kindOptions: readonly TabItem<CategoryKind>[] = [
+    { value: 'expense', label: t('common:categoryKind.expense') },
+    { value: 'income', label: t('common:categoryKind.income') },
+  ];
+
+  const mode = draft?.mode ?? 'create';
   const kind = draft?.kind ?? 'expense';
   const categoryChips: CategoryChipItem[] = categories
     .filter((category) => category.kind === kind)
@@ -109,11 +114,13 @@ export function useTransactionForm(
   return {
     form: {
       isOpen: draft !== undefined,
-      mode: draft?.mode ?? 'create',
+      mode,
+      dialogTitle: mode === 'create' ? t('transactions:dialog.createTitle') : t('transactions:dialog.editTitle'),
+      submitLabel: mode === 'create' ? t('transactions:dialog.createSubmit') : t('common:action.saveChanges'),
       kind,
       onKindChange: (nextKind) =>
         setDraft((current) => (current ? { ...current, kind: nextKind, categoryId: firstOfKind(nextKind) } : current)),
-      kindOptions: KIND_OPTIONS,
+      kindOptions,
       amount: draft?.amount ?? '',
       onAmountChange: (amount) => setDraft((current) => (current ? { ...current, amount } : current)),
       desc: draft?.desc ?? '',
@@ -150,12 +157,12 @@ export function useTransactionForm(
             ...(note === '' ? {} : { note }),
           });
           if (!input.success) {
-            setErrorMessage('Check the transaction details and try again.');
+            setErrorMessage(t('transactions:dialog.errorCheckDetails'));
             return;
           }
           createTransaction.mutate(input.data, {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not create the transaction. Try again.'),
+            onError: () => setErrorMessage(t('transactions:dialog.errorCouldNotCreate')),
           });
           return;
         }
@@ -172,7 +179,7 @@ export function useTransactionForm(
           },
           {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not save the changes. Try again.'),
+            onError: () => setErrorMessage(t('common:error.couldNotSaveChanges')),
           },
         );
       },

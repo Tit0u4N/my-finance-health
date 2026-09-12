@@ -4,6 +4,7 @@
 // it by design (domain-model.md — it only ever moves together with a value snapshot), so an edit
 // never touches price at all.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useCreateInvestment } from '@repo/app-core/mutations/useCreateInvestment';
 import { useUpdateInvestment } from '@repo/app-core/mutations/useUpdateInvestment';
 import { createInvestmentInputSchema, type Investment } from '@repo/domain/entities/investment';
@@ -16,6 +17,8 @@ import { parseAmountInput, toMinorUnits } from '../shared/moneyInput';
 export type InvestmentFormState = {
   readonly isOpen: boolean;
   readonly mode: 'create' | 'edit';
+  readonly dialogTitle: string;
+  readonly submitLabel: string;
   readonly name: string;
   readonly onNameChange: (value: string) => void;
   readonly ticker: string;
@@ -64,6 +67,7 @@ const emptyDraft = (color: string): Draft => ({
 });
 
 export function useInvestmentForm(existingCount: number): UseInvestmentFormResult {
+  const { t } = useTranslation();
   const createInvestment = useCreateInvestment();
   const updateInvestment = useUpdateInvestment();
 
@@ -85,10 +89,14 @@ export function useInvestmentForm(existingCount: number): UseInvestmentFormResul
     !createInvestment.isPending &&
     !updateInvestment.isPending;
 
+  const mode = draft?.mode ?? 'create';
+
   return {
     form: {
       isOpen: draft !== undefined,
-      mode: draft?.mode ?? 'create',
+      mode,
+      dialogTitle: mode === 'create' ? t('investments:createDialog.addTitle') : t('investments:createDialog.editTitle'),
+      submitLabel: mode === 'create' ? t('investments:createDialog.submitCreate') : t('common:action.saveChanges'),
       name: draft?.name ?? '',
       onNameChange: (name) => setDraft((prev) => (prev ? { ...prev, name } : prev)),
       ticker: draft?.ticker ?? '',
@@ -122,12 +130,12 @@ export function useInvestmentForm(existingCount: number): UseInvestmentFormResul
             color: draft.color,
           });
           if (!input.success) {
-            setErrorMessage('Check the position details and try again.');
+            setErrorMessage(t('investments:createDialog.errorCheckDetails'));
             return;
           }
           createInvestment.mutate(input.data, {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not add the position. Try again.'),
+            onError: () => setErrorMessage(t('investments:createDialog.errorCouldNotAdd')),
           });
           return;
         }
@@ -141,7 +149,7 @@ export function useInvestmentForm(existingCount: number): UseInvestmentFormResul
           },
           {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not save the changes. Try again.'),
+            onError: () => setErrorMessage(t('common:error.couldNotSaveChanges')),
           },
         );
       },

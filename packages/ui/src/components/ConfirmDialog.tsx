@@ -7,6 +7,9 @@ export type ConfirmDialogProps = {
   readonly title: string;
   readonly description: string;
   readonly confirmLabel: string;
+  /** @repo/ui may not import @repo/i18n (start-roadmap.md §6) — the caller in @repo/routes
+   * supplies this alongside confirmLabel, which was already a required prop for the same reason. */
+  readonly cancelLabel: string;
   readonly onConfirm: () => void;
   readonly isPending?: boolean;
 };
@@ -21,6 +24,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  cancelLabel,
   onConfirm,
   isPending = false,
 }: ConfirmDialogProps) {
@@ -37,7 +41,7 @@ export function ConfirmDialog({
             {/* A plain onClick, not AlertDialog.Close's `render` merge — Button isn't forwardRef'd,
              * and Close's only job here (closing without confirming) needs no DOM ref from base-ui. */}
             <Button tone="secondary" size="sm" disabled={isPending} onClick={() => onOpenChange(false)}>
-              Cancel
+              {cancelLabel}
             </Button>
             <Button tone="destruct" size="sm" onClick={onConfirm} disabled={isPending}>
               {confirmLabel}

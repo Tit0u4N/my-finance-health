@@ -28,6 +28,7 @@ export default defineConfig({
       '@repo/platform',
       '@repo/router',
       '@repo/routes',
+      '@repo/i18n',
     ],
   },
   clearScreen: false,

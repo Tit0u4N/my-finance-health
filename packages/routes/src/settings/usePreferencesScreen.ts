@@ -10,7 +10,7 @@ import { useExchangeRates } from '@repo/app-core/queries/useExchangeRates';
 import { useWorkspaceSettings } from '@repo/app-core/queries/useWorkspaceSettings';
 import { findExchangeRate } from '@repo/app-core/selectors/convertToBaseCurrency';
 import { parseRateInput } from '@repo/app-core/selectors/parseRateInput';
-import type { SidebarMode, ThemeMode } from '@repo/app-core/stores/createPreferencesStore';
+import type { LanguagePreference, SidebarMode, ThemeMode } from '@repo/app-core/stores/createPreferencesStore';
 import { usePreferencesStore } from '@repo/app-core/stores/PreferencesProvider';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
 import { rateToDecimal } from '@repo/domain/primitives/rate';
@@ -36,6 +36,8 @@ export type UsePreferencesScreenResult =
       readonly onThemeModeChange: (mode: ThemeMode) => void;
       readonly sidebarMode: SidebarMode;
       readonly onSidebarModeChange: (mode: SidebarMode) => void;
+      readonly languageOption: LanguagePreference;
+      readonly onLanguageChange: (language: LanguagePreference) => void;
       readonly baseCurrency: CurrencyCode;
       readonly baseCurrencyOptions: readonly BaseCurrencyOption[];
       readonly onBaseCurrencyChange: (currency: CurrencyCode) => void;
@@ -59,6 +61,8 @@ export function usePreferencesScreen(): UsePreferencesScreenResult {
   const setThemeMode = usePreferencesStore((state) => state.setThemeMode);
   const sidebarMode = usePreferencesStore((state) => state.sidebarMode);
   const setSidebarMode = usePreferencesStore((state) => state.setSidebarMode);
+  const languageOption = usePreferencesStore((state) => state.language);
+  const setLanguage = usePreferencesStore((state) => state.setLanguage);
 
   const updateBaseCurrency = useUpdateBaseCurrency();
   const upsertRate = useUpsertExchangeRate();
@@ -114,6 +118,8 @@ export function usePreferencesScreen(): UsePreferencesScreenResult {
     onThemeModeChange: setThemeMode,
     sidebarMode,
     onSidebarModeChange: setSidebarMode,
+    languageOption,
+    onLanguageChange: setLanguage,
     baseCurrency: settings.baseCurrency,
     baseCurrencyOptions: BASE_CURRENCY_OPTIONS,
     onBaseCurrencyChange: (currency) => updateBaseCurrency.mutate(currency),

@@ -8,10 +8,13 @@ import type { RepositorySet } from '@repo/domain/repositories/repositorySet';
 import type { Platform } from '@repo/platform/platform';
 import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement, ReactNode } from 'react';
+import { resolveActiveLanguage } from '../i18n/resolveActiveLanguage';
 import { AccountSelectionProvider } from '../stores/AccountSelectionProvider';
-import { PreferencesProvider } from '../stores/PreferencesProvider';
+import { PreferencesProvider, usePreferencesStore } from '../stores/PreferencesProvider';
 import { PlatformProvider } from './PlatformProvider';
 import { RepositoriesProvider } from './RepositoriesProvider';
+import { TranslationsProvider } from './TranslationsProvider';
+import { usePlatform } from './usePlatform';
 
 export type AppStageProvidersProps = {
   readonly platform: Platform;
@@ -32,10 +35,23 @@ export function AppStageProviders({
       <RepositoriesProvider repositories={repositories}>
         <QueryClientProvider client={queryClient}>
           <PreferencesProvider>
-            <AccountSelectionProvider>{children}</AccountSelectionProvider>
+            <PreferredLanguage>
+              <AccountSelectionProvider>{children}</AccountSelectionProvider>
+            </PreferredLanguage>
           </PreferencesProvider>
         </QueryClientProvider>
       </RepositoriesProvider>
     </PlatformProvider>
+  );
+}
+
+// Split out so it can read the preferences store `PreferencesProvider` just mounted above it —
+// the same shape as apps/desktop's own `ThemedRouter` (reads a store from inside the tree that
+// constructs it).
+function PreferredLanguage({ children }: { readonly children: ReactNode }): ReactElement {
+  const systemLocale = usePlatform().localization.locale();
+  const language = usePreferencesStore((state) => state.language);
+  return (
+    <TranslationsProvider language={resolveActiveLanguage(language, systemLocale)}>{children}</TranslationsProvider>
   );
 }

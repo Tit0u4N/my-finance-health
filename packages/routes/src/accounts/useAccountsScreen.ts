@@ -3,6 +3,8 @@
 // useAccountSelectionStore — this screen shows every account, ignoring the cross-screen scope
 // filter Overview/Transactions/Recurring share (screens.md's Accounts row lists no scoping).
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useCreateAccount } from '@repo/app-core/mutations/useCreateAccount';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useRepositories } from '@repo/app-core/providers/useRepositories';
@@ -85,9 +87,10 @@ export type UseAccountsScreenResult =
 const emptyDraft = { name: '', type: 'Checking' as AccountType, currency: 'EUR' as CurrencyCode, initialBalance: '' };
 
 export function useAccountsScreen(): UseAccountsScreenResult {
+  const { t } = useTranslation();
   const platform = usePlatform();
   const repositories = useRepositories();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
   const navigate = useNavigate();
 
   const accountsQuery = useAccounts();
@@ -137,27 +140,30 @@ export function useAccountsScreen(): UseAccountsScreenResult {
   const hasMissingRate = accounts.some(
     (account) => account.currency !== settings.baseCurrency && findExchangeRate(rates, account.currency) === undefined,
   );
-  const subtitle = `${accounts.length} account${accounts.length === 1 ? '' : 's'} · ${money(total, settings.baseCurrency)} total${hasMissingRate ? ' (some rates missing)' : ''}`;
+  const subtitle =
+    t('accounts:list.subtitle', { count: accounts.length, total: money(total, settings.baseCurrency) }) +
+    (hasMissingRate ? t('accounts:list.subtitleMissingRate') : '');
 
   const cards: AccountsCard[] = accounts.map((account, index) => {
     const change = changeByAccount.get(account.id) ?? toMoney(0);
     const sparkline = (historyQueries[index]?.data ?? []).map((point) => point.balance as number);
+    const typeLabel = t(`common:accountType.${account.type}`);
     return {
       id: account.id,
       name: account.name,
-      meta: account.last4 ? `${account.type} · •• ${account.last4}` : account.type,
+      meta: account.last4 ? `${typeLabel} · •• ${account.last4}` : typeLabel,
       icon: ACCOUNT_TYPE_ICON[account.type],
       color: account.color,
       balanceLabel: money(account.balance, account.currency),
       currencyLabel: account.currency,
       changeLabel: money(change, account.currency, { compact: true, hideSign: change === 0 }),
       changeTone: change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral',
-      changeCaption: 'past month',
+      changeCaption: t('accounts:list.changeCaption'),
       sparkline,
     };
   });
 
-  const typeOptions = ACCOUNT_TYPES.map((type) => ({ value: type, label: type }));
+  const typeOptions = ACCOUNT_TYPES.map((type) => ({ value: type, label: t(`common:accountType.${type}`) }));
   const currencyOptions = CURRENCIES.map((currency) => ({ value: currency, label: currency }));
   const parsedBalance = parseAmountInput(draft.initialBalance);
   const canSubmit = draft.name.trim().length > 0 && parsedBalance !== undefined && !createAccount.isPending;
@@ -200,12 +206,12 @@ export function useAccountsScreen(): UseAccountsScreenResult {
           icon: ACCOUNT_TYPE_ICON_SLUG[draft.type],
         });
         if (!input.success) {
-          setErrorMessage('Check the account details and try again.');
+          setErrorMessage(t('accounts:createDialog.errorCheckDetails'));
           return;
         }
         createAccount.mutate(input.data, {
           onSuccess: () => setOpen(false),
-          onError: () => setErrorMessage('Could not create the account. Try again.'),
+          onError: () => setErrorMessage(t('accounts:createDialog.errorCouldNotCreate')),
         });
       },
       canSubmit,

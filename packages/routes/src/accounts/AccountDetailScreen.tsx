@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Account detail screen (screens.md) — JSX and @repo/ui composition only, all data
-// and handlers come from useAccountDetailScreen.
+// and handlers come from useAccountDetailScreen. useTranslation is allowed here for static copy —
+// everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { AmountValue } from '@repo/ui/components/AmountValue';
 import { Avatar } from '@repo/ui/components/Avatar';
 import { Button } from '@repo/ui/components/Button';
@@ -28,14 +30,19 @@ const KPI_ICON_COLOR: Record<string, string> = {
 };
 
 export function AccountDetailScreen() {
+  const { t } = useTranslation();
   const screen = useAccountDetailScreen();
 
   if (!screen.ready) {
-    return <div className="flex flex-1 items-center justify-center text-body text-muted">Loading your workspace…</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-body text-muted">
+        {t('common:state.loadingWorkspace')}
+      </div>
+    );
   }
 
   if (!screen.found) {
-    return <PageHeader title="Not found" back={screen.onBack} />;
+    return <PageHeader title={t('common:state.notFound')} back={screen.onBack} />;
   }
 
   const {
@@ -62,10 +69,10 @@ export function AccountDetailScreen() {
         actions={
           <>
             <Button tone="secondary" size="sm" icon={Pencil} onClick={edit.onOpen}>
-              Edit
+              {t('accounts:detail.edit')}
             </Button>
             <Button tone="secondary" size="sm" icon={Download} disabled>
-              Export CSV
+              {t('accounts:detail.exportCsv')}
             </Button>
           </>
         }
@@ -86,39 +93,44 @@ export function AccountDetailScreen() {
         </div>
 
         <Panel
-          title="Balance trend"
+          title={t('accounts:detail.balanceTrendTitle')}
           subtitle={rangeCaption}
           right={
-            <RangePicker value={range} onChange={onRangeChange} options={rangeOptions} ariaLabel="History range" />
+            <RangePicker
+              value={range}
+              onChange={onRangeChange}
+              options={rangeOptions}
+              ariaLabel={t('common:label.historyRange')}
+            />
           }
         >
           <LineChart data={trend} color={trendColor} />
         </Panel>
 
         <Panel
-          title="Transactions"
+          title={t('accounts:detail.transactionsPanelTitle')}
           subtitle={rowCountLabel}
           bodyClassName="p-1 pt-3"
           right={
             <Button tone="secondary" size="sm" disabled>
-              Filter
+              {t('accounts:detail.filter')}
             </Button>
           }
         >
           {rows.length === 0 ? (
             <EmptyState
               icon={Receipt}
-              title="No transactions yet"
-              subtitle="Activity on this account will show up here."
+              title={t('accounts:detail.emptyTitle')}
+              subtitle={t('accounts:detail.emptySubtitle')}
             />
           ) : (
             <Table
               minWidth={620}
               head={[
-                { label: 'Description' },
-                { label: 'Category', width: 170 },
-                { label: 'Date', width: 120 },
-                { label: 'Amount', align: 'right', width: 130 },
+                { label: t('common:column.description') },
+                { label: t('common:column.category'), width: 170 },
+                { label: t('common:column.date'), width: 120 },
+                { label: t('common:column.amount'), align: 'right', width: 130 },
               ]}
             >
               {rows.map((row) => {
@@ -151,37 +163,46 @@ export function AccountDetailScreen() {
       <Dialog
         open={edit.isOpen}
         onOpenChange={edit.onClose}
-        title="Edit account"
+        title={t('accounts:editDialog.title')}
+        closeLabel={t('common:action.close')}
         width={560}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={edit.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={edit.onSubmit} disabled={!edit.canSubmit}>
-              Save changes
+              {t('common:action.saveChanges')}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
-          <Input label="Name" value={edit.name} onChange={(event) => edit.onNameChange(event.target.value)} />
+          <Input
+            label={t('accounts:createDialog.nameLabel')}
+            value={edit.name}
+            onChange={(event) => edit.onNameChange(event.target.value)}
+          />
           <div>
-            <span className="text-label text-muted">Type</span>
+            <span className="text-label text-muted">{t('accounts:createDialog.typeLabel')}</span>
             <div className="mt-2">
               <OptionGrid
                 value={edit.type}
                 onChange={edit.onTypeChange}
                 options={edit.typeOptions}
                 columns={2}
-                ariaLabel="Account type"
+                ariaLabel={t('accounts:createDialog.typeAriaLabel')}
               />
             </div>
           </div>
           <div>
-            <span className="text-label text-muted">Colour</span>
+            <span className="text-label text-muted">{t('accounts:editDialog.colourLabel')}</span>
             <div className="mt-2">
-              <ColorSwatchPicker value={edit.color} onChange={edit.onColorChange} ariaLabel="Account colour" />
+              <ColorSwatchPicker
+                value={edit.color}
+                onChange={edit.onColorChange}
+                ariaLabel={t('accounts:editDialog.colourAriaLabel')}
+              />
             </div>
           </div>
           {edit.errorMessage && <span className="text-body-sm text-neg">{edit.errorMessage}</span>}

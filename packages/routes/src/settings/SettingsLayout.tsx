@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Settings shell (screens.md "Settings") — the sticky nav rail + content pane every
-// /settings/* screen mounts under. JSX and @repo/ui composition only.
+// /settings/* screen mounts under. JSX and @repo/ui composition only. useTranslation is allowed
+// here for static copy — everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Avatar } from '@repo/ui/components/Avatar';
 import { Content } from '@repo/ui/components/Content';
 import { PageHeader } from '@repo/ui/components/PageHeader';
@@ -10,11 +12,12 @@ import { Link, Outlet } from '@tanstack/react-router';
 import { useSettingsLayout } from './useSettingsLayout';
 
 export function SettingsLayout() {
+  const { t } = useTranslation();
   const { items, activeId } = useSettingsLayout();
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Local preferences · nothing leaves this machine" />
+      <PageHeader title={t('settings:layout.title')} subtitle={t('settings:layout.subtitle')} />
       <Content>
         <div className="grid-settings">
           <div className="sticky top-0 flex flex-col gap-0.5 rounded-lg border border-border bg-surface p-2">

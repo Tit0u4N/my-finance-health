@@ -3,6 +3,8 @@
 // not-ready (still loading), found:false (the not-found guard as testable ViewModel state, not a
 // View-level `if (!account)` check), and the full ready screen.
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useUpdateAccount } from '@repo/app-core/mutations/useUpdateAccount';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useAccount } from '@repo/app-core/queries/useAccount';
@@ -25,7 +27,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowDownRight, ArrowUpRight, Repeat } from 'lucide-react';
 import { useState } from 'react';
-import { HISTORY_RANGE_OPTIONS } from '../shared/historyRange';
+import { useHistoryRangeOptions } from '../shared/historyRange';
 import { ACCOUNT_TYPE_ICON, categoryIcon } from '../shared/visuals';
 import { accountDetailSearchSchema, accountTransactionsCriteria } from './accountSearch';
 
@@ -92,17 +94,24 @@ export type UseAccountDetailScreenResult =
 
 const ACCOUNT_TYPES: readonly AccountType[] = ['Checking', 'Savings', 'Investment', 'Cash'];
 
-const RANGE_CAPTION: Record<HistoryRange, string> = {
-  '7d': 'Past 7 days',
-  '1m': 'Past month',
-  '3m': 'Past period',
-  '1y': 'Past period',
-  all: 'Past period',
+// Only 7d and 1m get their own translation key — 3m/1y/all all resolve to the same "Past period"
+// key (accounts:detail.pastPeriodOther), matching the original RANGE_CAPTION's shape.
+const RANGE_CAPTION_KEY: Record<
+  HistoryRange,
+  'accounts:detail.pastPeriod7d' | 'accounts:detail.pastPeriodMonth' | 'accounts:detail.pastPeriodOther'
+> = {
+  '7d': 'accounts:detail.pastPeriod7d',
+  '1m': 'accounts:detail.pastPeriodMonth',
+  '3m': 'accounts:detail.pastPeriodOther',
+  '1y': 'accounts:detail.pastPeriodOther',
+  all: 'accounts:detail.pastPeriodOther',
 };
 
 export function useAccountDetailScreen(): UseAccountDetailScreenResult {
+  const { t } = useTranslation();
+  const rangeOptions = useHistoryRangeOptions();
   const platform = usePlatform();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
   const navigate = useNavigate();
   const rawParams = useParams({ strict: false }) as { readonly accountId?: string };
   const rawSearch = useSearch({ strict: false }) as { readonly range?: HistoryRange };
@@ -156,19 +165,31 @@ export function useAccountDetailScreen(): UseAccountDetailScreenResult {
   const kpis: AccountDetailKpi[] = [
     {
       id: 'balance',
-      label: 'Current balance',
+      label: t('accounts:detail.kpi.balance'),
       valueLabel: money(account.balance),
-      sub: `${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`,
+      sub: t('accounts:detail.kpi.balanceSub', { count: transactions.length }),
       hero: true,
       icon: ACCOUNT_TYPE_ICON[account.type],
     },
-    { id: 'inflow', label: 'Inflow', valueLabel: money(totals.income), sub: 'all recorded', icon: ArrowDownRight },
-    { id: 'outflow', label: 'Outflow', valueLabel: money(totals.expense), sub: 'all recorded', icon: ArrowUpRight },
+    {
+      id: 'inflow',
+      label: t('common:kpi.inflow'),
+      valueLabel: money(totals.income),
+      sub: t('accounts:detail.kpi.allRecorded'),
+      icon: ArrowDownRight,
+    },
+    {
+      id: 'outflow',
+      label: t('common:kpi.outflow'),
+      valueLabel: money(totals.expense),
+      sub: t('accounts:detail.kpi.allRecorded'),
+      icon: ArrowUpRight,
+    },
     {
       id: 'net',
-      label: 'Net',
+      label: t('common:kpi.net'),
       valueLabel: money(totals.net),
-      sub: `${transactions.length} entries`,
+      sub: t('accounts:detail.kpi.netEntries', { count: transactions.length }),
       icon: Repeat,
     },
   ];
@@ -184,7 +205,7 @@ export function useAccountDetailScreen(): UseAccountDetailScreenResult {
     return {
       id: transaction.id,
       desc: transaction.desc,
-      categoryName: category?.name ?? 'Other',
+      categoryName: category?.name ?? t('common:category.other'),
       categoryColor: category?.color ?? 'var(--mfh-muted)',
       categoryIcon: categoryIcon(category?.name),
       dateLabel: formatRelativeDate(transaction.date.slice(0, 10) as never, today, locale),
@@ -193,30 +214,32 @@ export function useAccountDetailScreen(): UseAccountDetailScreenResult {
     };
   });
 
-  const typeOptions = ACCOUNT_TYPES.map((type) => ({ value: type, label: type }));
+  const typeOptions = ACCOUNT_TYPES.map((type) => ({ value: type, label: t(`common:accountType.${type}`) }));
   const canSubmit = draft.name.trim().length > 0 && !updateAccount.isPending;
 
   return {
     ready: true,
     found: true,
     hidden,
-    eyebrow: `Accounts · ${account.type}`,
+    eyebrow: t('accounts:detail.eyebrow', { type: t(`common:accountType.${account.type}`) }),
     title: account.name,
-    subtitle: account.last4 ? `Ending in ${account.last4} · ${account.currency}` : account.currency,
+    subtitle: account.last4
+      ? t('accounts:detail.subtitleWithLast4', { last4: account.last4, currency: account.currency })
+      : account.currency,
     onBack,
     kpis,
     range,
-    rangeOptions: HISTORY_RANGE_OPTIONS,
+    rangeOptions,
     onRangeChange: (next) => {
       // replace: true — a range change updates the current view, it isn't a new page to walk
       // back through (routes.md §4's "no waterfall" intent extends to the back button too).
       void navigate({ to: '/accounts/$accountId', params: { accountId: id }, search: { range: next }, replace: true });
     },
-    rangeCaption: RANGE_CAPTION[range],
+    rangeCaption: t(RANGE_CAPTION_KEY[range]),
     trend,
     trendColor: account.color,
     rows,
-    rowCountLabel: `${transactions.length} on this account`,
+    rowCountLabel: t('accounts:detail.rowCount', { count: transactions.length }),
     edit: {
       isOpen: isEditOpen,
       onOpen: () => {
@@ -238,7 +261,7 @@ export function useAccountDetailScreen(): UseAccountDetailScreenResult {
           { id, patch: { name: draft.name.trim(), type: draft.type, color: draft.color } },
           {
             onSuccess: () => setEditOpen(false),
-            onError: () => setErrorMessage('Could not save the changes. Try again.'),
+            onError: () => setErrorMessage(t('common:error.couldNotSaveChanges')),
           },
         );
       },

@@ -9,6 +9,7 @@ const buildProps = () => ({
   title: 'Delete "Groceries"?',
   description: '3 transactions use this category.',
   confirmLabel: 'Delete',
+  cancelLabel: 'Cancel',
   onConfirm: vi.fn(),
 });
 

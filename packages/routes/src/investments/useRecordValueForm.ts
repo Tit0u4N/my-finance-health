@@ -3,6 +3,7 @@
 // header action — one small hook shared by both ViewModels, same "single draft" shape as the
 // other forms in this pass.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useRecordInvestmentValueSnapshot } from '@repo/app-core/mutations/useRecordInvestmentValueSnapshot';
 import type { Investment } from '@repo/domain/entities/investment';
 import { isoDateTimeSchema } from '@repo/domain/primitives/dateTime';
@@ -13,6 +14,7 @@ import { parseAmountInput, toMinorUnits } from '../shared/moneyInput';
 
 export type RecordValueFormState = {
   readonly isOpen: boolean;
+  readonly dialogTitle: string;
   readonly investmentName: string;
   readonly date: string;
   readonly onDateChange: (value: string) => void;
@@ -38,6 +40,7 @@ export type UseRecordValueFormResult = {
 };
 
 export function useRecordValueForm(today: string): UseRecordValueFormResult {
+  const { t } = useTranslation();
   const recordValueSnapshot = useRecordInvestmentValueSnapshot();
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -48,6 +51,7 @@ export function useRecordValueForm(today: string): UseRecordValueFormResult {
   return {
     form: {
       isOpen: draft !== undefined,
+      dialogTitle: t('investments:recordValueDialog.title', { name: draft?.investmentName ?? '' }),
       investmentName: draft?.investmentName ?? '',
       date: draft?.date ?? today,
       onDateChange: (date) => setDraft((prev) => (prev ? { ...prev, date } : prev)),
@@ -68,7 +72,7 @@ export function useRecordValueForm(today: string): UseRecordValueFormResult {
           },
           {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not record the value. Try again.'),
+            onError: () => setErrorMessage(t('investments:recordValueDialog.errorCouldNotRecord')),
           },
         );
       },

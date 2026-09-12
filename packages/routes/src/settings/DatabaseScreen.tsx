@@ -1,6 +1,9 @@
 // @repo/routes — level 3.
-// View for Settings → Database (screens.md) — JSX and @repo/ui composition only.
+// View for Settings → Database (screens.md) — JSX and @repo/ui composition only. useTranslation is
+// allowed here for static copy — everything derived (plurals, interpolation) stays in the
+// ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Button } from '@repo/ui/components/Button';
 import { EmptyState } from '@repo/ui/components/EmptyState';
 import { Panel } from '@repo/ui/components/Panel';
@@ -8,10 +11,11 @@ import { Database, Trash2 } from 'lucide-react';
 import { useDatabaseScreen } from './useDatabaseScreen';
 
 export function DatabaseScreen() {
+  const { t } = useTranslation();
   const screen = useDatabaseScreen();
 
   if (!screen.ready) {
-    return <div className="text-body text-muted">Loading…</div>;
+    return <div className="text-body text-muted">{t('common:state.loading')}</div>;
   }
 
   if (!screen.isAvailable) {
@@ -19,8 +23,8 @@ export function DatabaseScreen() {
       <Panel>
         <EmptyState
           icon={Database}
-          title="Not available on this platform"
-          subtitle="Database management needs local file access, which this build doesn't have."
+          title={t('settings:database.emptyState.title')}
+          subtitle={t('settings:database.emptyState.subtitle')}
         />
       </Panel>
     );
@@ -30,7 +34,10 @@ export function DatabaseScreen() {
 
   return (
     <>
-      <Panel title="Active file" subtitle="Everything lives in this single file">
+      <Panel
+        title={t('settings:database.activeFilePanel.title')}
+        subtitle={t('settings:database.activeFilePanel.subtitle')}
+      >
         <div className="rounded-md border border-border bg-chip-bg px-3.5 py-3 font-mono text-body-sm text-foreground">
           {path}
         </div>
@@ -51,16 +58,19 @@ export function DatabaseScreen() {
         </div>
       </Panel>
 
-      <Panel title="Danger zone" subtitle="These actions cannot be undone">
+      <Panel
+        title={t('settings:database.dangerZonePanel.title')}
+        subtitle={t('settings:database.dangerZonePanel.subtitle')}
+      >
         <div className="flex items-center gap-4">
           <div className="flex-1">
-            <div className="text-label-strong text-neg">Reset all data</div>
+            <div className="text-label-strong text-neg">{t('settings:database.resetAllData.label')}</div>
             <div className="mt-0.5 text-body-sm text-muted leading-relaxed">
-              Wipes transactions, accounts and investments. The file itself stays on disk.
+              {t('settings:database.resetAllData.description')}
             </div>
           </div>
           <Button tone="destruct" size="sm" icon={Trash2} disabled>
-            Reset everything
+            {t('settings:database.resetEverything')}
           </Button>
         </div>
       </Panel>

@@ -20,6 +20,9 @@ describe('Sidebar', () => {
         onSelect={onSelect}
         amountsHidden={false}
         onToggleAmountsHidden={() => undefined}
+        brandLabel="My Finance Health"
+        showAmountsLabel="Show amounts"
+        hideAmountsLabel="Hide amounts"
       />,
     );
 
@@ -36,6 +39,9 @@ describe('Sidebar', () => {
         onSelect={() => undefined}
         amountsHidden={false}
         onToggleAmountsHidden={() => undefined}
+        brandLabel="My Finance Health"
+        showAmountsLabel="Show amounts"
+        hideAmountsLabel="Hide amounts"
         footerItems={FOOTER_ITEMS}
       />,
     );
@@ -51,6 +57,9 @@ describe('Sidebar', () => {
         onSelect={() => undefined}
         amountsHidden={false}
         onToggleAmountsHidden={() => undefined}
+        brandLabel="My Finance Health"
+        showAmountsLabel="Show amounts"
+        hideAmountsLabel="Hide amounts"
         footerItems={FOOTER_ITEMS}
         collapsed
       />,

@@ -4,6 +4,7 @@
 // provider, never a module singleton: test isolation, platform injection, and desktop
 // multi-window each need their own instance (start-roadmap.md §5).
 
+import { type Language, SUPPORTED_LANGUAGES } from '@repo/i18n/languages';
 import type { KeyValueStore } from '@repo/platform/services/keyValueStore';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 
@@ -12,17 +13,23 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 // sidebar options (Expanded / Icons only, ui-inventory.md's OptionGrid row), and no screen or
 // consumer ever reads a third state (open-questions.md #11's "not an evidenced product feature").
 export type SidebarMode = 'expanded' | 'collapsed';
+// 'system' follows the platform's own locale (platform.localization.locale(), resolved through
+// @repo/i18n's resolveLanguage) until the user picks a shipped language explicitly —
+// localization.ts's docblock: "consumed as a default before the user picks a language explicitly".
+export type LanguagePreference = 'system' | Language;
 
 export type PersistedPreferences = {
   readonly themeMode: ThemeMode;
   readonly sidebarMode: SidebarMode;
   readonly amountsHidden: boolean;
+  readonly language: LanguagePreference;
 };
 
 export type PreferencesState = PersistedPreferences & {
   readonly setThemeMode: (themeMode: ThemeMode) => void;
   readonly setSidebarMode: (sidebarMode: SidebarMode) => void;
   readonly toggleAmountsHidden: () => void;
+  readonly setLanguage: (language: LanguagePreference) => void;
 };
 
 const PREFERENCES_KEY = 'preferences';
@@ -31,13 +38,19 @@ const DEFAULT_PREFERENCES: PersistedPreferences = {
   themeMode: 'system',
   sidebarMode: 'expanded',
   amountsHidden: false,
+  language: 'system',
 };
+
+function isLanguagePreference(value: unknown): value is LanguagePreference {
+  return value === 'system' || (SUPPORTED_LANGUAGES as readonly unknown[]).includes(value);
+}
 
 function toPersisted(state: PreferencesState): PersistedPreferences {
   return {
     themeMode: state.themeMode,
     sidebarMode: state.sidebarMode,
     amountsHidden: state.amountsHidden,
+    language: state.language,
   };
 }
 
@@ -58,6 +71,10 @@ export function createPreferencesStore(keyValueStore: KeyValueStore): StoreApi<P
     },
     toggleAmountsHidden: () => {
       set((state) => ({ amountsHidden: !state.amountsHidden }));
+      persist(get());
+    },
+    setLanguage: (language) => {
+      set({ language });
       persist(get());
     },
   }));
@@ -84,10 +101,12 @@ export async function hydratePreferencesStore(
     const sidebarMode =
       parsed.sidebarMode === 'expanded' || parsed.sidebarMode === 'collapsed' ? parsed.sidebarMode : undefined;
     const amountsHidden = typeof parsed.amountsHidden === 'boolean' ? parsed.amountsHidden : undefined;
+    const language = isLanguagePreference(parsed.language) ? parsed.language : undefined;
     store.setState({
       ...(themeMode !== undefined && { themeMode }),
       ...(sidebarMode !== undefined && { sidebarMode }),
       ...(amountsHidden !== undefined && { amountsHidden }),
+      ...(language !== undefined && { language }),
     });
   } catch {
     // Corrupt value — keep the defaults already in the store rather than failing bootstrap over a display setting.

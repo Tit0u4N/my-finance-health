@@ -1,6 +1,9 @@
 // @repo/routes — level 3.
-// View for Settings → Categories (screens.md) — JSX and @repo/ui composition only.
+// View for Settings → Categories (screens.md) — JSX and @repo/ui composition only. useTranslation
+// is allowed here for static copy — everything derived (plurals, interpolation) stays in the
+// ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Button } from '@repo/ui/components/Button';
 import { ColorSwatchPicker } from '@repo/ui/components/ColorSwatchPicker';
 import { ConfirmDialog } from '@repo/ui/components/ConfirmDialog';
@@ -21,6 +24,7 @@ type CategoryColumnProps = {
 };
 
 function CategoryColumn({ title, countLabel, rows, onAdd, onEdit, onDelete }: CategoryColumnProps) {
+  const { t } = useTranslation();
   return (
     <Panel
       title={title}
@@ -28,7 +32,7 @@ function CategoryColumn({ title, countLabel, rows, onAdd, onEdit, onDelete }: Ca
       bodyClassName="p-0"
       right={
         <Button tone="soft" size="sm" icon={Plus} onClick={onAdd}>
-          Add
+          {t('settings:categories.addButton')}
         </Button>
       }
     >
@@ -42,7 +46,7 @@ function CategoryColumn({ title, countLabel, rows, onAdd, onEdit, onDelete }: Ca
           <div className="flex gap-0.5 text-subtle">
             <button
               type="button"
-              title="Edit"
+              title={t('common:action.edit')}
               onClick={() => onEdit(row.id)}
               className="flex h-7 w-7 items-center justify-center rounded-sm hover:bg-chip-bg"
             >
@@ -50,7 +54,7 @@ function CategoryColumn({ title, countLabel, rows, onAdd, onEdit, onDelete }: Ca
             </button>
             <button
               type="button"
-              title="Delete"
+              title={t('common:action.delete')}
               onClick={() => onDelete(row.id)}
               className="flex h-7 w-7 items-center justify-center rounded-sm hover:bg-chip-bg"
             >
@@ -64,9 +68,10 @@ function CategoryColumn({ title, countLabel, rows, onAdd, onEdit, onDelete }: Ca
 }
 
 export function CategoriesScreen() {
+  const { t } = useTranslation();
   const screen = useCategoriesScreen();
   if (!screen.ready) {
-    return <div className="text-body text-muted">Loading…</div>;
+    return <div className="text-body text-muted">{t('common:state.loading')}</div>;
   }
 
   const { expenses, income, expensesCountLabel, incomeCountLabel, onAdd, onEdit, onDelete, dialog, deleteDialog } =
@@ -76,7 +81,7 @@ export function CategoriesScreen() {
     <>
       <div className="grid-half">
         <CategoryColumn
-          title="Expenses"
+          title={t('common:categoryKind.expense')}
           countLabel={expensesCountLabel}
           rows={expenses}
           onAdd={() => onAdd('expense')}
@@ -84,7 +89,7 @@ export function CategoriesScreen() {
           onDelete={onDelete}
         />
         <CategoryColumn
-          title="Income"
+          title={t('common:categoryKind.income')}
           countLabel={incomeCountLabel}
           rows={income}
           onAdd={() => onAdd('income')}
@@ -96,30 +101,39 @@ export function CategoriesScreen() {
       <Dialog
         open={dialog.isOpen}
         onOpenChange={dialog.onClose}
-        title={dialog.mode === 'create' ? 'New category' : 'Edit category'}
+        title={
+          dialog.mode === 'create'
+            ? t('settings:categories.dialog.createTitle')
+            : t('settings:categories.dialog.editTitle')
+        }
         subtitle={dialog.kindLabel}
+        closeLabel={t('common:action.close')}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={dialog.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={dialog.onSubmit} disabled={!dialog.canSubmit}>
-              {dialog.mode === 'create' ? 'Create category' : 'Save changes'}
+              {dialog.mode === 'create' ? t('settings:categories.dialog.createSubmit') : t('common:action.saveChanges')}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <Input
-            label="Name"
-            placeholder="e.g. Groceries"
+            label={t('settings:categories.dialog.nameLabel')}
+            placeholder={t('settings:categories.dialog.namePlaceholder')}
             value={dialog.name}
             onChange={(event) => dialog.onNameChange(event.target.value)}
           />
           <div>
-            <span className="text-label text-muted">Colour</span>
+            <span className="text-label text-muted">{t('settings:categories.dialog.colourLabel')}</span>
             <div className="mt-2">
-              <ColorSwatchPicker value={dialog.color} onChange={dialog.onColorChange} ariaLabel="Category colour" />
+              <ColorSwatchPicker
+                value={dialog.color}
+                onChange={dialog.onColorChange}
+                ariaLabel={t('settings:categories.dialog.colourAriaLabel')}
+              />
             </div>
           </div>
           {dialog.errorMessage && <span className="text-body-sm text-neg">{dialog.errorMessage}</span>}
@@ -129,9 +143,10 @@ export function CategoriesScreen() {
       <ConfirmDialog
         open={deleteDialog.isOpen}
         onOpenChange={deleteDialog.onClose}
-        title={`Delete "${deleteDialog.name}"?`}
-        description={deleteDialog.usageWarning ?? 'This category has no transactions yet.'}
-        confirmLabel="Delete"
+        title={deleteDialog.title}
+        description={deleteDialog.description}
+        confirmLabel={t('common:action.delete')}
+        cancelLabel={t('common:action.cancel')}
         onConfirm={deleteDialog.onConfirm}
         isPending={deleteDialog.isSubmitting}
       />

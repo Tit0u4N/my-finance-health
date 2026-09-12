@@ -1,7 +1,9 @@
 // @repo/routes — level 3.
 // View for the Accounts (list) screen (screens.md) — JSX and @repo/ui composition only, all data
-// and handlers come from useAccountsScreen.
+// and handlers come from useAccountsScreen. useTranslation is allowed here for static copy —
+// everything derived (plurals, interpolation) stays in the ViewModel.
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { AmountValue } from '@repo/ui/components/AmountValue';
 import { Avatar } from '@repo/ui/components/Avatar';
 import { Badge } from '@repo/ui/components/Badge';
@@ -17,10 +19,15 @@ import { ChevronRight, Plus } from 'lucide-react';
 import { useAccountsScreen } from './useAccountsScreen';
 
 export function AccountsScreen() {
+  const { t } = useTranslation();
   const screen = useAccountsScreen();
 
   if (!screen.ready) {
-    return <div className="flex flex-1 items-center justify-center text-body text-muted">Loading your workspace…</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-body text-muted">
+        {t('common:state.loadingWorkspace')}
+      </div>
+    );
   }
 
   const { hidden, cards, subtitle, onOpenAccount, addAccount } = screen;
@@ -28,11 +35,11 @@ export function AccountsScreen() {
   return (
     <>
       <PageHeader
-        title="Accounts"
+        title={t('accounts:list.title')}
         subtitle={subtitle}
         actions={
           <Button tone="primary" size="sm" icon={Plus} onClick={addAccount.onOpen}>
-            Add account
+            {t('accounts:list.addAccount')}
           </Button>
         }
       />
@@ -82,7 +89,7 @@ export function AccountsScreen() {
             className="flex min-h-55 flex-col items-center justify-center gap-2 rounded-lg border-2 border-border-strong border-dashed text-muted"
           >
             <Plus size={22} />
-            <span className="text-label-strong">Add another account</span>
+            <span className="text-label-strong">{t('accounts:list.addAnother')}</span>
           </button>
         </div>
       </Content>
@@ -92,49 +99,50 @@ export function AccountsScreen() {
         // The dialog is opened only by our own onOpen() above (no <Dialog.Trigger> here) — base-ui
         // only ever calls this back to request a close (Escape / backdrop / the header's own X).
         onOpenChange={addAccount.onClose}
-        title="New account"
-        subtitle="Balances update as you record transactions"
+        title={t('accounts:createDialog.title')}
+        subtitle={t('accounts:createDialog.subtitle')}
+        closeLabel={t('common:action.close')}
         width={560}
         actions={
           <>
             <Button tone="secondary" size="sm" onClick={addAccount.onClose}>
-              Cancel
+              {t('common:action.cancel')}
             </Button>
             <Button tone="primary" size="sm" onClick={addAccount.onSubmit} disabled={!addAccount.canSubmit}>
-              Create account
+              {t('accounts:createDialog.submit')}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <Input
-            label="Name"
-            placeholder="e.g. Everyday"
+            label={t('accounts:createDialog.nameLabel')}
+            placeholder={t('accounts:createDialog.namePlaceholder')}
             value={addAccount.name}
             onChange={(event) => addAccount.onNameChange(event.target.value)}
           />
           <div>
-            <span className="text-label text-muted">Type</span>
+            <span className="text-label text-muted">{t('accounts:createDialog.typeLabel')}</span>
             <div className="mt-2">
               <OptionGrid
                 value={addAccount.type}
                 onChange={addAccount.onTypeChange}
                 options={addAccount.typeOptions}
                 columns={2}
-                ariaLabel="Account type"
+                ariaLabel={t('accounts:createDialog.typeAriaLabel')}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Initial balance"
+              label={t('accounts:createDialog.initialBalanceLabel')}
               placeholder="0.00"
               inputMode="decimal"
               value={addAccount.initialBalance}
               onChange={(event) => addAccount.onInitialBalanceChange(event.target.value)}
             />
             <Select
-              label="Currency"
+              label={t('accounts:createDialog.currencyLabel')}
               value={addAccount.currency}
               onValueChange={addAccount.onCurrencyChange}
               options={addAccount.currencyOptions}

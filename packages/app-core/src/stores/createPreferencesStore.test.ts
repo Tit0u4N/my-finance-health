@@ -15,6 +15,7 @@ describe('createPreferencesStore', () => {
       themeMode: 'system',
       sidebarMode: 'expanded',
       amountsHidden: false,
+      language: 'system',
     });
   });
 
@@ -46,6 +47,26 @@ describe('createPreferencesStore', () => {
     const raw = await keyValueStore.get('preferences');
     expect(JSON.parse(raw ?? '{}')).toMatchObject({ amountsHidden: true });
   });
+
+  it('setLanguage persists a shipped language', async () => {
+    const keyValueStore = buildKeyValueStore();
+    const store = createPreferencesStore(keyValueStore);
+
+    store.getState().setLanguage('fr');
+
+    expect(store.getState().language).toBe('fr');
+    const raw = await keyValueStore.get('preferences');
+    expect(JSON.parse(raw ?? '{}')).toMatchObject({ language: 'fr' });
+  });
+
+  it('setLanguage accepts the "system" sentinel', () => {
+    const store = createPreferencesStore(buildKeyValueStore());
+
+    store.getState().setLanguage('fr');
+    store.getState().setLanguage('system');
+
+    expect(store.getState().language).toBe('system');
+  });
 });
 
 describe('hydratePreferencesStore', () => {
@@ -68,7 +89,12 @@ describe('hydratePreferencesStore', () => {
 
     await hydratePreferencesStore(store, keyValueStore);
 
-    expect(store.getState()).toMatchObject({ themeMode: 'system', sidebarMode: 'expanded', amountsHidden: false });
+    expect(store.getState()).toMatchObject({
+      themeMode: 'system',
+      sidebarMode: 'expanded',
+      amountsHidden: false,
+      language: 'system',
+    });
   });
 
   it('keeps the defaults when the persisted value is corrupt JSON', async () => {
@@ -78,7 +104,26 @@ describe('hydratePreferencesStore', () => {
 
     await hydratePreferencesStore(store, keyValueStore);
 
-    expect(store.getState()).toMatchObject({ themeMode: 'system', sidebarMode: 'expanded', amountsHidden: false });
+    expect(store.getState()).toMatchObject({
+      themeMode: 'system',
+      sidebarMode: 'expanded',
+      amountsHidden: false,
+      language: 'system',
+    });
+  });
+
+  it('loads a persisted language and rejects an unshipped one', async () => {
+    const keyValueStore = buildKeyValueStore();
+    await keyValueStore.set('preferences', JSON.stringify({ language: 'fr' }));
+    const store = createPreferencesStore(keyValueStore);
+    await hydratePreferencesStore(store, keyValueStore);
+    expect(store.getState().language).toBe('fr');
+
+    const otherKeyValueStore = buildKeyValueStore();
+    await otherKeyValueStore.set('preferences', JSON.stringify({ language: 'de' }));
+    const otherStore = createPreferencesStore(otherKeyValueStore);
+    await hydratePreferencesStore(otherStore, otherKeyValueStore);
+    expect(otherStore.getState().language).toBe('system');
   });
 
   it('does not reintroduce accent/density from a legacy blob written by an older build', async () => {

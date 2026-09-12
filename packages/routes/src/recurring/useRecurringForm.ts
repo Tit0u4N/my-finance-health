@@ -3,6 +3,7 @@
 // transactions/useTransactionForm.ts. The `active` toggle lives on the row's own Switch, not in
 // this dialog (create defaults to active; screens.md's toggle is a list-row affordance).
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useCreateRecurringRule } from '@repo/app-core/mutations/useCreateRecurringRule';
 import { useUpdateRecurringRule } from '@repo/app-core/mutations/useUpdateRecurringRule';
 import type { Account } from '@repo/domain/entities/account';
@@ -22,20 +23,13 @@ import { useState } from 'react';
 import { parseAmountInput, toMinorUnits } from '../shared/moneyInput';
 import { categoryIcon } from '../shared/visuals';
 
-const KIND_OPTIONS: readonly TabItem<CategoryKind>[] = [
-  { value: 'expense', label: 'Expense' },
-  { value: 'income', label: 'Income' },
-];
-
 const FREQUENCIES: readonly RecurringFrequency[] = ['Daily', 'Weekly', 'Monthly', 'Yearly'];
-const FREQUENCY_OPTIONS: readonly SelectOption<RecurringFrequency>[] = FREQUENCIES.map((freq) => ({
-  value: freq,
-  label: freq,
-}));
 
 export type RecurringFormState = {
   readonly isOpen: boolean;
   readonly mode: 'create' | 'edit';
+  readonly dialogTitle: string;
+  readonly submitLabel: string;
   readonly kind: CategoryKind;
   readonly onKindChange: (kind: CategoryKind) => void;
   readonly kindOptions: readonly TabItem<CategoryKind>[];
@@ -84,6 +78,7 @@ export function useRecurringForm(
   accounts: readonly Account[],
   today: string,
 ): UseRecurringFormResult {
+  const { t } = useTranslation();
   const createRecurringRule = useCreateRecurringRule();
   const updateRecurringRule = useUpdateRecurringRule();
 
@@ -94,6 +89,16 @@ export function useRecurringForm(
   const firstOfKind = (targetKind: CategoryKind): string =>
     categories.find((category) => category.kind === targetKind)?.id ?? '';
 
+  const kindOptions: readonly TabItem<CategoryKind>[] = [
+    { value: 'expense', label: t('common:categoryKind.expense') },
+    { value: 'income', label: t('common:categoryKind.income') },
+  ];
+  const freqOptions: readonly SelectOption<RecurringFrequency>[] = FREQUENCIES.map((freq) => ({
+    value: freq,
+    label: t(`common:recurringFrequency.${freq}`),
+  }));
+
+  const mode = draft?.mode ?? 'create';
   const kind = draft?.kind ?? 'expense';
   const categoryChips: CategoryChipItem[] = categories
     .filter((category) => category.kind === kind)
@@ -119,11 +124,13 @@ export function useRecurringForm(
   return {
     form: {
       isOpen: draft !== undefined,
-      mode: draft?.mode ?? 'create',
+      mode,
+      dialogTitle: mode === 'create' ? t('recurring:dialog.createTitle') : t('recurring:dialog.editTitle'),
+      submitLabel: mode === 'create' ? t('recurring:dialog.createSubmit') : t('common:action.saveChanges'),
       kind,
       onKindChange: (nextKind) =>
         setDraft((current) => (current ? { ...current, kind: nextKind, categoryId: firstOfKind(nextKind) } : current)),
-      kindOptions: KIND_OPTIONS,
+      kindOptions,
       amount: draft?.amount ?? '',
       onAmountChange: (amount) => setDraft((current) => (current ? { ...current, amount } : current)),
       desc: draft?.desc ?? '',
@@ -136,7 +143,7 @@ export function useRecurringForm(
       accountOptions: accounts.map((account) => ({ value: account.id, label: account.name })),
       freq: draft?.freq ?? 'Monthly',
       onFreqChange: (freq) => setDraft((current) => (current ? { ...current, freq } : current)),
-      freqOptions: FREQUENCY_OPTIONS,
+      freqOptions,
       startDate: draft?.startDate ?? today,
       onStartDateChange: (startDate) => setDraft((current) => (current ? { ...current, startDate } : current)),
       onSubmit: () => {
@@ -159,12 +166,12 @@ export function useRecurringForm(
             active: true,
           });
           if (!input.success) {
-            setErrorMessage('Check the rule details and try again.');
+            setErrorMessage(t('recurring:dialog.errorCheckDetails'));
             return;
           }
           createRecurringRule.mutate(input.data, {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not create the rule. Try again.'),
+            onError: () => setErrorMessage(t('recurring:dialog.errorCouldNotCreate')),
           });
           return;
         }
@@ -185,7 +192,7 @@ export function useRecurringForm(
           },
           {
             onSuccess: () => setDraft(undefined),
-            onError: () => setErrorMessage('Could not save the changes. Try again.'),
+            onError: () => setErrorMessage(t('common:error.couldNotSaveChanges')),
           },
         );
       },

@@ -4,6 +4,7 @@
 // principle 1 — a capability check, not a platform name, and not the `.desktop.tsx` route-suffix
 // routes.md §5 originally proposed (this repo has no file-based route generation to hang that on).
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
 import { useCategories } from '@repo/app-core/queries/useCategories';
@@ -28,15 +29,8 @@ export type UseDatabaseScreenResult =
       readonly actions: readonly DatabaseAction[];
     };
 
-const NOT_YET_AVAILABLE = 'Not available yet';
-
-const ACTIONS: readonly DatabaseAction[] = [
-  { id: 'switch-file', label: 'Switch file', icon: FolderOpen },
-  { id: 'backup', label: 'Create backup', icon: Save },
-  { id: 'export', label: 'Export CSV', icon: Download },
-];
-
 export function useDatabaseScreen(): UseDatabaseScreenResult {
+  const { t } = useTranslation();
   const platform = usePlatform();
   const isAvailable = platform.capabilities.canWriteFile;
 
@@ -71,18 +65,24 @@ export function useDatabaseScreen(): UseDatabaseScreenResult {
     (investmentsQuery.data as NonNullable<typeof investmentsQuery.data>).length +
     (ratesQuery.data as NonNullable<typeof ratesQuery.data>).length;
 
+  const notYetAvailable = t('settings:database.notAvailableYet');
+
   return {
     ready: true,
     isAvailable: true,
     // No workspace path exists yet to read: @repo/routes may not import @repo/data (where a
     // WorkspaceRef lives), and Platform carries no file-path field. Real once bootstrap exposes
     // the active WorkspaceRef through app-core instead — flagged, not silently guessed at.
-    path: NOT_YET_AVAILABLE,
+    path: notYetAvailable,
     metadata: [
-      { label: 'Size', value: NOT_YET_AVAILABLE },
-      { label: 'Last opened', value: NOT_YET_AVAILABLE },
-      { label: 'Rows', value: String(rowCount) },
+      { label: t('settings:database.metadata.size'), value: notYetAvailable },
+      { label: t('settings:database.metadata.lastOpened'), value: notYetAvailable },
+      { label: t('settings:database.metadata.rows'), value: String(rowCount) },
     ],
-    actions: ACTIONS,
+    actions: [
+      { id: 'switch-file', label: t('settings:database.actions.switchFile'), icon: FolderOpen },
+      { id: 'backup', label: t('settings:database.actions.createBackup'), icon: Save },
+      { id: 'export', label: t('common:action.exportCsv'), icon: Download },
+    ],
   };
 }

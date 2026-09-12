@@ -1,6 +1,7 @@
 // @repo/routes — level 3.
 // ViewModel for CategoriesScreen.tsx (screens.md "Settings → Categories").
 
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useCreateCategory } from '@repo/app-core/mutations/useCreateCategory';
 import { useDeleteCategory } from '@repo/app-core/mutations/useDeleteCategory';
 import { useUpdateCategory } from '@repo/app-core/mutations/useUpdateCategory';
@@ -30,8 +31,8 @@ export type CategoryDialogState = {
 
 export type CategoryDeleteState = {
   readonly isOpen: boolean;
-  readonly name: string;
-  readonly usageWarning: string | undefined;
+  readonly title: string;
+  readonly description: string;
   readonly onConfirm: () => void;
   readonly onClose: () => void;
   readonly isSubmitting: boolean;
@@ -61,6 +62,7 @@ type Draft = {
 };
 
 export function useCategoriesScreen(): UseCategoriesScreenResult {
+  const { t } = useTranslation();
   const categoriesQuery = useCategories();
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
@@ -86,19 +88,17 @@ export function useCategoriesScreen(): UseCategoriesScreenResult {
   const toRow = (category: Category): CategoryRow => ({ id: category.id, name: category.name, color: category.color });
 
   const usageCount = usageQuery.data?.length;
-  const usageWarning =
-    deleting && usageCount !== undefined
-      ? usageCount === 0
-        ? undefined
-        : `${usageCount} transaction${usageCount === 1 ? '' : 's'} use${usageCount === 1 ? 's' : ''} this category.`
-      : undefined;
+  const description =
+    usageCount === undefined || usageCount === 0
+      ? t('settings:categories.deleteDialog.noTransactions')
+      : t('settings:categories.usageWarning', { count: usageCount });
 
   return {
     ready: true,
     expenses: expenses.map(toRow),
     income: income.map(toRow),
-    expensesCountLabel: `${expenses.length} categor${expenses.length === 1 ? 'y' : 'ies'}`,
-    incomeCountLabel: `${income.length} categor${income.length === 1 ? 'y' : 'ies'}`,
+    expensesCountLabel: t('settings:categories.countLabel', { count: expenses.length }),
+    incomeCountLabel: t('settings:categories.countLabel', { count: income.length }),
     onAdd: (kind) => {
       setErrorMessage(undefined);
       setDraft({
@@ -125,7 +125,7 @@ export function useCategoriesScreen(): UseCategoriesScreenResult {
     dialog: {
       isOpen: draft !== undefined,
       mode: draft?.mode ?? 'create',
-      kindLabel: draft?.kind === 'income' ? 'Income' : 'Expense',
+      kindLabel: draft?.kind === 'income' ? t('common:categoryKind.income') : t('common:categoryKind.expense'),
       name: draft?.name ?? '',
       onNameChange: (name) => setDraft((current) => (current ? { ...current, name } : current)),
       color: draft?.color ?? (CATEGORY_SWATCHES[0] as string),
@@ -139,7 +139,10 @@ export function useCategoriesScreen(): UseCategoriesScreenResult {
         if (draft.mode === 'create') {
           createCategory.mutate(
             { name, color: draft.color, kind: draft.kind },
-            { onSuccess: () => setDraft(undefined), onError: () => setErrorMessage('Could not create the category.') },
+            {
+              onSuccess: () => setDraft(undefined),
+              onError: () => setErrorMessage(t('settings:categories.errorCouldNotCreate')),
+            },
           );
           return;
         }
@@ -148,7 +151,10 @@ export function useCategoriesScreen(): UseCategoriesScreenResult {
         }
         updateCategory.mutate(
           { id: draft.id, patch: { name, color: draft.color } },
-          { onSuccess: () => setDraft(undefined), onError: () => setErrorMessage('Could not save the changes.') },
+          {
+            onSuccess: () => setDraft(undefined),
+            onError: () => setErrorMessage(t('common:error.couldNotSaveChanges')),
+          },
         );
       },
       onClose: () => setDraft(undefined),
@@ -158,8 +164,8 @@ export function useCategoriesScreen(): UseCategoriesScreenResult {
     },
     deleteDialog: {
       isOpen: deleting !== undefined,
-      name: deleting?.name ?? '',
-      usageWarning,
+      title: t('settings:categories.deleteDialog.title', { name: deleting?.name ?? '' }),
+      description,
       onConfirm: () => {
         if (!deleting) {
           return;

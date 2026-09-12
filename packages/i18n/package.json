@@ -11,7 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@repo/domain": "workspace:*"
+    "@repo/domain": "workspace:*",
+    "i18next": "^26.4.2"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

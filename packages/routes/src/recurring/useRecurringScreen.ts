@@ -6,6 +6,8 @@
 // criteria) and include paused rules, unlike computeUpcomingRecurring which drops them — the
 // active toggle needs every row, not just the upcoming ones.
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useDeleteRecurringRule } from '@repo/app-core/mutations/useDeleteRecurringRule';
 import { useUpdateRecurringRule } from '@repo/app-core/mutations/useUpdateRecurringRule';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
@@ -45,6 +47,8 @@ export type RecurringRow = {
   readonly monthlyLabel: string;
   readonly isPositive: boolean;
   readonly isActive: boolean;
+  readonly activeAriaLabel: string;
+  readonly actionsAriaLabel: string;
 };
 
 export type RecurringKpi = {
@@ -57,7 +61,7 @@ export type RecurringKpi = {
 
 export type RecurringDeleteState = {
   readonly isOpen: boolean;
-  readonly desc: string;
+  readonly title: string;
   readonly onConfirm: () => void;
   readonly onClose: () => void;
   readonly isSubmitting: boolean;
@@ -82,8 +86,9 @@ export type UseRecurringScreenResult =
     };
 
 export function useRecurringScreen(): UseRecurringScreenResult {
+  const { t } = useTranslation();
   const platform = usePlatform();
-  const locale = platform.localization.locale();
+  const locale = useFormattingLocale();
 
   const accountsQuery = useAccounts();
   const categoriesQuery = useCategories();
@@ -135,17 +140,19 @@ export function useRecurringScreen(): UseRecurringScreenResult {
     return {
       id: rule.id,
       desc: rule.desc,
-      categoryName: category?.name ?? 'Other',
+      categoryName: category?.name ?? t('common:category.other'),
       categoryColor: category?.color ?? 'var(--mfh-muted)',
       categoryIcon: categoryIcon(category?.name),
       accountName: account?.name ?? '',
-      freqLabel: rule.freq,
+      freqLabel: t(`common:recurringFrequency.${rule.freq}`),
       nextLabel: formatAbsoluteDate(next, locale),
       nextRelativeLabel: formatRelativeDate(next, today, locale),
       amountLabel: formatMoney(rule.amount, currency, locale),
       monthlyLabel: formatMoney(toMonthlyAmount(rule), currency, locale, { compact: true }),
       isPositive: rule.amount > 0,
       isActive: rule.active,
+      activeAriaLabel: t('recurring:list.activeAriaLabel', { name: rule.desc }),
+      actionsAriaLabel: t('recurring:list.actionsAriaLabel', { name: rule.desc }),
     };
   });
 
@@ -153,12 +160,18 @@ export function useRecurringScreen(): UseRecurringScreenResult {
   const money = (amount: number) => formatMoney(amount as never, settings.baseCurrency, locale);
 
   const kpis: RecurringKpi[] = [
-    { id: 'in', label: 'Monthly in', valueLabel: money(commitment.income), icon: TrendingUp },
-    { id: 'out', label: 'Monthly out', valueLabel: money(commitment.expense), icon: TrendingDown },
-    { id: 'net', label: 'Monthly net', valueLabel: money(commitment.net), icon: CalendarClock, hero: true },
+    { id: 'in', label: t('recurring:list.kpiIn'), valueLabel: money(commitment.income), icon: TrendingUp },
+    { id: 'out', label: t('recurring:list.kpiOut'), valueLabel: money(commitment.expense), icon: TrendingDown },
+    {
+      id: 'net',
+      label: t('recurring:list.kpiNet'),
+      valueLabel: money(commitment.net),
+      icon: CalendarClock,
+      hero: true,
+    },
     {
       id: 'active',
-      label: 'Active rules',
+      label: t('recurring:list.kpiActive'),
       valueLabel: `${commitment.activeCount}`,
       icon: Layers,
     },
@@ -167,21 +180,21 @@ export function useRecurringScreen(): UseRecurringScreenResult {
   return {
     ready: true,
     hidden,
-    subtitle: `${scope.selectedIds.length} of ${accounts.length} accounts in scope`,
+    subtitle: t('recurring:list.scopeSubtitle', { selected: scope.selectedIds.length, count: accounts.length }),
     kpis,
     rows,
-    rowCountLabel: `${rules.length} rule${rules.length === 1 ? '' : 's'}`,
+    rowCountLabel: t('recurring:list.rowCount', { count: rules.length }),
     onToggleActive: (id, active) => {
       updateRecurringRule.mutate({ id, patch: { active } });
     },
     onEdit: (id) => {
-      const rule = rules.find((r) => r.id === id);
+      const rule = rules.find((candidate) => candidate.id === id);
       if (rule) {
         openEdit(rule);
       }
     },
     onDelete: (id) => {
-      const rule = rules.find((r) => r.id === id);
+      const rule = rules.find((candidate) => candidate.id === id);
       if (rule) {
         setDeleting(rule);
       }
@@ -190,7 +203,7 @@ export function useRecurringScreen(): UseRecurringScreenResult {
     form,
     deleteDialog: {
       isOpen: deleting !== undefined,
-      desc: deleting?.desc ?? '',
+      title: deleting ? t('recurring:deleteDialog.title', { name: deleting.desc }) : '',
       onConfirm: () => {
         if (!deleting) {
           return;
