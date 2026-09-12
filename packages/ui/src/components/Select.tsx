@@ -63,7 +63,7 @@ export function Select<TValue extends string>({
           </BaseSelect.Icon>
         </BaseSelect.Trigger>
         <BaseSelect.Portal>
-          <BaseSelect.Positioner side="bottom" align="start" sideOffset={6}>
+          <BaseSelect.Positioner side="bottom" align="start" sideOffset={6} className="z-60">
             <BaseSelect.Popup className="min-w-(--anchor-width) overflow-hidden rounded-lg border border-border bg-elevated p-1 shadow-md outline-none">
               {options.map((option) => (
                 <BaseSelect.Item

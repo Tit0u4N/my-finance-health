@@ -8,6 +8,11 @@ const amountVariants = cva('tabular-nums', {
       positive: 'text-pos',
       negative: 'text-neg',
       muted: 'text-muted',
+      /** On top of the accent gradient (StatTile's `hero` tile) — `default`'s `text-foreground`
+       * would override the tile's inherited `text-white` and read near-black-on-indigo in light
+       * mode (invisible in dark mode only by coincidence, since `--mfh-foreground` is near-white
+       * there). */
+      onAccent: 'text-white',
     },
   },
   defaultVariants: { tone: 'default' },

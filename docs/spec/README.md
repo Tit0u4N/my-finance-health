@@ -43,3 +43,4 @@ Covers the **domain model**, the **`@repo/app-core` work inventory**, the **`@re
 6. **`ui-inventory.md`** — the answer to "what has to be built in `@repo/ui`": shadcn primitives, bespoke composites, and the hand-rolled SVG charts, each traced back to a screen and (for charts) to the app-core selector that feeds it.
 7. **`routes.md`** — the DOM route tree and the `@repo/router` factory contract, replacing the mock's `tab`/`stack` navigation state with real URLs.
 8. **`open-questions.md`** — decisions the design implies but doesn't settle. Read before any domain type lands; the answers change field types.
+9. **`cross-app-pitfalls.md`** — not from the design read: conventions extracted from real bugs found in `apps/desktop` after implementation, stated as rules so the same root causes don't reappear in a new screen, a new `@repo/ui` component, or `apps/mobile`.

@@ -21,6 +21,8 @@ const investments = {
     subtitle_other: '{{count}} positions · {{total}} au total',
     portfolioTrendTitle: 'Évolution du portefeuille',
     pastMonth: 'Le mois dernier',
+    curveTotal: 'Total',
+    curveAriaLabel: 'Courbe',
     allocationTitle: 'Répartition',
     donutCenterLabel: 'Total',
     positionsTitle: 'Positions',

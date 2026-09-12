@@ -1,7 +1,6 @@
 import { Radio } from '@base-ui-components/react/radio';
 import { RadioGroup } from '@base-ui-components/react/radio-group';
 import type { LucideIcon } from 'lucide-react';
-import { cn } from '../lib/cn';
 
 export type CategoryChipItem = {
   readonly id: string;
@@ -19,7 +18,10 @@ export type CategoryChipsProps = {
 };
 
 /** Category picker inside the New transaction / New recurring rule modals (ui-inventory.md §1) —
- * a toggle-chip row over the `Category` list, filtered by the modal's income/expense tab. */
+ * a toggle-chip row over the `Category` list, filtered by the modal's income/expense tab. Each
+ * category's own color is always shown (icon tinted, or a dot when there's no icon) and carries
+ * over to the checked state — a per-record hex is data, not a token, the same reasoning
+ * Avatar.tsx already applies with `color-mix`. */
 export function CategoryChips({ items, value, onChange, ariaLabel }: CategoryChipsProps) {
   return (
     <RadioGroup
@@ -28,23 +30,27 @@ export function CategoryChips({ items, value, onChange, ariaLabel }: CategoryChi
       onValueChange={(next) => onChange(next as string)}
       className="flex flex-wrap gap-1.5"
     >
-      {items.map((item) => (
-        <Radio.Root
-          key={item.id}
-          value={item.id}
-          className={cn(
-            'flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-chip-bg px-2.5 text-body-sm text-muted transition-colors',
-            'data-[checked]:bg-accent-soft data-[checked]:text-accent',
-          )}
-        >
-          {item.icon ? (
-            <item.icon size={13} />
-          ) : (
-            <span className="h-2 w-2 rounded-full" style={{ background: item.color }} />
-          )}
-          {item.name}
-        </Radio.Root>
-      ))}
+      {items.map((item) => {
+        const checked = item.id === value;
+        return (
+          <Radio.Root
+            key={item.id}
+            value={item.id}
+            className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-body-sm transition-colors"
+            style={{
+              background: checked ? `color-mix(in oklch, ${item.color} 14%, transparent)` : 'var(--mfh-chip-bg)',
+              color: checked ? item.color : 'var(--mfh-muted)',
+            }}
+          >
+            {item.icon ? (
+              <item.icon size={13} color={checked ? item.color : undefined} />
+            ) : (
+              <span className="h-2 w-2 rounded-full" style={{ background: item.color }} />
+            )}
+            {item.name}
+          </Radio.Root>
+        );
+      })}
     </RadioGroup>
   );
 }

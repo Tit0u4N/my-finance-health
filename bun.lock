@@ -20,6 +20,7 @@
         "@repo/data": "workspace:*",
         "@repo/domain": "workspace:*",
         "@repo/platform": "workspace:*",
+        "@repo/platform-tauri": "workspace:*",
         "@repo/router": "workspace:*",
         "@repo/routes": "workspace:*",
         "@repo/ui": "workspace:*",

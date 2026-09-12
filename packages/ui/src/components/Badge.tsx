@@ -10,6 +10,9 @@ const badgeVariants = cva('inline-flex items-center rounded-full font-medium lea
       positive: 'bg-pos-soft text-pos',
       negative: 'bg-neg-soft text-neg',
       accent: 'bg-accent-soft text-accent',
+      /** On top of the accent gradient (StatTile's `hero` tile) — `accent`'s `text-accent` on an
+       * already-accent background is indigo-on-indigo. */
+      onAccent: 'bg-white/20 text-white',
     },
     size: {
       sm: 'h-5 gap-1 px-2 text-xs',

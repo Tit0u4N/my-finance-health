@@ -92,7 +92,7 @@ export function InvestmentDetailScreen() {
               hero={kpi.hero}
               icon={kpi.icon}
               iconColor={KPI_ICON_COLOR[kpi.id]}
-              value={<AmountValue value={kpi.valueLabel} hidden={hidden} />}
+              value={<AmountValue value={kpi.valueLabel} hidden={hidden} tone={kpi.hero ? 'onAccent' : 'default'} />}
               sub={kpi.sub}
             />
           ))}

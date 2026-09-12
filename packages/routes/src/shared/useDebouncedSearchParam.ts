@@ -26,8 +26,11 @@ export function useDebouncedSearchParam(
   if (committed !== lastCommitted) {
     setLastCommitted(committed);
     setDraft(committed);
-    clearTimeout(timer.current);
   }
+
+  useEffect(() => {
+    clearTimeout(timer.current);
+  }, [lastCommitted]);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 

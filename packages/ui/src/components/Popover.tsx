@@ -28,7 +28,7 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
 export function PopoverContent({ className, align = 'end', sideOffset = 8, ...props }: PopoverContentProps) {
   return (
     <BasePopover.Portal>
-      <BasePopover.Positioner side="bottom" align={align} sideOffset={sideOffset}>
+      <BasePopover.Positioner side="bottom" align={align} sideOffset={sideOffset} className="z-60">
         <BasePopover.Popup
           className={cn(
             'w-72 overflow-hidden rounded-lg border border-border bg-elevated shadow-md outline-none',

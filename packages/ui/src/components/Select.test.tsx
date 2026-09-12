@@ -26,4 +26,13 @@ describe('Select', () => {
     // base-ui calls onValueChange(value, eventDetails) — only the first argument is ours to assert on.
     expect(onValueChange.mock.calls[0]?.[0]).toBe('USD');
   });
+
+  it('portals the open popup onto the z-60 layer, above Dialog (z-50) and PageHeader (z-20)', async () => {
+    render(<Select value="EUR" onValueChange={() => undefined} options={OPTIONS} label="Currency" />);
+
+    await userEvent.click(screen.getByRole('combobox'));
+    const option = await screen.findByRole('option', { name: 'USD' });
+
+    expect(option.closest('.z-60')).not.toBeNull();
+  });
 });

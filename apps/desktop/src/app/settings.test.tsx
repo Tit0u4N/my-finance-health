@@ -16,11 +16,12 @@ describe('Settings', () => {
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 
-  it('Preferences shows the exchange-rate empty state against the EUR-only seed', async () => {
+  it('Preferences shows a formatted rate row for the seeded USD account', async () => {
     await openSettings();
     await screen.findByText('Appearance');
 
-    expect(screen.getByText('No other currencies')).toBeInTheDocument();
+    expect(screen.getByText('USD → EUR')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('0.9234')).toBeInTheDocument();
   });
 
   it('Categories switches sections while keeping Settings highlighted, and lists the seeded counts', async () => {
@@ -56,8 +57,8 @@ describe('Settings', () => {
 
     await userEvent.click(screen.getByRole('link', { name: /Database/ }));
 
-    // 3 accounts + 9 categories + 18 transactions + 5 recurring rules + 4 investments + 0 exchange rates.
-    expect(await screen.findByText('39')).toBeInTheDocument();
+    // 4 accounts + 9 categories + 18 transactions + 5 recurring rules + 4 investments + 1 exchange rate.
+    expect(await screen.findByText('41')).toBeInTheDocument();
     for (const label of ['Switch file', 'Create backup', 'Export CSV', 'Reset everything']) {
       expect(screen.getByRole('button', { name: label })).toBeDisabled();
     }

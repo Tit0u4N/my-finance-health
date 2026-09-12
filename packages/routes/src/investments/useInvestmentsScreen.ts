@@ -31,6 +31,7 @@ import type { InvestmentValuePoint } from '@repo/domain/repositories/investmentR
 import { todayIn } from '@repo/domain/time/workspaceTime';
 import type { DonutSlice } from '@repo/ui/components/charts/Donut';
 import type { LineChartPoint } from '@repo/ui/components/charts/LineChart';
+import type { SelectOption } from '@repo/ui/components/Select';
 import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { type LucideIcon, Scale, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
@@ -47,6 +48,11 @@ import { useRecordValueForm } from './useRecordValueForm';
 const HISTORY_RANGE: HistoryRange = '1m';
 
 export type InvestmentSortKey = 'value' | 'profitLoss' | 'allocation';
+
+/** 'total' is the whole portfolio's value curve (the screen's original, only behavior); any other
+ * value is a single position's own value curve (price × qty), picked from the trend panel's
+ * curve select. */
+export type InvestmentCurveSelection = 'total' | InvestmentId;
 
 export type InvestmentRow = {
   readonly id: InvestmentId;
@@ -100,8 +106,12 @@ export type UseInvestmentsScreenResult =
       readonly hidden: boolean;
       readonly subtitle: string;
       readonly kpis: readonly PortfolioKpi[];
+      readonly trendTitle: string;
       readonly trend: readonly LineChartPoint[];
       readonly trendColor: string;
+      readonly curve: InvestmentCurveSelection;
+      readonly curveOptions: readonly SelectOption<InvestmentCurveSelection>[];
+      readonly onCurveChange: (curve: InvestmentCurveSelection) => void;
       readonly donutData: readonly DonutSlice[];
       readonly donutCenterLabel: string;
       readonly donutCenterValue: string;
@@ -157,6 +167,10 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
   const [sortKey, setSortKey] = useState<InvestmentSortKey>('value');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [deleting, setDeleting] = useState<Investment | undefined>(undefined);
+  // Local state, not a URL search param — investmentsRoute has no validateSearch (unlike
+  // Investment detail's own range) and a chart curve pick has no bookmark/share use case, the
+  // same reasoning sortKey/sortDirection above already rely on.
+  const [curve, setCurve] = useState<InvestmentCurveSelection>('total');
 
   const ready =
     settings !== undefined &&
@@ -201,12 +215,25 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
     };
   });
 
-  const trendPoints = computePortfolioValueHistory(investments, historyByInvestmentId);
+  // 'total' reuses the existing portfolio-wide history unchanged. Any other selection narrows
+  // both arguments to that one position — computePortfolioValueHistory then returns that
+  // position's own value curve (price × qty) on the same date grid, no separate selector needed.
+  const selectedInvestment = curve === 'total' ? undefined : investments.find((item) => item.id === curve);
+  const trendInvestments = selectedInvestment ? [selectedInvestment] : investments;
+  const trendHistoryById =
+    selectedInvestment === undefined
+      ? historyByInvestmentId
+      : new Map([[selectedInvestment.id, historyByInvestmentId.get(selectedInvestment.id) ?? []]]);
+  const trendPoints = computePortfolioValueHistory(trendInvestments, trendHistoryById);
   const trend: LineChartPoint[] = trendPoints.map((point) => ({
     value: point.value as number,
     label: formatAbsoluteDate(point.date, locale),
     valueLabel: money(point.value, { compact: true }),
   }));
+  const curveOptions: SelectOption<InvestmentCurveSelection>[] = [
+    { value: 'total', label: t('investments:list.curveTotal') },
+    ...investments.map((investment) => ({ value: investment.id, label: investment.name })),
+  ];
 
   const donutData: DonutSlice[] = investments.map((investment) => ({
     id: investment.id,
@@ -245,8 +272,12 @@ export function useInvestmentsScreen(): UseInvestmentsScreenResult {
     hidden,
     subtitle: t('investments:list.subtitle', { count: investments.length, total: money(totals.value) }),
     kpis,
+    trendTitle: selectedInvestment ? selectedInvestment.name : t('investments:list.portfolioTrendTitle'),
     trend,
-    trendColor: 'var(--mfh-accent)',
+    trendColor: selectedInvestment ? selectedInvestment.color : 'var(--mfh-accent)',
+    curve,
+    curveOptions,
+    onCurveChange: setCurve,
     donutData,
     donutCenterLabel: t('investments:list.donutCenterLabel'),
     donutCenterValue: money(totals.value, { compact: true }),

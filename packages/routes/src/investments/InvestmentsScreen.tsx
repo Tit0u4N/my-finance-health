@@ -18,6 +18,7 @@ import { EmptyState } from '@repo/ui/components/EmptyState';
 import { Input } from '@repo/ui/components/Input';
 import { PageHeader } from '@repo/ui/components/PageHeader';
 import { Panel } from '@repo/ui/components/Panel';
+import { Select } from '@repo/ui/components/Select';
 import { StatTile } from '@repo/ui/components/StatTile';
 import { Table } from '@repo/ui/components/Table';
 import { Td } from '@repo/ui/components/Td';
@@ -47,8 +48,12 @@ export function InvestmentsScreen() {
     hidden,
     subtitle,
     kpis,
+    trendTitle,
     trend,
     trendColor,
+    curve,
+    curveOptions,
+    onCurveChange,
     donutData,
     donutCenterLabel,
     donutCenterValue,
@@ -86,7 +91,7 @@ export function InvestmentsScreen() {
               hero={kpi.hero}
               icon={kpi.icon}
               iconColor={KPI_ICON_COLOR[kpi.id]}
-              value={<AmountValue value={kpi.valueLabel} hidden={hidden} />}
+              value={<AmountValue value={kpi.valueLabel} hidden={hidden} tone={kpi.hero ? 'onAccent' : 'default'} />}
               sub={kpi.sub}
             />
           ))}
@@ -94,9 +99,18 @@ export function InvestmentsScreen() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Panel
-            title={t('investments:list.portfolioTrendTitle')}
+            title={trendTitle}
             subtitle={t('investments:list.pastMonth')}
             className="lg:col-span-2"
+            right={
+              <Select
+                value={curve}
+                onValueChange={onCurveChange}
+                options={curveOptions}
+                ariaLabel={t('investments:list.curveAriaLabel')}
+                className="h-8.5 w-44"
+              />
+            }
           >
             <LineChart data={trend} color={trendColor} />
           </Panel>

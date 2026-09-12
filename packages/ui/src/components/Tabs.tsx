@@ -6,6 +6,10 @@ export type TabItem<TValue extends string> = {
   readonly value: TValue;
   readonly label: string;
   readonly icon?: LucideIcon;
+  /** Active-state color — the New transaction/recurring modal's income/expense toggle (screens.md)
+   * so the active tab reads as green/red instead of the same neutral surface for both. Omit for
+   * the plain neutral active state. */
+  readonly tone?: 'positive' | 'negative';
 };
 
 export type TabsProps<TValue extends string> = {
@@ -14,6 +18,11 @@ export type TabsProps<TValue extends string> = {
   readonly items: readonly TabItem<TValue>[];
   readonly ariaLabel: string;
   readonly className?: string;
+};
+
+const TONE_ACTIVE_CLASS: Record<NonNullable<TabItem<string>['tone']>, string> = {
+  positive: 'data-[active]:bg-pos-soft data-[active]:text-pos',
+  negative: 'data-[active]:bg-neg-soft data-[active]:text-neg',
 };
 
 /** Income/expense toggle in the New transaction modal (ui-inventory.md §1). No `Tabs.Panel` —
@@ -32,7 +41,9 @@ export function Tabs<TValue extends string>({ value, onValueChange, items, ariaL
             value={item.value}
             className={cn(
               'flex h-8 flex-1 items-center justify-center gap-1.5 rounded-sm px-3 text-body-sm text-muted transition-colors',
-              'data-[active]:bg-surface data-[active]:text-foreground data-[active]:shadow-xs',
+              item.tone
+                ? TONE_ACTIVE_CLASS[item.tone]
+                : 'data-[active]:bg-surface data-[active]:text-foreground data-[active]:shadow-xs',
             )}
           >
             {item.icon && <item.icon size={14} />}

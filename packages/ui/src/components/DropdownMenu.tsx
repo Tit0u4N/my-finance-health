@@ -26,7 +26,7 @@ export type DropdownMenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
 function DropdownMenuContent({ className, align = 'end', sideOffset = 6, ...props }: DropdownMenuContentProps) {
   return (
     <BaseMenu.Portal>
-      <BaseMenu.Positioner side="bottom" align={align} sideOffset={sideOffset}>
+      <BaseMenu.Positioner side="bottom" align={align} sideOffset={sideOffset} className="z-60">
         <BaseMenu.Popup
           className={cn(
             'min-w-44 overflow-hidden rounded-lg border border-border bg-elevated p-1 shadow-md outline-none',

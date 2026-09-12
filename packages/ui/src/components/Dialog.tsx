@@ -2,6 +2,13 @@ import { Dialog as BaseDialog } from '@base-ui-components/react/dialog';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+// Layer scale for every portalled element (all render to document.body, so DOM order never
+// decides stacking — only these numbers do): PageHeader sticky z-20 < Dialog/ConfirmDialog
+// backdrop z-40 < their popup z-50 < Select/Popover/DropdownMenu popups z-60 < Tooltip z-70.
+// Without an explicit z-index a portalled popup paints at "auto", which loses to any of the
+// numbered layers above regardless of open order — this scale is what Select.tsx, Popover.tsx,
+// DropdownMenu.tsx and Tooltip.tsx each reference on their own Positioner.
+
 export type DialogProps = {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;

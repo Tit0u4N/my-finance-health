@@ -90,8 +90,8 @@ export function useRecurringForm(
     categories.find((category) => category.kind === targetKind)?.id ?? '';
 
   const kindOptions: readonly TabItem<CategoryKind>[] = [
-    { value: 'expense', label: t('common:categoryKind.expense') },
-    { value: 'income', label: t('common:categoryKind.income') },
+    { value: 'expense', label: t('common:categoryKind.expense'), tone: 'negative' },
+    { value: 'income', label: t('common:categoryKind.income'), tone: 'positive' },
   ];
   const freqOptions: readonly SelectOption<RecurringFrequency>[] = FREQUENCIES.map((freq) => ({
     value: freq,

@@ -3,17 +3,18 @@
 // are NOT here — open-questions.md #11 drops both as non-v1 features; the store that used to
 // carry them no longer does either (createPreferencesStore.ts).
 
+import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
 import { useUpdateBaseCurrency } from '@repo/app-core/mutations/useUpdateBaseCurrency';
 import { useUpsertExchangeRate } from '@repo/app-core/mutations/useUpsertExchangeRate';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
 import { useExchangeRates } from '@repo/app-core/queries/useExchangeRates';
 import { useWorkspaceSettings } from '@repo/app-core/queries/useWorkspaceSettings';
 import { findExchangeRate } from '@repo/app-core/selectors/convertToBaseCurrency';
+import { formatRate } from '@repo/app-core/selectors/formatRate';
 import { parseRateInput } from '@repo/app-core/selectors/parseRateInput';
 import type { LanguagePreference, SidebarMode, ThemeMode } from '@repo/app-core/stores/createPreferencesStore';
 import { usePreferencesStore } from '@repo/app-core/stores/PreferencesProvider';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
-import { rateToDecimal } from '@repo/domain/primitives/rate';
 import { useState } from 'react';
 
 export type PreferencesRateRow = {
@@ -56,6 +57,7 @@ export function usePreferencesScreen(): UsePreferencesScreenResult {
   const settingsQuery = useWorkspaceSettings();
   const ratesQuery = useExchangeRates();
   const accountsQuery = useAccounts();
+  const locale = useFormattingLocale();
 
   const themeMode = usePreferencesStore((state) => state.themeMode);
   const setThemeMode = usePreferencesStore((state) => state.setThemeMode);
@@ -91,7 +93,7 @@ export function usePreferencesScreen(): UsePreferencesScreenResult {
     return {
       currency,
       label: `${currency} → ${settings.baseCurrency}`,
-      value: draft ?? (existing ? String(rateToDecimal(existing.rateToBase)) : ''),
+      value: draft ?? (existing ? formatRate(existing.rateToBase, locale) : ''),
       onValueChange: (text) => setDrafts((current) => ({ ...current, [currency]: text })),
       onCommit: () => {
         const text = drafts[currency];

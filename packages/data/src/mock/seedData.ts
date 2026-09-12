@@ -7,6 +7,7 @@
 
 import { accountSchema } from '@repo/domain/entities/account';
 import { categorySchema } from '@repo/domain/entities/category';
+import { exchangeRateSchema } from '@repo/domain/entities/exchangeRate';
 import { investmentSchema } from '@repo/domain/entities/investment';
 import type { InvestmentValueSnapshot } from '@repo/domain/entities/investmentValueSnapshot';
 import { investmentValueSnapshotSchema } from '@repo/domain/entities/investmentValueSnapshot';
@@ -70,6 +71,22 @@ const accounts = [
     balance: 18_000,
     color: '#F59E0B',
     icon: 'banknote',
+    createdAt: AUDIT_TIMESTAMP,
+    updatedAt: AUDIT_TIMESTAMP,
+  }),
+  // The one non-base-currency account — makes Settings → Preferences' exchange-rate section
+  // (otherwise unreachable against an all-EUR seed) actually show a row. No transactions or
+  // recurring rules reference it, matching Cash's own "zero activity" shape those screens'
+  // account-scope tests already rely on.
+  accountSchema.parse({
+    id: 'a4',
+    name: 'US Brokerage Checking',
+    type: 'Checking',
+    currency: 'USD',
+    balance: 500_000,
+    color: '#06B6D4',
+    icon: 'landmark',
+    last4: '9902',
     createdAt: AUDIT_TIMESTAMP,
     updatedAt: AUDIT_TIMESTAMP,
   }),
@@ -228,13 +245,21 @@ const investmentValueSnapshots = [
   ...snapshotSeries('i4', i4Prices),
 ];
 
+const exchangeRates = [
+  exchangeRateSchema.parse({
+    currency: 'USD',
+    rateToBase: 923_400,
+    updatedAt: AUDIT_TIMESTAMP,
+  }),
+];
+
 export const mockSeed: MemoryGatewaySeed = {
   workspaceSettings,
   account: accounts,
   category: categories,
   transaction: transactions,
   recurringRule: recurringRules,
-  exchangeRate: [],
+  exchangeRate: exchangeRates,
   investment: investments,
   investmentValueSnapshot: investmentValueSnapshots,
 };

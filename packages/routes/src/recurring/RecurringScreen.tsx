@@ -70,7 +70,13 @@ export function RecurringScreen() {
               hero={kpi.hero}
               icon={kpi.icon}
               iconColor={KPI_ICON_COLOR[kpi.id]}
-              value={kpi.id === 'active' ? kpi.valueLabel : <AmountValue value={kpi.valueLabel} hidden={hidden} />}
+              value={
+                kpi.id === 'active' ? (
+                  kpi.valueLabel
+                ) : (
+                  <AmountValue value={kpi.valueLabel} hidden={hidden} tone={kpi.hero ? 'onAccent' : 'default'} />
+                )
+              }
             />
           ))}
         </div>

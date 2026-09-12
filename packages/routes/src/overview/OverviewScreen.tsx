@@ -70,11 +70,14 @@ export function OverviewScreen() {
               key={kpi.id}
               label={kpi.label}
               hero={kpi.hero}
-              value={<AmountValue value={kpi.valueLabel} hidden={hidden} tone={kpi.hero ? 'default' : 'default'} />}
+              value={<AmountValue value={kpi.valueLabel} hidden={hidden} tone={kpi.hero ? 'onAccent' : 'default'} />}
               sub={kpi.sub}
               delta={
                 kpi.deltaLabel ? (
-                  <Badge tone={kpi.deltaTone === 'accent' ? 'accent' : (kpi.deltaTone ?? 'neutral')} size="sm">
+                  <Badge
+                    tone={kpi.hero ? 'onAccent' : kpi.deltaTone === 'accent' ? 'accent' : (kpi.deltaTone ?? 'neutral')}
+                    size="sm"
+                  >
                     {kpi.deltaLabel}
                   </Badge>
                 ) : undefined
