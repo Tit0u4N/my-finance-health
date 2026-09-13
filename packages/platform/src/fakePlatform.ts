@@ -65,6 +65,11 @@ function createFakeRandom(): RandomService {
       return `fake-id-${counter}`;
     },
     bytes: (length) => {
+      // Advances the shared counter so consecutive calls differ, matching what a caller relying
+      // on `bytes()` for uniqueness (nonces, session ids, journal entries) needs from a real
+      // random source — a fake that returned the same bytes twice in a row would make that class
+      // of behaviour untestable.
+      counter += 1;
       const out = new Uint8Array(length);
       for (let index = 0; index < length; index += 1) {
         out[index] = (counter + index) % 256;
@@ -74,8 +79,16 @@ function createFakeRandom(): RandomService {
   };
 }
 
-function createFakeFileSystem(): FileSystemService {
+function concatBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
+  const out = new Uint8Array(a.length + b.length);
+  out.set(a, 0);
+  out.set(b, a.length);
+  return out;
+}
+
+function createFakeFileSystem(clock: Clock): FileSystemService {
   const files = new Map<string, Uint8Array>();
+  const directories = new Set<string>(['/app-data', '/app-data/backups']);
 
   return {
     readFile: (path) => {
@@ -89,8 +102,39 @@ function createFakeFileSystem(): FileSystemService {
       files.set(path, data);
       return Promise.resolve();
     },
+    appendFile: (path, data) => {
+      const existing = files.get(path);
+      files.set(path, existing ? concatBytes(existing, data) : data);
+      return Promise.resolve();
+    },
+    truncateFile: (path, length) => {
+      const existing = files.get(path);
+      if (existing) {
+        files.set(path, existing.slice(0, length));
+      }
+      return Promise.resolve();
+    },
     deleteFile: (path) => {
       files.delete(path);
+      return Promise.resolve();
+    },
+    fileInfo: (path) => {
+      const data = files.get(path);
+      if (!data) {
+        return Promise.resolve(null);
+      }
+      return Promise.resolve({ sizeBytes: data.byteLength, modifiedAt: clock.now() });
+    },
+    rename: (from, to) => {
+      const data = files.get(from);
+      if (data) {
+        files.set(to, data);
+        files.delete(from);
+      }
+      return Promise.resolve();
+    },
+    createDirectory: (path) => {
+      directories.add(path);
       return Promise.resolve();
     },
     listDirectory: (path) => {
@@ -98,7 +142,9 @@ function createFakeFileSystem(): FileSystemService {
       return Promise.resolve([...files.keys()].filter((key) => key.startsWith(prefix)));
     },
     resolvePath: (...segments) => segments.join('/'),
+    appDataDirectory: () => Promise.resolve('/app-data'),
     pickFile: () => Promise.resolve(null),
+    pickSaveLocation: () => Promise.resolve(null),
   };
 }
 
@@ -116,16 +162,17 @@ export function createFakePlatform(options: CreateFakePlatformOptions = {}): Pla
   const now = options.now ?? DEFAULT_NOW;
   const systemTimezone = options.systemTimezone ?? DEFAULT_TIMEZONE;
   const locale = options.locale ?? DEFAULT_LOCALE;
+  const clock = createFakeClock(now, systemTimezone);
 
   return {
     capabilities,
     keyValueStore: createInMemoryStore(),
-    clock: createFakeClock(now, systemTimezone),
+    clock,
     random: createFakeRandom(),
     localization: { locale: () => locale },
     http: { instance: ky.create() },
     ...(capabilities.hasSecretVault ? { secrets: createInMemoryStore() } : {}),
-    ...(capabilities.canWriteFile ? { fileSystem: createFakeFileSystem() } : {}),
+    ...(capabilities.canWriteFile ? { fileSystem: createFakeFileSystem(clock) } : {}),
     ...(capabilities.hasEncryptedSqlDriver ? { sqlDriver: createFakeSqlDriver() } : {}),
   };
 }

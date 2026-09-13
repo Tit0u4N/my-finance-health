@@ -42,4 +42,49 @@ describe('createFakePlatform', () => {
     expect(platform.fileSystem).toBeUndefined();
     expect(platform.sqlDriver).toBeUndefined();
   });
+
+  it('appends without rewriting the file, and truncates it', async () => {
+    const platform = createFakePlatform();
+    const fileSystem = platform.fileSystem;
+    if (!fileSystem) {
+      throw new Error('fake platform did not expose a file system despite the default capability');
+    }
+
+    await fileSystem.writeFile('journal.mfhj', new Uint8Array([1, 2]));
+    await fileSystem.appendFile('journal.mfhj', new Uint8Array([3, 4]));
+    expect(await fileSystem.readFile('journal.mfhj')).toEqual(new Uint8Array([1, 2, 3, 4]));
+
+    await fileSystem.truncateFile('journal.mfhj', 2);
+    expect(await fileSystem.readFile('journal.mfhj')).toEqual(new Uint8Array([1, 2]));
+  });
+
+  it('reports file info against the frozen clock, and null for a missing path', async () => {
+    const platform = createFakePlatform({ now: '2026-03-01T00:00:00.000Z' });
+    const fileSystem = platform.fileSystem;
+    if (!fileSystem) {
+      throw new Error('fake platform did not expose a file system despite the default capability');
+    }
+
+    await fileSystem.writeFile('db.mfhdb', new Uint8Array([1, 2, 3]));
+    expect(await fileSystem.fileInfo('db.mfhdb')).toEqual({
+      sizeBytes: 3,
+      modifiedAt: '2026-03-01T00:00:00.000Z',
+    });
+    expect(await fileSystem.fileInfo('missing.mfhdb')).toBeNull();
+  });
+
+  it('renames a file and exposes an app-data directory outside any synced folder', async () => {
+    const platform = createFakePlatform();
+    const fileSystem = platform.fileSystem;
+    if (!fileSystem) {
+      throw new Error('fake platform did not expose a file system despite the default capability');
+    }
+
+    await fileSystem.writeFile('old.mfhdb', new Uint8Array([9]));
+    await fileSystem.rename('old.mfhdb', 'new.mfhdb');
+    expect(await fileSystem.readFile('new.mfhdb')).toEqual(new Uint8Array([9]));
+    await expect(fileSystem.readFile('old.mfhdb')).rejects.toThrow();
+
+    expect(await fileSystem.appDataDirectory()).toBe('/app-data');
+  });
 });

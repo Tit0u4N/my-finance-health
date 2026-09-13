@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@noble/ciphers": "^2",
+    "@noble/hashes": "^2",
     "@repo/domain": "workspace:*",
     "@repo/platform": "workspace:*",
     "ky": "^2.1.0",
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
+    "@types/node": "^26.5.1",
     "vitest": "^4.1.11"
   }
 }
