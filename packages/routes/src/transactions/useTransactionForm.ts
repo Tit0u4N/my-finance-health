@@ -8,6 +8,7 @@
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { useCreateTransaction } from '@repo/app-core/mutations/useCreateTransaction';
 import { useUpdateTransaction } from '@repo/app-core/mutations/useUpdateTransaction';
+import { useDescSuggestions } from '@repo/app-core/selectors/hooks/useDescSuggestions';
 import type { Account } from '@repo/domain/entities/account';
 import type { Category, CategoryKind } from '@repo/domain/entities/category';
 import { createTransactionInputSchema, type Transaction } from '@repo/domain/entities/transaction';
@@ -32,6 +33,7 @@ export type TransactionFormState = {
   readonly onAmountChange: (value: string) => void;
   readonly desc: string;
   readonly onDescChange: (value: string) => void;
+  readonly descSuggestions: readonly string[];
   readonly categoryId: string;
   readonly onCategoryChange: (id: string) => void;
   readonly categoryChips: readonly CategoryChipItem[];
@@ -78,6 +80,7 @@ export function useTransactionForm(
 
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const { names: descSuggestions } = useDescSuggestions(draft?.desc ?? '');
 
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const firstOfKind = (targetKind: CategoryKind): string =>
@@ -125,6 +128,7 @@ export function useTransactionForm(
       onAmountChange: (amount) => setDraft((current) => (current ? { ...current, amount } : current)),
       desc: draft?.desc ?? '',
       onDescChange: (desc) => setDraft((current) => (current ? { ...current, desc } : current)),
+      descSuggestions,
       categoryId: draft?.categoryId ?? '',
       onCategoryChange: (categoryId) => setDraft((current) => (current ? { ...current, categoryId } : current)),
       categoryChips,
@@ -142,7 +146,15 @@ export function useTransactionForm(
         setErrorMessage(undefined);
         // T00:00:00.000Z, never a mid-day stamp — Overview's MTD range ends at `nowIso`
         // (09:00Z under the mock), so a later time-of-day would sort a same-day entry out of it.
-        const date = isoDateTimeSchema.parse(`${draft.date}T00:00:00.000Z`);
+        // safeParse rather than parse: `draft.date` reaches here from the DatePicker, which only
+        // ever emits a well-formed value, but staying defensive costs nothing and avoids an
+        // unhandled throw if that ever changes.
+        const dateResult = isoDateTimeSchema.safeParse(`${draft.date}T00:00:00.000Z`);
+        if (!dateResult.success) {
+          setErrorMessage(t('transactions:dialog.errorCheckDetails'));
+          return;
+        }
+        const date = dateResult.data;
         const desc = draft.desc.trim();
         const note = draft.note.trim();
         const amount = toMoney(selectedCategory.kind === 'income' ? toMinorUnits(magnitude) : -toMinorUnits(magnitude));

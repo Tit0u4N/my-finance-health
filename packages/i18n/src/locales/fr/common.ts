@@ -74,6 +74,12 @@ const common = {
     outflow: 'Sorties',
     net: 'Net',
   },
+  datePicker: {
+    placeholder: 'Choisir une date',
+    openCalendar: 'Ouvrir le calendrier',
+    previousMonth: 'Mois précédent',
+    nextMonth: 'Mois suivant',
+  },
 } as const;
 
 export default common;

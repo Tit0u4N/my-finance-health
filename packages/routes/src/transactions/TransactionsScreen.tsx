@@ -7,6 +7,7 @@ import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { TransactionSortKey } from '@repo/domain/repositories/criteria';
 import { AccountFilter } from '@repo/ui/components/AccountFilter';
 import { AmountValue } from '@repo/ui/components/AmountValue';
+import { Autocomplete } from '@repo/ui/components/Autocomplete';
 import { Avatar } from '@repo/ui/components/Avatar';
 import { Button } from '@repo/ui/components/Button';
 import { CategoryChips } from '@repo/ui/components/CategoryChips';
@@ -24,6 +25,7 @@ import { Table } from '@repo/ui/components/Table';
 import { Tabs } from '@repo/ui/components/Tabs';
 import { Td } from '@repo/ui/components/Td';
 import { MoreVertical, Pencil, Plus, Receipt, Search, Trash2 } from 'lucide-react';
+import { DateField } from '../shared/DateField';
 import { useTransactionsScreen } from './useTransactionsScreen';
 
 const KPI_ICON_COLOR: Record<string, string> = {
@@ -209,18 +211,15 @@ export function TransactionsScreen() {
               value={form.amount}
               onChange={(event) => form.onAmountChange(event.target.value)}
             />
-            <Input
-              label={t('transactions:dialog.dateLabel')}
-              type="date"
-              value={form.date}
-              onChange={(event) => form.onDateChange(event.target.value)}
-            />
+            <DateField label={t('transactions:dialog.dateLabel')} value={form.date} onValueChange={form.onDateChange} />
           </div>
-          <Input
+          <Autocomplete
             label={t('transactions:dialog.descLabel')}
             placeholder={t('transactions:dialog.descPlaceholder')}
             value={form.desc}
-            onChange={(event) => form.onDescChange(event.target.value)}
+            onValueChange={form.onDescChange}
+            items={form.descSuggestions}
+            emptyLabel={t('transactions:dialog.descNoSuggestions')}
           />
           <div>
             <span className="text-label text-muted">{t('transactions:dialog.categoryLabel')}</span>

@@ -85,10 +85,11 @@ describe('Investments', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Record value' }));
     // A future date so this is unambiguously the newest snapshot regardless of time-of-day,
-    // sidestepping the seed's own same-day (later clock time) entry. fireEvent.change, not
-    // userEvent.type, for the date input — jsdom's native date-picker input doesn't reliably
-    // accept simulated keystrokes.
-    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-09-15' } });
+    // sidestepping the seed's own same-day (later clock time) entry. The date field is now a
+    // popover Calendar (DatePicker), not a native input — open it and click the day directly
+    // rather than firing a synthetic change event.
+    await userEvent.click(screen.getByLabelText('Date'));
+    await userEvent.click(document.querySelector('button[data-day="2026-09-15"]') as HTMLElement);
     fireEvent.change(screen.getByLabelText('Price per unit'), { target: { value: '80.00' } });
     await userEvent.click(screen.getByRole('button', { name: 'Save value' }));
 

@@ -76,6 +76,12 @@ const common = {
     outflow: 'Outflow',
     net: 'Net',
   },
+  datePicker: {
+    placeholder: 'Pick a date',
+    openCalendar: 'Open calendar',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+  },
 } as const;
 
 export default common;

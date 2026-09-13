@@ -23,6 +23,7 @@ import { StatTile } from '@repo/ui/components/StatTile';
 import { Table } from '@repo/ui/components/Table';
 import { Td } from '@repo/ui/components/Td';
 import { CirclePlus, LineChart as LineChartIcon, MoreVertical, Pencil, Plus, Trash2, TrendingUp } from 'lucide-react';
+import { DateField } from '../shared/DateField';
 import type { InvestmentSortKey } from './useInvestmentsScreen';
 import { useInvestmentsScreen } from './useInvestmentsScreen';
 
@@ -318,11 +319,10 @@ export function InvestmentsScreen() {
         }
       >
         <div className="flex flex-col gap-4">
-          <Input
+          <DateField
             label={t('investments:recordValueDialog.dateLabel')}
-            type="date"
             value={recordValueForm.date}
-            onChange={(event) => recordValueForm.onDateChange(event.target.value)}
+            onValueChange={recordValueForm.onDateChange}
           />
           <Input
             label={t('investments:recordValueDialog.priceLabel')}

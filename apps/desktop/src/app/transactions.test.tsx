@@ -71,7 +71,9 @@ describe('Transactions', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'New transaction' }));
     await userEvent.type(screen.getByLabelText('Amount'), '12.50');
-    await userEvent.type(screen.getByLabelText('Description'), 'Test lunch');
+    // Esc closes the description Autocomplete's suggestion popup — while open, base-ui marks the
+    // rest of the dialog inert, hiding the category radios and submit button from the a11y tree.
+    await userEvent.type(screen.getByLabelText('Description'), 'Test lunch{Escape}');
     await userEvent.click(screen.getByRole('radio', { name: 'Eating out' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create transaction' }));
 
@@ -92,7 +94,7 @@ describe('Transactions', () => {
     expect(screen.queryByRole('radio', { name: 'Rent' })).not.toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Amount'), '50');
-    await userEvent.type(screen.getByLabelText('Description'), 'Test income');
+    await userEvent.type(screen.getByLabelText('Description'), 'Test income{Escape}');
     await userEvent.click(screen.getByRole('button', { name: 'Create transaction' }));
 
     expect(await screen.findByText('Test income')).toBeInTheDocument();
