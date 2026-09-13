@@ -204,7 +204,7 @@ export function useOverviewScreen(): UseOverviewScreenResult {
 
   const cashflowNodes: SankeyNode[] = cashflowGraph.nodes.map((node) => {
     if (node.kind === 'total') {
-      return { id: node.id, label: '', value: node.amount, color: NEUTRAL_COLOR, column: 1, labelSide: 'none' };
+      return { id: node.id, label: '', value: node.amount, color: NEUTRAL_COLOR, column: 1 };
     }
     const category = node.categoryId ? categoryById.get(node.categoryId) : undefined;
     const label =
@@ -217,7 +217,6 @@ export function useOverviewScreen(): UseOverviewScreenResult {
       value: node.amount,
       color,
       column: node.kind === 'income' ? 0 : 2,
-      labelSide: node.kind === 'income' ? 'right' : 'left',
     };
   });
   const cashflowLinks: SankeyLink[] = cashflowGraph.links.map((link) => ({

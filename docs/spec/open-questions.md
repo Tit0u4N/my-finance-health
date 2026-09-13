@@ -102,9 +102,11 @@ Decided: `start-roadmap.md` §12 already specifies `@repo/ui` as "shadcn/ui prim
 
 Decided: CLAUDE.md already mandates `lucide-react-native` (never `lucide-react`) on mobile, implying the reverse convention on DOM. The mock hand-draws ~50 icons as inline SVG paths in `ui.jsx`'s `Icon` component; `ui-inventory.md` §4 gives the full name mapping onto `lucide-react` equivalents.
 
-### 14. Chart library — **none; hand-rolled SVG, ported from `charts.jsx`**
+### 14. Chart library — **none, except Sankey — `chartjs-chart-sankey`**
 
-Decided: the mock's `AreaChart`/`Donut`/`Sankey`/`LineChart`/`MiniBar` are custom SVG with no charting library dependency — worth keeping rather than introducing one, since a Sankey in particular has no first-class support in most lightweight chart libraries and would force a heavier dependency just for that one panel. `ui-inventory.md` §3 ports these near-verbatim, each pinned to the `app-core-inventory.md` §6 selector that produces its input shape. `ProgressBar` is declared in `charts.jsx` but consumed by no screen — excluded from the v1 port.
+Originally decided as: the mock's `AreaChart`/`Donut`/`Sankey`/`LineChart`/`MiniBar` are custom SVG with no charting library dependency — worth keeping rather than introducing one, since a Sankey in particular has no first-class support in most lightweight chart libraries and would force a heavier dependency just for that one panel. That held for `AreaChart`/`Donut`/`LineChart`/`MiniBar`, which stay hand-rolled SVG per `ui-inventory.md` §3, each pinned to the `app-core-inventory.md` §6 selector that produces its input shape.
+
+**Revised for `Sankey`**: the hand-rolled version's free-form node/link layout didn't reliably read as three distinct columns (income sources → total → expense/savings), which is the one thing a cashflow Sankey has to communicate. `Sankey` now renders via [`chartjs-chart-sankey`](https://www.npmjs.com/package/chartjs-chart-sankey) (`chart.js` + `chartjs-chart-sankey` added to `@repo/ui`'s dependencies), with each node pinned to a fixed column (0/1/2) instead of left to the library's topological auto-layout, and every node always labeled with its amount on both the income and outcome sides — not just on hover. `ProgressBar` is declared in `charts.jsx` but consumed by no screen — excluded from the v1 port.
 
 ### 15. `RichNote` — **controlled component; persistence and rich-text mechanism both deferred**
 

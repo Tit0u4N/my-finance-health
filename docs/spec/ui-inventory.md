@@ -47,16 +47,16 @@ Built from Tier 1 + tokens, no base-ui primitive of their own — presentational
 | `AmountCell` | pattern repeated inline everywhere (`mono`, sign-colored, `tabular-nums`) | `Table`/`Td` cell variant, receives an **already-formatted** string | Every money-bearing table cell |
 | `RichNote` | `desktop-shell.jsx` `RichNote` | toolbar `Button` row + `contentEditable` region, **controlled** (see §4) | Investment detail description panel. **Implemented as `Textarea`, not `RichNote`**: `open-questions.md` #15(b)'s still-open half (`document.execCommand`'s deprecated-API replacement) was resolved by dropping rich text from v1 entirely — a plain, logic-free `label`/`value`/`onChange`/`error` multi-line field (`Input.tsx`'s twin), no toolbar, no stored markup, no XSS surface from rendering it back. `RichNote`/`useRichNote` were never built. |
 
-## 3. Tier 3 — charts (hand-rolled SVG, no chart library)
+## 3. Tier 3 — charts (hand-rolled SVG, except Sankey — see `open-questions.md` #14)
 
-Ported near-verbatim from `charts.jsx` — no charting library dependency, consistent with the mock's own choice. Each input shape is pinned to its `app-core-inventory.md` §6 selector or §4 query hook, so the chart and its data source are specified against one contract.
+Ported near-verbatim from `charts.jsx` — no charting library dependency, consistent with the mock's own choice, except `Sankey`, which renders through `chartjs-chart-sankey` instead (the mock's free-form SVG fan-out didn't read as three distinct income/neutral/outcome columns). Each input shape is pinned to its `app-core-inventory.md` §6 selector or §4 query hook, so the chart and its data source are specified against one contract.
 
 | Component | Input shape | Source (`app-core-inventory.md`) | Backing screens |
 |---|---|---|---|
 | `AreaChart` | `{ day: number, value: number }[]` | §4 `useAccountBalanceHistory` (raw series, no selector transform) | Overview per-account sparkline, Accounts card |
 | `LineChart` | **Implemented as** `{ value: number, label: string, valueLabel: string }[]`, not `{day,value}[]` — an interactive tooltip needs a date label, and §4's "no formatting logic" rule means `@repo/ui` can't derive one itself, so the screen's ViewModel pre-formats both `label` and `valueLabel`. Fluid-width (measures its own container via `ResizeObserver`, the first in `@repo/ui`), unlike the other fixed-`width` charts here. | §4 `useAccountBalanceHistory` / `useInvestmentValueHistory` | Account detail, Investments portfolio trend, Investment detail |
 | `Donut` | `{ id, name, value, color }[]` | §6 Category breakdown selector (Overview) / Allocation selector (Investments) — "same shape, different source" per §6's own note | Overview spending breakdown, Investments allocation |
-| `Sankey` | `{ nodes: {id,label,value,color,side}[], links: {source,target,value}[] }` | §6 Cashflow graph selector | Overview cashflow panel |
+| `Sankey` | `{ nodes: {id,label,sub?,value,color,column}[], links: {source,target,value}[] }` — `column` is 0/1/2 (income/total/expense-or-savings), passed straight through as chartjs-chart-sankey's `column` dataset option so the three columns are fixed rather than left to its topological auto-layout. Node/flow colors are CSS custom properties, resolved to concrete `rgb()` at render time (canvas can't cascade `var()`/`oklch()` the way SVG `fill` could) and rebuilt on theme toggle. | §6 Cashflow graph selector | Overview cashflow panel |
 | `MiniBar` | `number[]` (short recent-values series) | §6 Recent period trend selector — daily income/expense buckets, trailing 30 days, clipped to the earliest transaction if history is shorter (`open-questions.md` #17) | Overview `StatTile` sparklines (income/spending KPIs) |
 | `ProgressBar` | `{ value, max, label?, right? }` | — | **Unused**: declared in `charts.jsx` but no screen in `screens.md` consumes it. Keep out of the v1 port; revisit if a future screen needs a bounded-progress visual. |
 
