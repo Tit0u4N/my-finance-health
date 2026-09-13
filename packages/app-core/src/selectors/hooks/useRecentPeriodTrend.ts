@@ -2,7 +2,7 @@
 // Composes the query hooks computeRecentPeriodTrend.ts needs — Overview's income/spending
 // `StatTile` sparklines (app-core-inventory.md §6, open-questions.md #17).
 
-import { type IsoDate, type IsoDateTime, isoDateTimeSchema } from '@repo/domain/primitives/dateTime';
+import { isoDateTimeSchema } from '@repo/domain/primitives/dateTime';
 import type { AccountId } from '@repo/domain/primitives/entityId';
 import type { TransactionCriteria } from '@repo/domain/repositories/criteria';
 import { rangeFor, todayIn } from '@repo/domain/time/workspaceTime';
@@ -10,19 +10,12 @@ import { usePlatform } from '../../providers/usePlatform';
 import { useTransactions } from '../../queries/useTransactions';
 import { useWorkspaceSettings } from '../../queries/useWorkspaceSettings';
 import { computeRecentPeriodTrend, type RecentPeriodTrendPoint } from '../recentPeriodTrend';
+import { startOfDayIso } from './startOfDayIso';
 
 export type UseRecentPeriodTrendResult = {
   readonly points: readonly RecentPeriodTrendPoint[] | undefined;
   readonly isLoading: boolean;
 };
-
-// UTC-midnight of the calendar date — approximate, not workspace-timezone-exact (unlike
-// `computeBalanceHistory`, which compares calendar dates directly and sidesteps this). Acceptable
-// here: this only bounds the query so it stays a single, cheap fetch — the selector's own
-// day-by-day clipping is what actually shapes the sparkline.
-function startOfDayIso(date: IsoDate): IsoDateTime {
-  return isoDateTimeSchema.parse(`${date}T00:00:00.000Z`);
-}
 
 export function useRecentPeriodTrend(accountIds?: readonly AccountId[]): UseRecentPeriodTrendResult {
   const platform = usePlatform();

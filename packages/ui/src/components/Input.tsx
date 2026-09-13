@@ -1,7 +1,7 @@
 import { Field } from '@base-ui-components/react/field';
 import type { LucideIcon } from 'lucide-react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
-import { cn } from '../lib/cn';
+import { inputControlClassName } from './inputControlClassName';
 
 // `style` is omitted too: React's InputHTMLAttributes types it `CSSProperties | undefined`
 // explicitly, which exactOptionalPropertyTypes then rejects against base-ui's `style?: CSSProperties`
@@ -24,15 +24,11 @@ export function Input({ label, icon: Icon, suffix, error, className, id, ...prop
         {Icon && <Icon size={16} className="pointer-events-none absolute left-3 text-subtle" />}
         <Field.Control
           id={id}
-          className={cn(
-            'h-11 w-full rounded-md border border-border bg-surface-alt px-3.5 text-body text-foreground outline-none transition-colors',
-            'placeholder:text-subtle',
-            'focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-accent/30',
-            'data-[invalid]:border-neg',
-            Icon && 'pl-9.5',
-            suffix && 'pr-9.5',
+          className={inputControlClassName({
+            hasLeadingIcon: Boolean(Icon),
+            hasTrailingContent: Boolean(suffix),
             className,
-          )}
+          })}
           {...props}
         />
         {suffix && <div className="absolute right-3 flex items-center text-subtle">{suffix}</div>}

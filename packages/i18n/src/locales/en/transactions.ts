@@ -31,6 +31,7 @@ const transactions = {
     dateLabel: 'Date',
     descLabel: 'Description',
     descPlaceholder: 'e.g. Carrefour Market',
+    descNoSuggestions: 'No matching description',
     categoryLabel: 'Category',
     accountLabel: 'Account',
     noteLabel: 'Note (optional)',

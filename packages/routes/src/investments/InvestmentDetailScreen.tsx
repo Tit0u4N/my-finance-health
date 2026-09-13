@@ -21,6 +21,7 @@ import { Table } from '@repo/ui/components/Table';
 import { Td } from '@repo/ui/components/Td';
 import { Textarea } from '@repo/ui/components/Textarea';
 import { CirclePlus, History, Pencil, Trash2 } from 'lucide-react';
+import { DateField } from '../shared/DateField';
 import { useInvestmentDetailScreen } from './useInvestmentDetailScreen';
 
 const KPI_ICON_COLOR: Record<string, string> = {
@@ -236,11 +237,10 @@ export function InvestmentDetailScreen() {
         }
       >
         <div className="flex flex-col gap-4">
-          <Input
+          <DateField
             label={t('investments:recordValueDialog.dateLabel')}
-            type="date"
             value={recordValueForm.date}
-            onChange={(event) => recordValueForm.onDateChange(event.target.value)}
+            onValueChange={recordValueForm.onDateChange}
           />
           <Input
             label={t('investments:recordValueDialog.priceLabel')}

@@ -25,6 +25,7 @@ import { Tabs } from '@repo/ui/components/Tabs';
 import { Td } from '@repo/ui/components/Td';
 import { cn } from '@repo/ui/lib/cn';
 import { MoreVertical, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
+import { DateField } from '../shared/DateField';
 import { useRecurringScreen } from './useRecurringScreen';
 
 const KPI_ICON_COLOR: Record<string, string> = {
@@ -227,11 +228,10 @@ export function RecurringScreen() {
               onValueChange={form.onAccountChange}
               options={form.accountOptions}
             />
-            <Input
+            <DateField
               label={t('recurring:dialog.startDateLabel')}
-              type="date"
               value={form.startDate}
-              onChange={(event) => form.onStartDateChange(event.target.value)}
+              onValueChange={form.onStartDateChange}
             />
           </div>
           {form.errorMessage && <span className="text-body-sm text-neg">{form.errorMessage}</span>}
