@@ -55,7 +55,9 @@ export function useSankeyChart({ nodes, links }: UseSankeyChartOptions): UseSank
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    probeRef.current ??= document.createElement('canvas').getContext('2d');
+    if (!probeRef.current) {
+      probeRef.current = document.createElement('canvas').getContext('2d');
+    }
     const probe = probeRef.current;
     if (!(canvas && probe)) {
       return;
