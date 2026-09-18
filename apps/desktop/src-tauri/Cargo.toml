@@ -16,3 +16,20 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+argon2 = "0.6"
+base64 = "0.22"
+
+# rusqlite's bundled-sqlcipher feature falls back to the OS's own crypto library (CommonCrypto on
+# macOS) when no system OpenSSL is configured, so macOS builds fast with nothing installed. Other
+# targets need the vendored-openssl variant, which builds OpenSSL from source (perl required,
+# several minutes cold) — reserved for the platforms that actually require it.
+[target.'cfg(target_os = "macos")'.dependencies]
+rusqlite = { version = "0.40", features = ["bundled-sqlcipher", "functions"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+rusqlite = { version = "0.40", features = ["bundled-sqlcipher-vendored-openssl", "functions"] }

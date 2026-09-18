@@ -6,6 +6,7 @@ import { isoDateTimeSchema } from '@repo/domain/primitives/dateTime';
 import type { AccountId } from '@repo/domain/primitives/entityId';
 import type { TransactionCriteria } from '@repo/domain/repositories/criteria';
 import { rangeFor, todayIn } from '@repo/domain/time/workspaceTime';
+import { useState } from 'react';
 import { usePlatform } from '../../providers/usePlatform';
 import { useTransactions } from '../../queries/useTransactions';
 import { useWorkspaceSettings } from '../../queries/useWorkspaceSettings';
@@ -21,7 +22,9 @@ export function useRecentPeriodTrend(accountIds?: readonly AccountId[]): UseRece
   const platform = usePlatform();
   const settingsQuery = useWorkspaceSettings();
   const settings = settingsQuery.data;
-  const nowIso = isoDateTimeSchema.parse(platform.clock.now());
+  // Snapshotted once at mount, not recomputed every render — see useOverviewScreen.ts's identical
+  // comment: this feeds `criteria.dateRange.end` below, part of `useTransactions`'s query key.
+  const [nowIso] = useState(() => isoDateTimeSchema.parse(platform.clock.now()));
 
   // "1 month back" is always >= the 30 calendar days the selector needs — it does its own precise
   // clipping from there, so this only has to be a safe superset, not an exact bound.

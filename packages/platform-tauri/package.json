@@ -12,7 +12,10 @@
   },
   "dependencies": {
     "@repo/domain": "workspace:*",
-    "@repo/platform": "workspace:*"
+    "@repo/platform": "workspace:*",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

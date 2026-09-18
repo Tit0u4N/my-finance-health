@@ -1,10 +1,19 @@
 import { AppStageProviders } from '@repo/app-core/providers/AppStageProviders';
 import { RouterProvider } from '@tanstack/react-router';
 import type { ReactElement } from 'react';
+import { LocalApp } from '../bootstrap/LocalApp';
 import { useApp } from './useApp';
 import { useThemeSync } from './useThemeSync';
 
+// A module-level check rather than a branch inside a hook: MockApp and LocalApp each call their
+// own hooks unconditionally, so no hook here is ever called conditionally.
+const IS_LOCAL_MODE = import.meta.env.VITE_STORAGE_MODE === 'classic';
+
 export function App(): ReactElement {
+  return IS_LOCAL_MODE ? <LocalApp /> : <MockApp />;
+}
+
+function MockApp(): ReactElement {
   const { platform, repositories, queryClient, router } = useApp();
 
   return (

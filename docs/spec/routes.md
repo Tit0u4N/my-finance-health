@@ -36,6 +36,8 @@ Three root-level layouts, matching the bootstrap-stage/app-stage split in `app-c
 
 Workspace switch is a full unmount/remount of the app layout (and everything under it) per CLAUDE.md — not an in-place route transition. The router instance itself is recreated at that point (§6).
 
+**Implementation note (local mode landed) — Bootstrap layout is not a route**: as built, the Bootstrap layout lives outside `@repo/router`/`@repo/routes` entirely, as plain desktop-only components (`apps/desktop/src/bootstrap/`), rendered *before* any router is constructed. Two reasons this diverged from "a root-level layout" as written above: (1) `createAppRouter`'s context requires `repositories`, which don't exist until the workspace is `ready` — there's no router to route within during bootstrap; (2) `@repo/routes` is shared with web, which has no local mode, so a bootstrap layout living there would need capability-gating inside a package this pass didn't otherwise touch. The Onboarding layout (3-step seed accounts/categories) remains entirely unbuilt — out of scope for this pass (see `app-core-inventory.md` §2's implementation note) — a newly created workspace lands directly in the App layout, empty.
+
 ## 3. Search params vs. component state
 
 Only state with a real bookmark/share/back-button use case becomes a typed route search param (TanStack Router's `validateSearch`, zod-backed). Everything else stays local component state, exactly as `screens.md` already labels it.

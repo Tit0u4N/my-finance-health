@@ -6,10 +6,9 @@ import { routeTree } from '@repo/routes/routeTree';
 import { QueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+// Only ever rendered for a non-'classic' VITE_STORAGE_MODE — App.tsx routes 'classic' to
+// LocalApp (../bootstrap/LocalApp.tsx) before this hook is called.
 function createWorkspace() {
-  if (import.meta.env.VITE_STORAGE_MODE === 'classic') {
-    throw new Error('VITE_STORAGE_MODE=classic: real workspace bootstrap is not wired up yet, use inMemory');
-  }
   const { platform, repositories } = createMockWorkspace();
   // The mock platform's keyValueStore is an in-memory Map (packages/platform/src/fakePlatform.ts)
   // and its locale is hard-coded 'en-US' — both fine for shared-package tests, wrong for a real

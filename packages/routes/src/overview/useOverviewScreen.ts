@@ -32,6 +32,7 @@ import type { AccountFilterRow } from '@repo/ui/components/AccountFilter';
 import type { DonutSlice } from '@repo/ui/components/charts/Donut';
 import type { SankeyLink, SankeyNode } from '@repo/ui/components/charts/Sankey';
 import { useQueries } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useAccountScope } from '../shared/useAccountScope';
 import { ACCOUNT_TYPE_ICON, categoryIcon } from '../shared/visuals';
 
@@ -152,7 +153,11 @@ export function useOverviewScreen(): UseOverviewScreenResult {
   );
   const scopedAccounts = accounts.filter((account) => scope.selectedIds.includes(account.id));
 
-  const nowIso = isoDateTimeSchema.parse(platform.clock.now());
+  // Snapshotted once at mount, not recomputed every render: `nowIso` feeds `transactionsCriteria`
+  // below, which is part of `useTransactions`'s query key — a live clock read here would change
+  // that key on every render, spinning up a brand-new TanStack Query each time and never letting
+  // `ready` settle (infinite fetch/render loop).
+  const [nowIso] = useState(() => isoDateTimeSchema.parse(platform.clock.now()));
   const settings = settingsQuery.data;
   const today = settings ? todayIn(nowIso, settings.timezone) : undefined;
   const monthStart = settings ? startOfMonthIn(nowIso, settings.timezone) : undefined;

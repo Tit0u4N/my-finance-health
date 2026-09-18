@@ -2,12 +2,14 @@
 // The `.mfhmeta` descriptor: cleartext canonical JSON written once at workspace creation,
 // holding the two independent Argon2id derivation specs (start-roadmap.md §9's key-policy
 // responsibility, held by the core: "generation at first opening, length, rotation, unlock
-// conditions"). Judgment call, flagged: raw-key SQLCipher mode (see sqlDriver.ts's
-// SqlKeyDerivation) means the database's own salt cannot live inside the encrypted file itself,
-// or a surviving `.mfhdb` with lost journal segments becomes permanently unopenable. Salts are
-// public by design, so storing them in the clear leaks nothing. Written via a write-temp-then-
-// rename swap so a crash mid-write never leaves a half-written descriptor (start-roadmap.md §8
-// assigns atomic writing to the core, not the adapter).
+// conditions"). Judgment call, flagged: `dbSalt` here is the Argon2id salt fed to the platform's
+// SqlDriver.unlock (see sqlDriver.ts's SqlKeyDerivation) — not a SQLCipher-internal salt.
+// SQLCipher keeps its own page salt inside the encrypted file's header regardless; this file
+// exists because a surviving `.mfhdb` with a lost `.mfhmeta` has no way to re-derive the
+// Argon2id key from the passphrase alone. Salts are public by design, so storing them in the
+// clear leaks nothing. Written via a write-temp-then-rename swap so a crash mid-write never
+// leaves a half-written descriptor (start-roadmap.md §8 assigns atomic writing to the core, not
+// the adapter).
 
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { z } from 'zod';
