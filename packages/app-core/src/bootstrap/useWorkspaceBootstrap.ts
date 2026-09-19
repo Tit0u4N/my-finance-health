@@ -30,6 +30,10 @@ export type UseWorkspaceBootstrapResult = {
   readonly unlock: (ref: WorkspaceRef, secret: string) => Promise<void>;
   /** Designates and creates a brand-new workspace. */
   readonly create: (ref: WorkspaceRef, input: CreateWorkspaceInput) => Promise<void>;
+  /** Returns to `needs-unlock` for the same ref from `ready` — a pure state transition, no I/O.
+   *  Releasing the opener's actual session (SQL connection, occupancy lock) is the caller's job,
+   *  the same way `onSessionOpen` already hands session lifetime to the app, not this hook. */
+  readonly lock: (ref: WorkspaceRef) => void;
 };
 
 async function resolve(
@@ -73,5 +77,7 @@ export function useWorkspaceBootstrap({ opener }: UseWorkspaceBootstrapDeps): Us
   const create = (ref: WorkspaceRef, input: CreateWorkspaceInput): Promise<void> =>
     resolve(dispatch, platform.keyValueStore, ref, opener.create(ref, input));
 
-  return { state, open, unlock, create };
+  const lock = (ref: WorkspaceRef): void => dispatch({ type: 'locked', ref });
+
+  return { state, open, unlock, create, lock };
 }

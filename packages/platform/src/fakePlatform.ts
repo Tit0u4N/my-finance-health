@@ -5,6 +5,7 @@
 import ky from 'ky';
 import type { PlatformCapabilities } from './capabilities';
 import type { Platform } from './platform';
+import type { BiometricUnlockService } from './services/biometricUnlock';
 import type { Clock } from './services/clock';
 import type { FileSystemService } from './services/fileSystem';
 import type { KeyValueStore } from './services/keyValueStore';
@@ -16,6 +17,7 @@ const DEFAULT_CAPABILITIES: PlatformCapabilities = {
   canPickFile: true,
   canResumeLocation: true,
   hasSecretVault: true,
+  hasBiometricUnlock: true,
   hasEncryptedSqlDriver: true,
   worksOffline: true,
   canControlWindow: true,
@@ -148,6 +150,24 @@ function createFakeFileSystem(clock: Clock): FileSystemService {
   };
 }
 
+function createFakeBiometricUnlock(): BiometricUnlockService {
+  const store = new Map<string, string>();
+
+  return {
+    status: () => Promise.resolve({ isAvailable: true, label: 'Biometric unlock' }),
+    has: (key) => Promise.resolve(store.has(key)),
+    get: (key) => Promise.resolve(store.get(key) ?? null),
+    set: (key, value) => {
+      store.set(key, value);
+      return Promise.resolve();
+    },
+    remove: (key) => {
+      store.delete(key);
+      return Promise.resolve();
+    },
+  };
+}
+
 function createFakeSqlDriver(): SqlDriver {
   return {
     unlock: () => Promise.resolve(),
@@ -172,6 +192,7 @@ export function createFakePlatform(options: CreateFakePlatformOptions = {}): Pla
     localization: { locale: () => locale },
     http: { instance: ky.create() },
     ...(capabilities.hasSecretVault ? { secrets: createInMemoryStore() } : {}),
+    ...(capabilities.hasBiometricUnlock ? { biometricUnlock: createFakeBiometricUnlock() } : {}),
     ...(capabilities.canWriteFile ? { fileSystem: createFakeFileSystem(clock) } : {}),
     ...(capabilities.hasEncryptedSqlDriver ? { sqlDriver: createFakeSqlDriver() } : {}),
   };

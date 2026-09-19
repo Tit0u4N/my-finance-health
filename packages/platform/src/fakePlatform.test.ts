@@ -35,12 +35,36 @@ describe('createFakePlatform', () => {
 
   it('omits optional services whose capability is declared false', () => {
     const platform = createFakePlatform({
-      capabilities: { hasSecretVault: false, canWriteFile: false, hasEncryptedSqlDriver: false },
+      capabilities: {
+        hasSecretVault: false,
+        hasBiometricUnlock: false,
+        canWriteFile: false,
+        hasEncryptedSqlDriver: false,
+      },
     });
 
     expect(platform.secrets).toBeUndefined();
+    expect(platform.biometricUnlock).toBeUndefined();
     expect(platform.fileSystem).toBeUndefined();
     expect(platform.sqlDriver).toBeUndefined();
+  });
+
+  it('round-trips a stored secret through the in-memory biometric-unlock store', async () => {
+    const platform = createFakePlatform();
+    const biometricUnlock = platform.biometricUnlock;
+    if (!biometricUnlock) {
+      throw new Error('fake platform did not expose biometric unlock despite the default capability');
+    }
+
+    expect(await biometricUnlock.status()).toEqual({ isAvailable: true, label: 'Biometric unlock' });
+    expect(await biometricUnlock.has('workspace-1')).toBe(false);
+
+    await biometricUnlock.set('workspace-1', 'the-passphrase');
+    expect(await biometricUnlock.has('workspace-1')).toBe(true);
+    expect(await biometricUnlock.get('workspace-1', 'Unlock workspace')).toBe('the-passphrase');
+
+    await biometricUnlock.remove('workspace-1');
+    expect(await biometricUnlock.has('workspace-1')).toBe(false);
   });
 
   it('appends without rewriting the file, and truncates it', async () => {

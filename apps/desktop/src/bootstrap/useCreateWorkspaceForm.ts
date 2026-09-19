@@ -3,14 +3,17 @@ import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener'
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
 import { timezoneSchema } from '@repo/domain/primitives/dateTime';
+import type { BiometricUnlockService } from '@repo/platform/services/biometricUnlock';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { useState } from 'react';
+import { useBiometricAvailability } from './useBiometricAvailability';
 
 const MIN_PASSPHRASE_LENGTH = 8;
 
 export type UseCreateWorkspaceFormDeps = {
   readonly fileSystem: FileSystemService;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput) => void;
+  readonly biometricUnlock: BiometricUnlockService | undefined;
+  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, remember: boolean) => void;
 };
 
 export type UseCreateWorkspaceFormResult = {
@@ -23,16 +26,22 @@ export type UseCreateWorkspaceFormResult = {
   readonly error: string | undefined;
   readonly canSubmit: boolean;
   readonly onSubmit: () => Promise<void>;
+  readonly remember: boolean;
+  readonly onRememberChange: (remember: boolean) => void;
+  readonly biometric: { readonly isSupported: boolean; readonly label: string };
 };
 
 export function useCreateWorkspaceForm({
   fileSystem,
+  biometricUnlock,
   onCreate,
 }: UseCreateWorkspaceFormDeps): UseCreateWorkspaceFormResult {
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>('EUR');
   const [secret, setSecret] = useState('');
   const [confirmSecret, setConfirmSecret] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
+  const [remember, setRemember] = useState(false);
+  const biometric = useBiometricAvailability(biometricUnlock);
 
   const canSubmit = secret.length >= MIN_PASSPHRASE_LENGTH && secret === confirmSecret;
 
@@ -63,6 +72,7 @@ export function useCreateWorkspaceForm({
     onCreate(
       { mode: 'local', id: path, path, label: workspaceLabelFromPath(path) },
       { timezone, baseCurrency, secret },
+      remember,
     );
   };
 
@@ -76,5 +86,8 @@ export function useCreateWorkspaceForm({
     error,
     canSubmit,
     onSubmit,
+    remember,
+    onRememberChange: setRemember,
+    biometric,
   };
 }

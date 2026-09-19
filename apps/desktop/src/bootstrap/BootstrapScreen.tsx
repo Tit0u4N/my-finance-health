@@ -1,5 +1,6 @@
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { Platform } from '@repo/platform/platform';
+import type { BiometricUnlockService } from '@repo/platform/services/biometricUnlock';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { Panel } from '@repo/ui/components/Panel';
 import type { ReactNode } from 'react';
@@ -8,6 +9,7 @@ import { BootstrapProgress } from './BootstrapProgress';
 import { CreateWorkspaceForm } from './CreateWorkspaceForm';
 import { describeBootstrapError } from './describeBootstrapError';
 import { UnlockWorkspaceForm } from './UnlockWorkspaceForm';
+import type { BiometricIntent } from './useBiometricEnrollment';
 import type { UseBootstrapScreenResult } from './useBootstrapScreen';
 import { useBootstrapScreen } from './useBootstrapScreen';
 import { WorkspacePicker } from './WorkspacePicker';
@@ -18,6 +20,7 @@ export type BootstrapScreenProps = {
   /** Cosmetic only — labels the spinner while `unlock`/`create` is in flight (see
    * useLocalApp.ts's docblock on why this can't be a real BootstrapState transition). */
   readonly progress: 'migrating' | 'replaying' | null;
+  readonly onBiometricIntent: (intent: BiometricIntent) => void;
 };
 
 function progressLabel(progress: BootstrapScreenProps['progress']): string {
@@ -33,6 +36,7 @@ function progressLabel(progress: BootstrapScreenProps['progress']): string {
 function renderBootstrapBody(
   screen: UseBootstrapScreenResult,
   fileSystem: FileSystemService,
+  biometricUnlock: BiometricUnlockService | undefined,
   progress: BootstrapScreenProps['progress'],
 ): ReactNode {
   if (screen.pending) {
@@ -44,7 +48,12 @@ function renderBootstrapBody(
       return <BootstrapProgress label="Loading…" />;
     case 'needs-designation':
       return screen.mode === 'create' ? (
-        <CreateWorkspaceForm fileSystem={fileSystem} onCreate={screen.create} onBack={screen.onBackToPicker} />
+        <CreateWorkspaceForm
+          fileSystem={fileSystem}
+          biometricUnlock={biometricUnlock}
+          onCreate={screen.create}
+          onBack={screen.onBackToPicker}
+        />
       ) : (
         <WorkspacePicker
           recent={screen.state.recent}
@@ -54,7 +63,13 @@ function renderBootstrapBody(
         />
       );
     case 'needs-unlock':
-      return <UnlockWorkspaceForm workspaceRef={screen.state.ref} onUnlock={screen.unlock} />;
+      return (
+        <UnlockWorkspaceForm
+          workspaceRef={screen.state.ref}
+          biometricUnlock={biometricUnlock}
+          onUnlock={screen.unlock}
+        />
+      );
     case 'migrating':
       return <BootstrapProgress label={progressLabel('migrating')} />;
     case 'replaying':
@@ -68,8 +83,8 @@ function renderBootstrapBody(
   }
 }
 
-export function BootstrapScreen({ platform, bootstrap, progress }: BootstrapScreenProps) {
-  const screen = useBootstrapScreen(bootstrap);
+export function BootstrapScreen({ platform, bootstrap, progress, onBiometricIntent }: BootstrapScreenProps) {
+  const screen = useBootstrapScreen(bootstrap, onBiometricIntent);
   const fileSystem = platform.fileSystem as FileSystemService;
 
   return (
@@ -78,7 +93,9 @@ export function BootstrapScreen({ platform, bootstrap, progress }: BootstrapScre
           Tailwind's named md container scale, silently resolving max-w-md to 1rem instead of 28rem
           — the numbered scale sidesteps the collision (see EmptyState.tsx's max-w-80 for the same fix). */}
       <div className="w-full max-w-112">
-        <Panel title="my finance health">{renderBootstrapBody(screen, fileSystem, progress)}</Panel>
+        <Panel title="my finance health">
+          {renderBootstrapBody(screen, fileSystem, platform.biometricUnlock, progress)}
+        </Panel>
       </div>
     </div>
   );

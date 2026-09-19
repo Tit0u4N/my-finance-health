@@ -16,6 +16,11 @@
     "fs:allow-read-dir",
     "fs:allow-stat",
     "fs:allow-appdata-read-recursive",
-    "fs:allow-appdata-write-recursive"
+    "fs:allow-appdata-write-recursive",
+    "biometry:allow-status",
+    "biometry:allow-has-data",
+    "biometry:allow-get-data",
+    "biometry:allow-set-data",
+    "biometry:allow-remove-data"
   ]
 }

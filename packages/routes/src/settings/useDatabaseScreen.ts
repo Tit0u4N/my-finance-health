@@ -6,6 +6,7 @@
 
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
+import { useWorkspaceLock } from '@repo/app-core/providers/useWorkspaceLock';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
 import { useCategories } from '@repo/app-core/queries/useCategories';
 import { useExchangeRates } from '@repo/app-core/queries/useExchangeRates';
@@ -27,12 +28,15 @@ export type UseDatabaseScreenResult =
       readonly path: string;
       readonly metadata: readonly DatabaseMetadata[];
       readonly actions: readonly DatabaseAction[];
+      readonly canLock: boolean;
+      readonly onLock: () => void;
     };
 
 export function useDatabaseScreen(): UseDatabaseScreenResult {
   const { t } = useTranslation();
   const platform = usePlatform();
   const isAvailable = platform.capabilities.canWriteFile;
+  const workspaceLock = useWorkspaceLock();
 
   const accountsQuery = useAccounts();
   const categoriesQuery = useCategories();
@@ -84,5 +88,11 @@ export function useDatabaseScreen(): UseDatabaseScreenResult {
       { id: 'backup', label: t('settings:database.actions.createBackup'), icon: Save },
       { id: 'export', label: t('common:action.exportCsv'), icon: Download },
     ],
+    canLock: workspaceLock.canLock,
+    onLock: () => {
+      if (workspaceLock.canLock) {
+        workspaceLock.lock();
+      }
+    },
   };
 }

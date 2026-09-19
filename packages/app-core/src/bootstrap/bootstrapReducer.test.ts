@@ -52,6 +52,14 @@ describe('bootstrapReducer', () => {
     expect(next).toEqual({ kind: 'failed', error });
   });
 
+  it('locked moves ready back to needs-unlock for the same ref', () => {
+    const state: BootstrapState = { kind: 'ready', ref: localRef, repositories: fakeRepositories };
+    expect(bootstrapReducer(state, { type: 'locked', ref: localRef })).toEqual({
+      kind: 'needs-unlock',
+      ref: localRef,
+    });
+  });
+
   it('reset always returns to idle', () => {
     const state: BootstrapState = { kind: 'ready', ref: onlineRef, repositories: fakeRepositories };
     expect(bootstrapReducer(state, { type: 'reset' })).toEqual({ kind: 'idle' });

@@ -24,6 +24,7 @@ import { createAppRouter } from '@repo/router/createAppRouter';
 import { routeTree } from '@repo/routes/routeTree';
 import { QueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useBiometricEnrollment } from './useBiometricEnrollment';
 import { useLocalWorkspaceSession } from './useLocalWorkspaceSession';
 
 // `platform` is created by the caller (LocalApp) and passed in, not built here: it must exist
@@ -47,6 +48,23 @@ export function useLocalApp(platform: Platform) {
 
   const bootstrap = useWorkspaceBootstrap({ opener });
   useLocalWorkspaceSession(session);
+  const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock);
+
+  // Closes the real session (releases the occupancy lock, closes the SQL connection) before
+  // flipping the bootstrap state machine back to `needs-unlock` for the same ref — mirrors
+  // `useLocalWorkspaceSession`'s own window-close handler, just triggered by the user instead of
+  // the OS. Fire-and-forget from the caller's perspective: `state.kind` changing away from
+  // `ready` unmounts whatever button called this, so there's nothing left to show a pending state.
+  const lock = (): void => {
+    if (bootstrap.state.kind !== 'ready') {
+      return;
+    }
+    const { ref } = bootstrap.state;
+    void session?.close().then(() => {
+      setSession(null);
+      bootstrap.lock(ref);
+    });
+  };
 
   const [queryClient] = useState(() => new QueryClient());
   // Memoized (unlike `opener` above): the router must stay the same instance across renders once
@@ -60,5 +78,5 @@ export function useLocalApp(platform: Platform) {
     return createAppRouter({ routeTree, context: { queryClient, repositories: bootstrap.state.repositories } });
   }, [bootstrap.state, queryClient]);
 
-  return { platform, bootstrap, progress, queryClient, router };
+  return { platform, bootstrap, progress, queryClient, router, lock, onBiometricIntent };
 }

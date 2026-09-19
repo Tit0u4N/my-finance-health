@@ -4,6 +4,7 @@
 // never `service !== undefined` as a proxy for it, so the two can never silently disagree.
 
 import type { PlatformCapabilities } from './capabilities';
+import type { BiometricUnlockService } from './services/biometricUnlock';
 import type { Clock } from './services/clock';
 import type { FileSystemService } from './services/fileSystem';
 import type { HttpClientService } from './services/httpClient';
@@ -21,6 +22,7 @@ export type Platform = {
   readonly localization: LocalizationService;
   readonly http: HttpClientService;
   readonly secrets?: SecretsService;
+  readonly biometricUnlock?: BiometricUnlockService;
   readonly fileSystem?: FileSystemService;
   readonly sqlDriver?: SqlDriver;
 };

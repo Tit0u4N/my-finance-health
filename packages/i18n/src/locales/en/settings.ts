@@ -94,6 +94,14 @@ const settings = {
       switchFile: 'Switch file',
       createBackup: 'Create backup',
     },
+    sessionPanel: {
+      title: 'Session',
+      subtitle: 'This device only',
+    },
+    lockWorkspace: {
+      label: 'Lock workspace',
+      description: 'Returns to the unlock screen. The passphrase (or biometrics, if enrolled) is needed again.',
+    },
     dangerZonePanel: {
       title: 'Danger zone',
       subtitle: 'These actions cannot be undone',

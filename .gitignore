@@ -110,3 +110,5 @@ target/
 *.pem
 dist
 next-env.d.ts
+# --- Local macOS dev signing (personal Team ID, identity, provisioning profile) ---
+apps/desktop/src-tauri/dev-signing/

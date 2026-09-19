@@ -4,7 +4,7 @@ import type { DomainError } from '@repo/domain/primitives/errors';
 import { err, ok, type Result } from '@repo/domain/primitives/result';
 import type { RepositorySet } from '@repo/domain/repositories/repositorySet';
 import { createFakePlatform } from '@repo/platform/fakePlatform';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PlatformProvider } from '../providers/PlatformProvider';
@@ -77,6 +77,19 @@ describe('useWorkspaceBootstrap', () => {
     await waitFor(() => expect(result.current.state.kind).toBe('ready'));
     expect(opener.open).not.toHaveBeenCalled();
     expect(opener.unlock).not.toHaveBeenCalled();
+  });
+
+  it('lock() returns a ready workspace to needs-unlock for the same ref', async () => {
+    const opener = createFakeOpener();
+    const { result } = renderBootstrap(opener);
+    await waitFor(() => expect(result.current.state.kind).toBe('needs-designation'));
+
+    await result.current.unlock(ref, 'my-passphrase');
+    await waitFor(() => expect(result.current.state.kind).toBe('ready'));
+
+    act(() => result.current.lock(ref));
+
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'needs-unlock', ref }));
   });
 
   it('a failed step moves state to failed, carrying the domain error', async () => {

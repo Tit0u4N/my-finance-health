@@ -30,6 +30,8 @@ export function bootstrapReducer(_state: BootstrapState, event: BootstrapEvent):
       return stepToState(event.ref, event.step);
     case 'failed':
       return { kind: 'failed', error: event.error };
+    case 'locked':
+      return { kind: 'needs-unlock', ref: event.ref };
     case 'reset':
       return { kind: 'idle' };
     default:

@@ -1,9 +1,14 @@
 // apps/desktop — composes the real Tauri adapters into one `Platform` (start-roadmap.md §6: only
-// apps wire concrete adapters). `hasSecretVault` is false: local mode derives its key from a
-// user passphrase at every unlock (open-questions.md #5), so nothing here reads an OS keyring —
-// adding one is deferred to whenever online mode needs to hold an API key.
+// apps wire concrete adapters). `hasSecretVault` stays false: local mode still derives its key
+// from a user passphrase at every unlock (open-questions.md #5), and no general-purpose keyring
+// is wired for it — that's deferred to whenever online mode needs to hold an API key.
+// `hasBiometricUnlock` is a separate, narrower capability (open-questions.md #23, amending #5):
+// an opt-in, per-device, biometric-bound *copy* of a workspace passphrase. The passphrase stays
+// the only key material and a workspace file copied to another device is still unopenable
+// without it — only the daily-launch prompt is silent, never the key derivation itself.
 
 import type { Platform } from '@repo/platform/platform';
+import { createTauriBiometricUnlock } from '@repo/platform-tauri/services/biometricUnlock';
 import { createSystemClock } from '@repo/platform-tauri/services/clock';
 import { createTauriFileSystem } from '@repo/platform-tauri/services/fileSystem';
 import { createLocalStorageKeyValueStore } from '@repo/platform-tauri/services/keyValueStore';
@@ -19,6 +24,7 @@ export function createDesktopPlatform(): Platform {
       canPickFile: true,
       canResumeLocation: true,
       hasSecretVault: false,
+      hasBiometricUnlock: true,
       hasEncryptedSqlDriver: true,
       worksOffline: true,
       canControlWindow: true,
@@ -31,5 +37,6 @@ export function createDesktopPlatform(): Platform {
     http: { instance: ky.create() },
     fileSystem: createTauriFileSystem(),
     sqlDriver: createTauriSqlDriver(),
+    biometricUnlock: createTauriBiometricUnlock(),
   };
 }

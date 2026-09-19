@@ -1,8 +1,10 @@
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
+import type { BiometricUnlockService } from '@repo/platform/services/biometricUnlock';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { Button } from '@repo/ui/components/Button';
+import { Checkbox } from '@repo/ui/components/Checkbox';
 import { Input } from '@repo/ui/components/Input';
 import { Select, type SelectOption } from '@repo/ui/components/Select';
 import { useCreateWorkspaceForm } from './useCreateWorkspaceForm';
@@ -15,12 +17,13 @@ const CURRENCY_OPTIONS: readonly SelectOption<CurrencyCode>[] = [
 
 export type CreateWorkspaceFormProps = {
   readonly fileSystem: FileSystemService;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput) => void;
+  readonly biometricUnlock: BiometricUnlockService | undefined;
+  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, remember: boolean) => void;
   readonly onBack: () => void;
 };
 
-export function CreateWorkspaceForm({ fileSystem, onCreate, onBack }: CreateWorkspaceFormProps) {
-  const form = useCreateWorkspaceForm({ fileSystem, onCreate });
+export function CreateWorkspaceForm({ fileSystem, biometricUnlock, onCreate, onBack }: CreateWorkspaceFormProps) {
+  const form = useCreateWorkspaceForm({ fileSystem, biometricUnlock, onCreate });
 
   return (
     <div className="flex flex-col gap-4">
@@ -45,6 +48,12 @@ export function CreateWorkspaceForm({ fileSystem, onCreate, onBack }: CreateWork
       <p className="text-body-sm text-muted">
         This passphrase unlocks the file every time it's opened, on every device — write it down somewhere safe.
       </p>
+      {form.biometric.isSupported && (
+        <label className="flex items-center gap-sm text-body-sm text-muted">
+          <Checkbox checked={form.remember} onCheckedChange={form.onRememberChange} />
+          Remember with {form.biometric.label} on this device
+        </label>
+      )}
       {form.error && <span className="text-body-sm text-neg">{form.error}</span>}
       <div className="flex gap-2">
         <Button tone="secondary" fullWidth onClick={onBack}>

@@ -25,11 +25,16 @@ export function LocalApp(): ReactElement {
 }
 
 function LocalAppBootstrap({ platform }: { readonly platform: Platform }): ReactElement {
-  const { bootstrap, progress, queryClient, router } = useLocalApp(platform);
+  const { bootstrap, progress, queryClient, router, lock, onBiometricIntent } = useLocalApp(platform);
 
   if (bootstrap.state.kind === 'ready' && router) {
     return (
-      <AppStageProviders platform={platform} repositories={bootstrap.state.repositories} queryClient={queryClient}>
+      <AppStageProviders
+        platform={platform}
+        repositories={bootstrap.state.repositories}
+        queryClient={queryClient}
+        onLockWorkspace={lock}
+      >
         <ThemedRouter router={router} />
       </AppStageProviders>
     );
@@ -37,7 +42,12 @@ function LocalAppBootstrap({ platform }: { readonly platform: Platform }): React
 
   return (
     <BootstrapStageProviders platform={platform}>
-      <BootstrapScreen platform={platform} bootstrap={bootstrap} progress={progress} />
+      <BootstrapScreen
+        platform={platform}
+        bootstrap={bootstrap}
+        progress={progress}
+        onBiometricIntent={onBiometricIntent}
+      />
     </BootstrapStageProviders>
   );
 }

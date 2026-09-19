@@ -23,6 +23,7 @@ export type BootstrapEvent =
   | { readonly type: 'recent-loaded'; readonly recent: readonly WorkspaceRef[] }
   | { readonly type: 'step-resolved'; readonly ref: WorkspaceRef; readonly step: WorkspaceOpenStep }
   | { readonly type: 'failed'; readonly error: DomainError }
+  | { readonly type: 'locked'; readonly ref: WorkspaceRef }
   | { readonly type: 'reset' };
 
 export type { CreateWorkspaceInput, WorkspaceOpenStep, WorkspaceRef };

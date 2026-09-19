@@ -174,3 +174,30 @@ Decided: add `delete(id)`, cascading to every `InvestmentValueSnapshot` for that
 - **Backdated snapshot silently overwrote a more recent price.** `recordValueSnapshot` unconditionally set `Investment.current` to the new snapshot's price, even when the snapshot's date was earlier than the latest one already on record. Fixed: `current` only advances when the new snapshot is the newest on record; a backdated entry is still written (nothing about *recording* a value ever fails), it just doesn't move `current`. Refines, doesn't contradict, `domain-model.md`'s "one fact, two rows" framing of `recordValueSnapshot`.
 
 Both are covered by new integration tests in `repositories.integration.test.ts`.
+
+---
+
+## Fifth-pass follow-on decisions (2026-09-18)
+
+### 23. Biometric unlock (`apps/desktop`) — **opt-in, per-device, amends #5, not #4**
+
+Decision #5 was "the key is derived from a user-supplied secret at every unlock … never a silent device-keyring unlock." Decision #4 (project memory, `project-local-mode-scope`) deferred `SecretsService`/`hasSecretVault` on desktop for exactly that reason: nothing in local mode needed to read an OS keyring.
+
+Decided: `apps/desktop` may store a **copy** of the workspace passphrase in the OS keyring (macOS Keychain / Windows Credential Manager), bound to a biometric check (Touch ID / Windows Hello) via the third-party `tauri-plugin-biometry` (no official Tauri 2 desktop biometric plugin exists). This is opt-in per workspace per device — a checkbox on the unlock and create forms — and is **narrower** than #5's silent-keyring-unlock ban, not a repeal of it:
+
+- The passphrase remains the **only** key material. Argon2id derivation and the SQLCipher key never change; the keyring only holds a plaintext copy of the same secret the user would otherwise type.
+- **Portability is unaffected.** A workspace file copied to a device with no enrolled entry is still unopenable without the typed passphrase — the convenience is device-local, never travels with the file.
+- **`hasSecretVault` stays `false`.** This is a new, narrower capability, `hasBiometricUnlock` (`@repo/platform/services/biometricUnlock.ts`), independent of the general-purpose keyring #4 deferred — that one (for a future online-mode API key) is still not built.
+- A stale entry (passphrase changed out of band, corrupted keyring item) self-heals: an unlock attempt whose secret was released biometrically, if it then fails, forgets the stored entry so the next launch falls back to a clean passphrase prompt rather than looping.
+
+**Signing requirement (found while testing):** the plugin writes to macOS's data-protection keychain (`kSecUseDataProtectionKeychain`, needed for biometric-bound `SecAccessControl`), which requires a code-signed app carrying a `keychain-access-groups` entitlement. An unsigned `bun tauri dev` binary fails the write with `errSecMissingEntitlement` (-34018), and `has()`/`get()` then degrade silently to `false`/`null`. So Touch ID can only be exercised end-to-end with a signed build; the passphrase path is unaffected.
+
+Not built: a Settings-screen toggle (enable/disable lives only on the unlock/create forms, per the bootstrap-only scope decision 4 already set for this pass), and no equivalent on mobile (`expo-local-authentication` is the eventual counterpart, unbuilt — `start-roadmap.md` §8).
+
+### 24. Manual "Lock workspace" (`apps/desktop`, Settings → Database)
+
+Testing #23 surfaced a gap: once unlocked, the only way back to the unlock screen (to retest a biometric prompt, or just to step away from the machine) was quitting and relaunching `apps/desktop`. `needs-unlock` was already a normal `BootstrapState` — nothing about it required a cold start — so this closes that gap rather than adding a new concept.
+
+Decided: `useWorkspaceBootstrap` (`@repo/app-core`) gains `lock(ref)`, a pure state transition back to `needs-unlock` for the same ref (new `locked` event on the existing reducer — `bootstrapState.ts`/`bootstrapReducer.ts`). It carries no I/O: releasing the actual session (occupancy lock, SQL connection) stays the host's job, the same split `onSessionOpen` already established. `apps/desktop`'s `useLocalApp.ts` closes the `LocalWorkspaceSession` first, then calls `bootstrap.lock(ref)`.
+
+The action reaches Settings → Database (not Preferences — `screens.md`'s existing "Active file"/"Danger zone" panels are where local-file-session actions already live) through a new capability-shaped context, `WorkspaceLockContext`/`useWorkspaceLock()` in `@repo/app-core/providers`: `AppStageProviders` takes an optional `onLockWorkspace` prop, absent for online mode (`canLock: false`) — the same "capability, not platform name" shape as `PlatformCapabilities`, just scoped to the session rather than the platform, since the lock action doesn't exist until a workspace is actually open.

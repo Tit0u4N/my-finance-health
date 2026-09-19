@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@choochmeque/tauri-plugin-biometry-api": "^0.2.8",
     "@repo/domain": "workspace:*",
     "@repo/platform": "workspace:*",
     "@tauri-apps/api": "^2",

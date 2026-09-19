@@ -92,6 +92,15 @@ const settings = {
       switchFile: 'Changer de fichier',
       createBackup: 'Créer une sauvegarde',
     },
+    sessionPanel: {
+      title: 'Session',
+      subtitle: 'Uniquement sur cet appareil',
+    },
+    lockWorkspace: {
+      label: 'Verrouiller',
+      description:
+        'Retour à l’écran de déverrouillage. Le mot de passe (ou la biométrie, si activée) sera de nouveau requis.',
+    },
     dangerZonePanel: {
       title: 'Zone à risque',
       subtitle: 'Ces actions sont irréversibles',

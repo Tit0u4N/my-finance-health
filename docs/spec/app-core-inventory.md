@@ -31,7 +31,7 @@ idle | needs-designation | needs-unlock | migrating | replaying | ready | failed
 
 `needs-designation` covers onboarding step 0 (`screens.md`) — choosing or creating the file. Entirely capability-driven: no platform-name check anywhere in this hook, only calls against the injected platform contract.
 
-**Unlock is always interactive** (`open-questions.md` #5): the key is derived from a user-supplied secret at every unlock, on every device — there is no silent device-keyring path. `needs-unlock` is therefore not a rare fallback state, it's the normal path on every cold open.
+**Unlock is always interactive** (`open-questions.md` #5): the key is derived from a user-supplied secret at every unlock, on every device — there is no silent device-keyring path. `needs-unlock` is therefore not a rare fallback state, it's the normal path on every cold open. **Amended by `open-questions.md` #23**: `apps/desktop` may additionally release that same secret from an opt-in, per-device, biometric-bound OS keyring entry (Touch ID / Windows Hello) instead of the user typing it — the key derivation and the passphrase itself are untouched, only the *entry* of the passphrase can now be silent, and only on a device the user explicitly enrolled.
 
 **Workspace creation sets `timezone`** (`open-questions.md` #3, `domain-model.md`'s `WorkspaceSettings`): the `needs-designation` → `ready` transition for a *new* workspace must capture the timezone once, immutably, as part of creation — not deferred to a later settings screen. `baseCurrency` is not captured here; it's ordinary mutable workspace data, set through `WorkspaceSettingsRepository` like any other post-bootstrap write (defaults reasonably, e.g. to the first account's currency, once accounts exist).
 

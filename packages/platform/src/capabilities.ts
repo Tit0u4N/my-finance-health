@@ -13,6 +13,10 @@ export type PlatformCapabilities = {
   readonly canResumeLocation: boolean;
   /** An OS-level secret vault (keyring / secure-store) is available. */
   readonly hasSecretVault: boolean;
+  /** A biometric-bound, per-device copy of a workspace passphrase can be stored and released
+   *  (open-questions.md #23). Independent of `hasSecretVault` — a narrower, opt-in convenience,
+   *  not the general-purpose keyring. */
+  readonly hasBiometricUnlock: boolean;
   /** An encrypted local SQL driver (SQLCipher) is available. */
   readonly hasEncryptedSqlDriver: boolean;
   /** The app can function with no network connection. */

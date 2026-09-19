@@ -15,12 +15,16 @@ import { PlatformProvider } from './PlatformProvider';
 import { RepositoriesProvider } from './RepositoriesProvider';
 import { TranslationsProvider } from './TranslationsProvider';
 import { usePlatform } from './usePlatform';
+import { WorkspaceLockProvider } from './WorkspaceLockProvider';
 
 export type AppStageProvidersProps = {
   readonly platform: Platform;
   readonly repositories: RepositorySet;
   /** Built by each app — cache configuration may reasonably differ by target (app-core-inventory.md §1). */
   readonly queryClient: QueryClient;
+  /** Present only when the host can return to the unlock screen without a full remount (local
+   *  mode's per-workspace session — open-questions.md #24). Absent for online mode. */
+  readonly onLockWorkspace?: () => void;
   readonly children: ReactNode;
 };
 
@@ -28,6 +32,7 @@ export function AppStageProviders({
   platform,
   repositories,
   queryClient,
+  onLockWorkspace,
   children,
 }: AppStageProvidersProps): ReactElement {
   return (
@@ -36,7 +41,9 @@ export function AppStageProviders({
         <QueryClientProvider client={queryClient}>
           <PreferencesProvider>
             <PreferredLanguage>
-              <AccountSelectionProvider>{children}</AccountSelectionProvider>
+              <WorkspaceLockProvider lock={onLockWorkspace ?? null}>
+                <AccountSelectionProvider>{children}</AccountSelectionProvider>
+              </WorkspaceLockProvider>
             </PreferredLanguage>
           </PreferencesProvider>
         </QueryClientProvider>

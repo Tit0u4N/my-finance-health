@@ -7,7 +7,7 @@ import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Button } from '@repo/ui/components/Button';
 import { EmptyState } from '@repo/ui/components/EmptyState';
 import { Panel } from '@repo/ui/components/Panel';
-import { Database, Trash2 } from 'lucide-react';
+import { Database, Lock, Trash2 } from 'lucide-react';
 import { useDatabaseScreen } from './useDatabaseScreen';
 
 export function DatabaseScreen() {
@@ -30,10 +30,24 @@ export function DatabaseScreen() {
     );
   }
 
-  const { path, metadata, actions } = screen;
+  const { path, metadata, actions, canLock, onLock } = screen;
 
   return (
     <>
+      {canLock && (
+        <Panel
+          title={t('settings:database.sessionPanel.title')}
+          subtitle={t('settings:database.sessionPanel.subtitle')}
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex-1 text-body-sm text-muted">{t('settings:database.lockWorkspace.description')}</div>
+            <Button tone="secondary" size="sm" icon={Lock} onClick={onLock}>
+              {t('settings:database.lockWorkspace.label')}
+            </Button>
+          </div>
+        </Panel>
+      )}
+
       <Panel
         title={t('settings:database.activeFilePanel.title')}
         subtitle={t('settings:database.activeFilePanel.subtitle')}
