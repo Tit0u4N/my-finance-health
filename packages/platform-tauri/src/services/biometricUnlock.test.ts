@@ -31,6 +31,24 @@ describe('createTauriBiometricUnlock', () => {
     await expect(biometricUnlock.status()).resolves.toEqual({ isAvailable: true, label: 'Touch ID' });
   });
 
+  it('reports unavailable when the keychain rejects the probe (unsigned build, -34018)', async () => {
+    checkStatus.mockResolvedValueOnce({ isAvailable: true, biometryType: 2 });
+    removeData.mockRejectedValueOnce(new Error('Error deleting item from keychain: -34018'));
+    const biometricUnlock = createTauriBiometricUnlock();
+
+    await expect(biometricUnlock.status()).resolves.toMatchObject({ isAvailable: false });
+    expect(removeData).toHaveBeenCalledWith({ domain: DOMAIN, name: '__keychain-probe__' });
+  });
+
+  it('does not touch the keychain when no biometric hardware is available', async () => {
+    removeData.mockClear();
+    checkStatus.mockResolvedValueOnce({ isAvailable: false, biometryType: 0 });
+    const biometricUnlock = createTauriBiometricUnlock();
+
+    await expect(biometricUnlock.status()).resolves.toMatchObject({ isAvailable: false });
+    expect(removeData).not.toHaveBeenCalled();
+  });
+
   it('degrades to unavailable when the plugin throws (e.g. unsupported on Linux)', async () => {
     checkStatus.mockRejectedValueOnce(new Error('plugin not registered'));
     const biometricUnlock = createTauriBiometricUnlock();

@@ -20,6 +20,8 @@ import {
 import type { BiometricUnlockService, BiometricUnlockStatus } from '@repo/platform/services/biometricUnlock';
 
 const DOMAIN = 'com.myfinancehealth.desktop';
+// Never written by anyone; workspace keys are file paths, which can't collide with it.
+const PROBE_KEY = '__keychain-probe__';
 
 function labelFor(biometryType: BiometryType): string {
   switch (biometryType) {
@@ -39,7 +41,17 @@ export function createTauriBiometricUnlock(): BiometricUnlockService {
     status: async (): Promise<BiometricUnlockStatus> => {
       try {
         const result = await checkStatus();
-        return { isAvailable: result.isAvailable, label: labelFor(result.biometryType) };
+        const label = labelFor(result.biometryType);
+        if (!result.isAvailable) {
+          return { isAvailable: false, label };
+        }
+        // Hardware present is not enough: the plugin's keychain needs a code-signed app carrying a
+        // keychain-access-groups entitlement, and an unsigned build (`tauri dev`) rejects every
+        // call with errSecMissingEntitlement (-34018). Deleting a key that cannot exist is a
+        // no-op on a working keychain (the plugin maps "not found" to success), needs no
+        // biometric prompt and writes nothing — so it only throws when the keychain is unusable.
+        await removeData({ domain: DOMAIN, name: PROBE_KEY });
+        return { isAvailable: true, label };
       } catch {
         return { isAvailable: false, label: 'Biometric unlock' };
       }

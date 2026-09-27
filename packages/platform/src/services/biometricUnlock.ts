@@ -5,7 +5,8 @@
 // PlatformCapabilities.hasBiometricUnlock, never assumed present.
 
 export type BiometricUnlockStatus = {
-  /** Hardware present and a biometric is enrolled. */
+  /** Hardware present, a biometric is enrolled, and the secure store is actually usable (e.g. an
+   *  unsigned macOS build can't reach the keychain) — false means hide every biometric control. */
   readonly isAvailable: boolean;
   /** Display copy resolved by the adapter ("Touch ID", "Windows Hello") — data, not a
    *  platform-name branch in shared code (start-roadmap.md §2, principle 1). */
