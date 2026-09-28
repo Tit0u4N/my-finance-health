@@ -7,6 +7,9 @@ investment curve). Each had a root cause that is not desktop-specific — it is 
 screen, any future `@repo/ui` component, or `apps/mobile` can reintroduce. This file states the
 underlying rule so it gets caught at write time instead of at manual-QA time.
 
+**#9 added 2026-09-27**: the first real bug found from the mobile side, once `apps/mobile` started
+composing screens with `@repo/app-core`'s real providers.
+
 Each entry says whether it is **DOM-only** (applies to `@repo/ui`, `apps/web`, `apps/desktop`) or
 **universal** (applies to any target, `apps/mobile` included).
 
@@ -123,6 +126,38 @@ same semantic tone (`pos`/`neg` or the app's equivalent) that the rest of the UI
 that distinction — don't leave it neutral gray by default. On `apps/mobile`, the same review
 question applies to whatever native segmented-control/tab component is built.
 
+## 9. A shared package's own test-only React version can silently duplicate React in a consuming app's test run — universal, but hits `apps/mobile` hardest
+
+Found 2026-09-27, first time `apps/mobile` composed a screen with `@repo/app-core`'s real
+providers (`AppStageProviders`) in a test. `@repo/app-core` is peer-dependency-only on `react`
+(`>=18`) in its actual source — correct, per docs/start-roadmap.md §5 — but its own `devDependencies`
+still need a *concrete* react/react-dom to run its own Vitest suite, pinned to the "dom" catalog.
+Bun installs workspace packages independently rather than hoisting: `packages/app-core/node_modules/react`
+physically resolves to whatever the "dom" catalog gives (`^19.2.0`, currently `19.2.8`), while
+`apps/mobile/node_modules/react` is the "native" catalog's exact `19.2.3` (Expo's SDK dictates it —
+not a range). When a mobile test imports `@repo/app-core`'s source directly (shared packages ship
+raw TypeScript, never a build — CLAUDE.md's Commands section), every library app-core's providers
+compose that itself calls `require('react')` internally (`zustand/react`, `@tanstack/react-query`,
+`react-i18next`) resolves through app-core's own nested `19.2.8`, not mobile's `19.2.3` — two
+physical React instances in one render tree, "Invalid hook call".
+
+This is real only for the test process — Metro bundles a single physical React for an actual
+build, so it never reaches a device — but it's real: `vitest-native`'s "mock engine" bypasses every
+standard Vite fix (`resolve.alias`, `resolve.dedupe`, `resolve.noExternal: true` — all tried, all
+ineffective for a dependency reached only through `@repo/app-core`), and forcing app-core's own
+devDependency to match mobile's exact version instead breaks apps/desktop's suite the same way, in
+the opposite direction (desktop's react-dom, still dom-catalog, would then mismatch app-core's
+react). Neither side can be pinned to satisfy both without an actual fix upstream (in `vitest-native`,
+or a genuinely hoisted single React per catalog rather than per-package).
+
+**Rule, until fixed upstream**: this is a real, filed gap, not a workaround to invent locally each
+time it's hit — `apps/mobile/src/screens/dashboard/DashboardScreen.test.tsx` and
+`OnboardingScreen.test.tsx`'s `it.skip` calls point back here rather than re-deriving the
+diagnosis. Before spending time re-debugging the same "Invalid hook call" in a later mobile
+screen's test, check here first. A composition test that only needs `@repo/app-core`'s pure
+query/selector hooks (no `zustand`-backed store, no `react-i18next`) may not hit this at all —
+only screens reading `usePreferencesStore`/`useTranslation`/`AccountSelectionProvider` currently do.
+
 ---
 
 ## Applicability summary
@@ -137,3 +172,4 @@ question applies to whatever native segmented-control/tab component is built.
 | 6 | Seed data must reach every screen state under test | | ✓ |
 | 7 | Per-record `color` is data, always rendered | | ✓ |
 | 8 | Signed/typed toggle gets a matching semantic tone | ✓ (native: same review question) | |
+| 9 | Shared package's test-only React version can duplicate React in a consumer's test | | ✓ (hits `apps/mobile` first) |

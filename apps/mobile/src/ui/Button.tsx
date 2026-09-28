@@ -6,17 +6,19 @@ type ButtonProps = {
   readonly label: string;
   readonly tone?: 'primary' | 'outline';
   readonly onPress: () => void;
+  readonly disabled?: boolean;
 };
 
 /** Native counterpart of the `Button` primitive of @repo/ui. Same tones, no shared code: the rendering
  * boundary stops at the DOM (docs/start-roadmap.md §2). */
-export function Button({ label, tone = 'primary', onPress }: ButtonProps) {
+export function Button({ label, tone = 'primary', onPress, disabled = false }: ButtonProps) {
   const { colors } = useColor();
   const isPrimary = tone === 'primary';
 
   return (
     <Pressable
       accessibilityRole="button"
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
@@ -24,7 +26,7 @@ export function Button({ label, tone = 'primary', onPress }: ButtonProps) {
           backgroundColor: isPrimary ? ACCENT : 'transparent',
           borderColor: colors.border,
           borderWidth: isPrimary ? 0 : StyleSheet.hairlineWidth,
-          opacity: pressed ? 0.9 : 1,
+          opacity: disabled ? 0.4 : pressed ? 0.9 : 1,
         },
       ]}
     >

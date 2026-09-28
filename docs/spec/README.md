@@ -31,7 +31,12 @@ Not read: `app.jsx`, `ios-frame.jsx`, `onboarding.jsx`, `screens-*.jsx`, `style.
 
 ## Scope of this pass
 
-Covers the **domain model**, the **`@repo/app-core` work inventory**, the **`@repo/design-tokens` values**, the **`@repo/ui` component inventory**, and the **DOM route tree** (`@repo/routes`/`@repo/router`). Still excludes mobile screens — `apps/mobile` shares no component with web/desktop (CLAUDE.md) and needs its own design read; that stays a separate future pass.
+Covers the **domain model**, the **`@repo/app-core` work inventory**, the **`@repo/design-tokens` values**, the **`@repo/ui` component inventory**, and the **DOM route tree** (`@repo/routes`/`@repo/router`). Excludes mobile screens — `apps/mobile` shares no component with web/desktop (CLAUDE.md) and needed its own design read.
+
+**Second pass, 2026-09-27**: that mobile design read landed — `screens-mobile.md` and
+`ui-inventory-mobile.md`, covering the screens built so far (Dashboard, onboarding; every other tab
+is a placeholder). Domain model, repository contracts, and design tokens are unchanged — they were
+already platform-agnostic.
 
 ## How to read this folder
 
@@ -44,3 +49,4 @@ Covers the **domain model**, the **`@repo/app-core` work inventory**, the **`@re
 7. **`routes.md`** — the DOM route tree and the `@repo/router` factory contract, replacing the mock's `tab`/`stack` navigation state with real URLs.
 8. **`open-questions.md`** — decisions the design implies but doesn't settle. Read before any domain type lands; the answers change field types.
 9. **`cross-app-pitfalls.md`** — not from the design read: conventions extracted from real bugs found in `apps/desktop` after implementation, stated as rules so the same root causes don't reappear in a new screen, a new `@repo/ui` component, or `apps/mobile`.
+10. **`screens-mobile.md`** / **`ui-inventory-mobile.md`** — the mobile equivalent of `screens.md`/`ui-inventory.md`, for the screens built there so far. `apps/mobile` shares no component with web/desktop, so it gets its own inventory rather than reusing `ui-inventory.md`'s (its component choices are DOM-only). Domain model, repository contracts, and design tokens are unchanged — read those same three files for mobile too.

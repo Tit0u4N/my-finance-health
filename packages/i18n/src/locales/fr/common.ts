@@ -27,6 +27,10 @@ const common = {
     investments: 'Investissements',
     accounts: 'Comptes',
     settings: 'Paramètres',
+    // apps/mobile's own tab labels — see locales/en/common.ts for the key contract.
+    home: 'Accueil',
+    activity: 'Activité',
+    invest: 'Investir',
   },
   accountType: {
     Checking: 'Courant',

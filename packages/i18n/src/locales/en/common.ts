@@ -29,6 +29,11 @@ const common = {
     investments: 'Investments',
     accounts: 'Accounts',
     settings: 'Settings',
+    // apps/mobile's own tab labels (docs/spec/screens-mobile.md) — same destinations as
+    // overview/transactions/investments above, worded the way the mobile mockup names its tabs.
+    home: 'Home',
+    activity: 'Activity',
+    invest: 'Invest',
   },
   accountType: {
     Checking: 'Checking',
