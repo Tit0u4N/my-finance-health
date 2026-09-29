@@ -6,10 +6,21 @@ const settings = {
     title: 'Paramètres',
     subtitle: 'Préférences locales · rien ne quitte cette machine',
   },
+  groups: {
+    app: 'Application',
+    support: 'Aide',
+  },
+  identity: {
+    subtitle: 'Local · v{{version}}',
+  },
+  mobile: {
+    footer: 'Fait avec soin · Local d’abord · Aucune télémétrie',
+  },
   nav: {
     preferences: { label: 'Préférences', sub: 'Thème, devise, disposition' },
     categories: { label: 'Catégories', sub: 'Revenus et dépenses' },
     database: { label: 'Base de données', sub: 'Fichier, sauvegardes, export' },
+    data: { label: 'Données', sub: 'Import, export et informations de l’espace' },
     about: { label: 'À propos', sub: 'Version et crédits' },
   },
   preferences: {
@@ -58,6 +69,8 @@ const settings = {
   },
   categories: {
     addButton: 'Ajouter',
+    editAriaLabel: 'Modifier {{name}}',
+    deleteAriaLabel: 'Supprimer {{name}}',
     dialog: {
       createTitle: 'Nouvelle catégorie',
       editTitle: 'Modifier la catégorie',
@@ -86,11 +99,18 @@ const settings = {
       size: 'Taille',
       lastOpened: 'Dernière ouverture',
       rows: 'Lignes',
+      timezone: 'Fuseau horaire',
+      baseCurrency: 'Devise de référence',
     },
     notAvailableYet: 'Pas encore disponible',
     actions: {
       switchFile: 'Changer de fichier',
       createBackup: 'Créer une sauvegarde',
+      newWorkspace: 'Configurer un nouvel espace de travail',
+    },
+    workspacePanel: {
+      title: 'Espace de travail',
+      subtitle: 'Uniquement sur cet appareil',
     },
     sessionPanel: {
       title: 'Session',
@@ -118,6 +138,7 @@ const settings = {
   about: {
     panelTitle: 'À propos',
     panelSubtitle: 'My Finance Health pour ordinateur',
+    panelSubtitleMobile: 'My Finance Health pour iOS et Android',
     version: 'Version {{version}} · Build local',
     encryptedAtRest: 'Chiffré au repos',
     facts: {

@@ -31,6 +31,17 @@ export const ACCOUNT_TYPE_ICON: Record<AccountType, LucideIcon> = {
   Cash: Banknote,
 };
 
+// `Account.icon` (domain-model.md: "redundant with type-derived icon... only type-derived is
+// actually used") still has to be *written* on create — accountSchema requires a non-empty
+// string. Same slugs packages/routes/src/shared/visuals.ts's `ACCOUNT_TYPE_ICON_SLUG` already
+// uses, so a mobile-created account's stored `icon` reads the same as one created on desktop.
+export const ACCOUNT_TYPE_ICON_SLUG: Record<AccountType, string> = {
+  Checking: 'landmark',
+  Savings: 'piggybank',
+  Investment: 'trending',
+  Cash: 'banknote',
+};
+
 const CATEGORY_ICON_BY_NAME: Record<string, LucideIcon> = {
   Salary: Banknote,
   Freelance: Sparkles,

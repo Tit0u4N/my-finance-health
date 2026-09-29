@@ -8,10 +8,25 @@ const settings = {
     title: 'Settings',
     subtitle: 'Local preferences · nothing leaves this machine',
   },
+  // apps/mobile's Settings tab groups its rows under these two captions (screens-mobile.md) —
+  // the desktop nav rail has no equivalent grouping, so these have no desktop counterpart.
+  groups: {
+    app: 'App',
+    support: 'Support',
+  },
+  identity: {
+    subtitle: 'Local · v{{version}}',
+  },
+  mobile: {
+    footer: 'Made with care · Local-first · No telemetry',
+  },
   nav: {
     preferences: { label: 'Preferences', sub: 'Theme, currency, layout' },
     categories: { label: 'Categories', sub: 'Income and expenses' },
     database: { label: 'Database', sub: 'File, backups, export' },
+    // apps/mobile's counterpart of the desktop-only `database` row: mobile has no file-in-place
+    // notion (start-roadmap.md §325) — this is import/export and workspace facts instead.
+    data: { label: 'Data', sub: 'Import, export and workspace info' },
     about: { label: 'About', sub: 'Version and credits' },
   },
   preferences: {
@@ -60,6 +75,11 @@ const settings = {
   },
   categories: {
     addButton: 'Add',
+    // apps/mobile's row action buttons are icon-only (no inline "Edit"/"Delete" text label the
+    // way desktop's `title=` tooltip can be, per-row on a touch target) — desktop reuses
+    // common:action.edit/delete instead, since its icon buttons carry a visible tooltip.
+    editAriaLabel: 'Edit {{name}}',
+    deleteAriaLabel: 'Delete {{name}}',
     dialog: {
       createTitle: 'New category',
       editTitle: 'Edit category',
@@ -88,11 +108,22 @@ const settings = {
       size: 'Size',
       lastOpened: 'Last opened',
       rows: 'Rows',
+      timezone: 'Time zone',
+      baseCurrency: 'Base currency',
     },
     notAvailableYet: 'Not available yet',
     actions: {
       switchFile: 'Switch file',
       createBackup: 'Create backup',
+      // apps/mobile's Data screen — the one real affordance carried over from the old
+      // SettingsPlaceholder route, now a real row rather than a placeholder link.
+      newWorkspace: 'Set up a new workspace',
+    },
+    // apps/mobile's Data screen: real read-only workspace facts shown regardless of file
+    // capability, above the (desktop-only) file metadata block.
+    workspacePanel: {
+      title: 'Workspace',
+      subtitle: 'This device only',
     },
     sessionPanel: {
       title: 'Session',
@@ -119,6 +150,10 @@ const settings = {
   about: {
     panelTitle: 'About',
     panelSubtitle: 'My Finance Health for desktop',
+    // apps/mobile's own About screen — the desktop wording above is genuinely wrong there, so
+    // this is a sibling key rather than an edit to the shared one (same pattern as
+    // common:nav.home/activity/invest alongside overview/transactions/investments).
+    panelSubtitleMobile: 'My Finance Health for iOS and Android',
     version: 'Version {{version}} · Local build',
     encryptedAtRest: 'Encrypted at rest',
     facts: {

@@ -16,6 +16,9 @@ type FieldProps = {
   readonly onClear?: () => void;
   readonly autoFocus?: boolean;
   readonly returnKeyType?: 'done' | 'search';
+  /** Commits a draft on blur — the exchange-rate rows' "type, then leave the field" pattern
+   * (desktop's `Input` `onBlur={rate.onCommit}`). */
+  readonly onBlur?: () => void;
   /** `focal` is the New-transaction sheet's oversized, centred amount entry. */
   readonly variant?: 'default' | 'focal';
   /** Spoken name when `label` is absent. */
@@ -34,6 +37,7 @@ export function Field({
   onClear,
   autoFocus = false,
   returnKeyType,
+  onBlur,
   variant = 'default',
   accessibilityLabel,
 }: FieldProps) {
@@ -60,6 +64,7 @@ export function Field({
           style={[styles.input, isFocal && styles.inputFocal, { color: colors.foreground }]}
           {...(keyboardType === 'decimal-pad' ? { keyboardType } : {})}
           {...(returnKeyType ? { returnKeyType } : {})}
+          {...(onBlur === undefined ? {} : { onBlur })}
           {...(accessibilityLabel === undefined ? {} : { accessibilityLabel })}
           value={value}
         />

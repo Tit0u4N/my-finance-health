@@ -13,6 +13,9 @@ const common = {
     exportCsv: 'Export CSV',
     showAmounts: 'Show amounts',
     hideAmounts: 'Hide amounts',
+    // apps/mobile's pushed detail screens (Account detail, every Settings sub-screen) draw their
+    // own back RoundButton — icon-only, so `accessibilityLabel` is mandatory.
+    back: 'Back',
   },
   state: {
     loading: 'Loading…',

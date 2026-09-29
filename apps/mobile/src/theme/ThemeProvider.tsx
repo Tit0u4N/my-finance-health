@@ -1,3 +1,4 @@
+import type { ThemeMode } from '@repo/app-core/stores/createPreferencesStore';
 import type { ColorScheme } from '@repo/design-tokens/colors';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
@@ -9,20 +10,24 @@ type ThemeProviderProps = {
 };
 
 /**
- * Holds the active colour scheme. It starts on the system preference and follows it until the user overrides
- * it, at which point the override wins for the rest of the session.
+ * Holds the active colour scheme. Starts on `'system'` (follows the OS) until `setThemeMode` is
+ * called with `'light'`/`'dark'`, which pins it. `setThemeMode` is pushed from outside — by
+ * `ThemeModeSync`, mounted once the app stage's `usePreferencesStore` exists — rather than read
+ * here directly: `ThemeProvider` sits above `AppRoot` in `app/_layout.tsx` (every pre-app-stage
+ * surface, including `AppRoot`'s own "unsupported storage mode" fallback, calls `useColor()`), so
+ * it cannot itself be a descendant of the provider carrying the persisted preference.
  */
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const systemScheme = useColorScheme();
-  const [overriddenScheme, setOverriddenScheme] = useState<ColorScheme | null>(null);
+  const [mode, setThemeMode] = useState<ThemeMode>('system');
 
-  const scheme: ColorScheme = overriddenScheme ?? (systemScheme === 'dark' ? 'dark' : 'light');
+  const scheme: ColorScheme = mode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : mode;
 
   const theme = useMemo<Theme>(
     () => ({
-      scheme,
       colors: COLORS[scheme],
-      toggleScheme: () => setOverriddenScheme(scheme === 'dark' ? 'light' : 'dark'),
+      scheme,
+      setThemeMode,
     }),
     [scheme],
   );

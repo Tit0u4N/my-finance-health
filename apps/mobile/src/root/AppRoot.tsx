@@ -6,6 +6,7 @@
 import { AppStageProviders } from '@repo/app-core/providers/AppStageProviders';
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { ThemeModeSync } from '@/theme/ThemeModeSync';
 import { FONT_SIZE, SPACING } from '@/theme/tokens';
 import { useAppRoot } from './useAppRoot';
 
@@ -31,6 +32,7 @@ function MockAppRoot({ children }: AppRootProps): ReactElement {
 
   return (
     <AppStageProviders platform={platform} queryClient={queryClient} repositories={repositories}>
+      <ThemeModeSync />
       {children}
     </AppStageProviders>
   );

@@ -11,6 +11,7 @@ const common = {
     exportCsv: 'Exporter en CSV',
     showAmounts: 'Afficher les montants',
     hideAmounts: 'Masquer les montants',
+    back: 'Retour',
   },
   state: {
     loading: 'Chargement…',

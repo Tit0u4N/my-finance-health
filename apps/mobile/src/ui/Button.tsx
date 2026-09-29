@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { ACCENT, BORDER_RADIUS, FONT_SIZE, HEIGHT, SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
 
-export type ButtonTone = 'primary' | 'outline' | 'danger';
+export type ButtonTone = 'primary' | 'outline' | 'danger' | 'dashed';
 
 type ButtonProps = {
   readonly label: string;
@@ -22,8 +22,11 @@ export function Button({ label, tone = 'primary', onPress, disabled = false, ico
   // `danger` is a filled destructive button, not an outline one: it confirms a delete, and the
   // confirm sheet's other action is the (outline) cancel — the two must not read alike.
   const background = tone === 'primary' ? ACCENT : tone === 'danger' ? colors.neg : 'transparent';
-  const isFilled = tone !== 'outline';
-  const labelColor = isFilled ? '#FFFFFF' : colors.foreground;
+  const isFilled = tone === 'primary' || tone === 'danger';
+  // `dashed` reads as a muted, inviting affordance ("add another…") rather than a real button, so
+  // it takes the accent for its label/border instead of `foreground` — same intent as `soft` in
+  // the design mock, without adding a fourth background treatment.
+  const labelColor = isFilled ? '#FFFFFF' : tone === 'dashed' ? ACCENT : colors.foreground;
 
   return (
     <Pressable
@@ -33,10 +36,11 @@ export function Button({ label, tone = 'primary', onPress, disabled = false, ico
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
+        tone === 'dashed' && styles.dashed,
         {
           backgroundColor: background,
-          borderColor: colors.border,
-          borderWidth: isFilled ? 0 : StyleSheet.hairlineWidth,
+          borderColor: tone === 'dashed' ? colors.borderStrong : colors.border,
+          borderWidth: tone === 'dashed' ? 1.5 : isFilled ? 0 : StyleSheet.hairlineWidth,
           opacity: disabled ? 0.4 : pressed ? 0.9 : 1,
         },
       ]}
@@ -57,6 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: SPACING.lg,
   },
+  dashed: { borderStyle: 'dashed' },
   label: {
     fontSize: FONT_SIZE.body,
     fontWeight: '500',

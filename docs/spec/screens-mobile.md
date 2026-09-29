@@ -23,6 +23,19 @@ Activity pass (2026-09-28): the **Activity tab** is real — both segments (ledg
 full CRUD, matching `open-questions.md` #19's decision for desktop. Accounts, Invest and Settings
 remain `ComingSoon`.
 
+Accounts + Settings pass (2026-09-29): both tabs are real. **Invest remains the only `ComingSoon`
+placeholder.** This pass also fixed a latent bug the Accounts/Settings work exposed:
+`apps/mobile/src/root/useAppRoot.ts`'s fixture workspace was booting with `createFakePlatform`'s
+all-`true` default `PlatformCapabilities` — meaning a naive capability gate (Settings → Data) would
+have rendered as if file import/export worked, against `@repo/platform-expo`'s still-placeholder
+adapter. `apps/mobile` now passes its own honest capability set (everything false) into
+`createMockWorkspace`, which gained an optional `{ capabilities?, locale? }` parameter for exactly
+this (`packages/data/src/mock/createMockWorkspace.ts`) — apps/desktop's own call is unaffected,
+since the parameter defaults to the previous all-`true` behaviour. `locale` stays on the default
+`'en-US'` placeholder for now: a real device-locale override needs `expo-localization`, a new
+dependency that belongs in `@repo/platform-expo` (`cross-app-pitfalls.md` #2), not added in this
+pass — left as a named follow-up rather than silently deferred.
+
 ## Rendering boundary
 
 `apps/mobile` shares no UI component with web/desktop (CLAUDE.md) — every screen below is its own
@@ -58,7 +71,14 @@ freshly created local workspace is genuinely empty.
 | Activity — transaction sheet | `screens-tx.jsx` new-transaction sheet | Create and edit in one draft | categories, accounts, description suggestions (trailing year) | `Transaction` create / update | amount sign, derived from the picked category's `kind` — never from the expense/income toggle, which only re-filters the categories offered and resets the pick | draft (kind, amount, description, category, account, date mode + date, note), submit error |
 | Activity — recurring sheet | `screens-tx.jsx` new-rule sheet | Create and edit in one draft | categories, accounts | `RecurringRule` create / update | amount sign, same derivation as above | draft (kind, description, amount, frequency, account, category, start date), submit error |
 | Activity — row actions / delete confirm | — (native stand-in) | Edit or delete one row | — | — | — | which row, and whether the confirm step is showing |
-| Accounts, Invest, Settings | — | Not built yet | — | — | — | — |
+| Accounts (list) | `screens-main.jsx` `AccountsList` | Browse every account as a card, with a balance sparkline and past-month change | accounts, per-account balance history (`getBalanceHistory(id, '1m')`, one query per account), workspace settings, exchange rates | `Account` create | cross-account total (base-currency, converted); per-account 30-day change (see "Accounts tab" below for why it's not derived from the sparkline series) | new-account draft |
+| Account detail | `screens-main.jsx` `AccountDetail` | One account's trend and full transaction list | one account, its transactions (search/category-filterable), its balance history (range-selectable: 7d/1m/3m/1y/all) | `Account` update (name, type — no colour/currency control on mobile) | balance trend points; per-row relative date | selected range, search text, category filter, edit draft |
+| New/Edit account sheet | `screens-tx.jsx` `AddAccountModal` | Create an account, or rename/retype an existing one | account types, currencies | `Account` create / update | auto-assigned colour on create (`categoricalPaletteHex[n % 8]`, design-system.md §3) | draft (name, type, currency, initial balance), submit error |
+| Settings — root menu | `screens-invest-settings.jsx` `SettingsScreen` | Entry point into every settings sub-screen, grouped "App"/"Support" | categories (for a subtitle count elsewhere), platform capabilities (for the "Encrypted" badge only) | — | — | — |
+| Settings → Preferences | `screens-invest-settings.jsx` `SetPrefs` | Theme, language, base currency, exchange rates — no sidebar control (DOM-only) | workspace settings, exchange rates, accounts (to know which currencies need a rate) | device-local preference writes (`themeMode`, `language`); `WorkspaceSettingsRepository.setBaseCurrency`; `ExchangeRateRepository.upsert` | — | per-currency rate draft map |
+| Settings → Categories | `screens-invest-settings.jsx` `SetCategories` | Manage the category list, one kind at a time via a segmented switch | categories, transaction count for the category pending deletion | `Category` create / update / delete | usage-warning count on delete | active tab (expense/income), create/edit draft, deleting category |
+| Settings → Data | `screens-invest-settings.jsx` `SetDatabase`, adapted | Real workspace facts (timezone, base currency, record count) always; file actions capability-gated | workspace settings, accounts, categories, transactions, recurring rules, exchange rates (for the record count) | — | total record count | — |
+| Settings → About | `screens-invest-settings.jsx` `SetAbout`, adapted | Static app info plus the storage/sync/telemetry facts | platform capabilities (for the "Encrypted" badge only) | — | — (hardcoded strings) | — |
 
 Dropped relative to both the mock and desktop's Overview, with a reason each:
 
@@ -118,11 +138,63 @@ Dropped relative to both the mock and desktop's Overview, with a reason each:
   hook; the cost is one cached query for the hidden segment, bought back as an instant tab switch and
   a header subtitle that can count either side.
 
+### Accounts + Settings tabs — dropped or diverged (2026-09-29)
+
+- **No accent colour, density, or tab-bar-style pickers in Preferences.** The mock's Preferences
+  screen shows all three; `open-questions.md` #11 already dropped accent and density as non-v1
+  product features for desktop, and this pass extends the same reasoning to the mock's tab-bar-style
+  picker — a designer tweak, not a shipped feature. Theme mode (light/dark/system) is the only
+  theming axis Preferences exposes.
+- **No sidebar-mode control.** `SidebarMode` is a DOM-only concept (`open-questions.md` #11); mobile
+  has a tab bar, not a collapsible sidebar, so `usePreferencesScreen.ts` never reads or exposes it.
+- **Settings → Database's "Active file" panel does not transpose.** The mock shows
+  `~/Documents/MyFinanceHealth.db`, a size, and a "Switch file" action. `start-roadmap.md` §325 and
+  `context.md`'s file-location row both say mobile cannot open a file in place — the model is
+  explicit import into, and export out of, the app-reserved directory. Settings → Data instead shows
+  real workspace facts (timezone, base currency, record count) unconditionally, and renders
+  `settings:database.emptyState` ("Not available on this platform") in place of file actions while
+  `platform.capabilities.canWriteFile` is false — which it honestly is today (see the Status section
+  above). The Data *row* on the root menu is never hidden by this gate — only the row's own screen
+  content is — so the destination stays reachable by deep link and back-stack.
+- **No "Reset everything" action.** No `resetWorkspace` mutation exists anywhere in
+  `@repo/app-core`'s mutations, and desktop's own `useDatabaseScreen.ts` already ships this action
+  with no handler wired up. Shipping an inert destructive button on a brand-new screen is exactly the
+  dead chrome this doc's other "Dropped" lists already refuse (the notification bell, the "Paused"
+  badge).
+- **No "Switch file" / "Create backup" / "Export CSV" actions**, for the same file-capability reason.
+  These land once `@repo/platform-expo`'s real adapter ships explicit import/export.
+- **"Encrypted at rest" badge is capability-gated, not hardcoded on.** The mock's Settings identity
+  card always shows it. `platform.capabilities.hasEncryptedSqlDriver` is honestly false on mobile
+  today (the in-memory fixture has no SQLCipher driver), so the badge is absent on both the Settings
+  root card and the About screen until it is true.
+- **Gradient monogram avatar → solid accent fill.** Same call the Dashboard pass already made for
+  its hero card: `expo-linear-gradient` is an unapproved new dependency.
+- **Account detail's header shows only balance + two badges, no KPI tile row.** Matches the mock
+  exactly, and is the same "no KPI tile row" decision the Activity pass already made — `Inflow`/
+  `Outflow`/`Net` and `computePeriodTotals` stay desktop-only for this screen too.
+- **Account detail's search/filter are an inline `Field` + `ChipSelect`, not the mock's two round
+  icon buttons.** Consistency with the already-shipped `LedgerTab.tsx` pattern won out over fidelity
+  to a mock of a screen that hadn't shipped yet.
+- **`LineChart`'s hover tooltip is dropped**, same reasoning as the Activity tab's date-picker and
+  option-picker entries: no touch equivalent of a mouse hover exists, and the chart geometry
+  (`apps/mobile/src/ui/charts/lineChartMath.ts`) is a duplicate of `@repo/ui`'s own module rather
+  than a shared one, for the same rendering-boundary reason `Sankey`/`Donut`/`MiniBar` already are.
+- **The 30-day per-account change is a date-bounded transaction sum, never derived from
+  `getBalanceHistory`'s series** — `app-core-inventory.md` §6 calls this out explicitly: that
+  series has no leading window-start point, so a single-transaction account's last-minus-first would
+  read as zero even when the real change is not.
+
 ## Cross-screen state
 
-`amountsHidden` is the only cross-screen state reused so far — same store as desktop
-(`@repo/app-core`'s `PreferencesProvider`), already device-local and persisted
-(`open-questions.md #4`). Every money value on the Activity tab reads it too, through `AmountValue`.
-No account-scope filter exists on mobile (see the Dropped lists above), so there is nothing
-equivalent to desktop's `accSel` to share: the ledger's account chip is that screen's own state and
-resets when the tab unmounts.
+`amountsHidden`, `themeMode` and `language` are the cross-screen state reused so far — the same
+store as desktop (`@repo/app-core`'s `PreferencesProvider`), already device-local. `amountsHidden`
+was already persisted; `themeMode` and `language` are too, in principle, but on mobile today they
+reset on cold start (see the Status section's note on `useAppRoot.ts`'s fixture `keyValueStore`
+being in-memory until `@repo/platform-expo` lands). Every money value on the Activity and Accounts
+tabs reads `amountsHidden` through `AmountValue`; `apps/mobile/src/theme/ThemeModeSync.tsx` pushes
+`themeMode` into `ThemeProvider` (which cannot read the store itself — it sits above
+`AppStageProviders` in `app/_layout.tsx`) so a Preferences theme change repaints the whole app, not
+just the Settings tab. No account-scope filter exists on mobile (see the Dropped lists above), so
+there is nothing equivalent to desktop's `accSel` to share: the ledger's account chip is that
+screen's own state and resets when the tab unmounts, and so is the Accounts list's palette-index
+colour assignment (it reads `accounts.length` fresh each time, not a shared counter).

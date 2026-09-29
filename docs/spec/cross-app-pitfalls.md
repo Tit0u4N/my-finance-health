@@ -57,6 +57,19 @@ real window — at minimum `keyValueStore` (real persistence) and `localization.
 platform's real locale, e.g. `navigator.language` on web/desktop, the native locale API on mobile).
 Never assume the object `createFakePlatform`/`createMockWorkspace` returns is production-ready as-is.
 
+**A third instance, found while building mobile's Accounts + Settings tabs**: `createFakePlatform`'s
+`DEFAULT_CAPABILITIES` is all-`true` (`canWriteFile`, `hasSecretVault`, `hasEncryptedSqlDriver`, …).
+`apps/mobile/src/root/useAppRoot.ts` booted `createMockWorkspace()` with no override, same as this
+entry's original `apps/desktop` case — so any capability-gated screen (Settings → Data, gated on
+`canWriteFile`) would have rendered its *available* branch against a fixture with no real
+filesystem, exactly the dead chrome this doc's other entries already refuse. `createMockWorkspace`
+gained an optional `{ capabilities?, locale? }` parameter for this
+(`packages/data/src/mock/createMockWorkspace.ts`); `apps/mobile` now passes its own honestly-false
+capability set (`@repo/platform-expo` is still a placeholder). Capabilities are a third service in
+this rule's "at minimum" list, alongside `keyValueStore` and `localization.locale()` — any app
+booting a mock workspace should check whether its fixture's default capabilities overstate what its
+real platform adapter can actually do yet.
+
 ## 4. Anything painted on an accent/brand-colored surface needs its own on-accent tone — DOM-only today, same principle for native
 
 `StatTile`'s `hero` tile sets `text-white` on the container, but `AmountValue`'s default tone
