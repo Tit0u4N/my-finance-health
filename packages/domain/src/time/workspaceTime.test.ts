@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { IsoDate, IsoDateTime, Timezone } from '../primitives/dateTime';
-import { addFrequency, historyRangeSchema, rangeFor, startOfMonthIn, todayIn } from './workspaceTime';
+import { addDays, addFrequency, historyRangeSchema, rangeFor, startOfMonthIn, todayIn } from './workspaceTime';
 
 const UTC = 'UTC' as Timezone;
 const LOS_ANGELES = 'America/Los_Angeles' as Timezone;
@@ -57,6 +57,24 @@ describe('addFrequency', () => {
 
   it('advances by one year', () => {
     expect(addFrequency('2026-02-28' as IsoDate, 'Yearly')).toBe('2027-02-28');
+  });
+});
+
+describe('addDays', () => {
+  it('shifts forward across a month boundary', () => {
+    expect(addDays('2026-01-31' as IsoDate, 1)).toBe('2026-02-01');
+  });
+
+  it('shifts backward across a month boundary', () => {
+    expect(addDays('2026-03-01' as IsoDate, -1)).toBe('2026-02-28');
+  });
+
+  it('shifts backward across a year boundary', () => {
+    expect(addDays('2026-01-01' as IsoDate, -1)).toBe('2025-12-31');
+  });
+
+  it('is the identity for zero days', () => {
+    expect(addDays('2026-06-15' as IsoDate, 0)).toBe('2026-06-15');
   });
 });
 

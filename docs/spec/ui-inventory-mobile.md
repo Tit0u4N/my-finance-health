@@ -11,13 +11,23 @@ primitives that already existed (`Button`, `Badge`).
 | Component | Backs | Notes |
 |---|---|---|
 | `Card` | Every panel on Dashboard and onboarding | Bordered container, `BORDER_RADIUS.xl` — the mock's `Card` (`ui.jsx`) |
-| `Avatar` | Account/category icon discs (Dashboard KPIs/activity, onboarding) | `soft` prop for the tinted-disc variant, same `${color}1F` alpha suffix as the mock |
+| `Avatar` | Account/category icon discs (Dashboard KPIs/activity, onboarding, Activity rows) | `soft` prop for the tinted-disc variant, same `${color}1F` alpha suffix as the mock |
 | `AmountValue` | Every money-bearing spot | Native counterpart of `@repo/ui`'s `AmountValue` — same `tone`/`hidden` contract, so the amounts-hidden preference threads the same way on both targets |
-| `Badge` | Onboarding's selected-option check, future KPI deltas | Rewritten this pass from a single-purpose uppercase label chip (whose only caller, the removed landing placeholder, is gone) into the mock's actual flexible soft-tinted pill (`color`, `icon`, `size`) |
-| `Field` | Onboarding step 1's account name/balance inputs | Labelled `TextInput`, native counterpart of the mock's `Field` |
-| `ComingSoon` | The 4 not-yet-built tabs | Placeholder so the tab bar has 5 real routes instead of a differently-shaped nav; not a permanent screen |
+| `Badge` | Onboarding's selected-option check, Activity's frequency/next-occurrence pills | Rewritten in the first pass from a single-purpose uppercase label chip into the mock's actual flexible soft-tinted pill (`color`, `icon`, `size`) |
+| `Field` | Onboarding step 1's inputs; Activity's ledger search, amount, date and note inputs | Labelled `TextInput`, native counterpart of the mock's `Field`. **Extended (Activity pass)**: `label` is now optional (the search box and focal amount are named by their surroundings), plus a leading `icon`, an `onClear` trailing button, `autoFocus`, `returnKeyType`, `accessibilityLabel`, and a `variant: 'default' \| 'focal'` — `focal` being the sheet's oversized centred amount entry (`HEIGHT.focalControl`). Every addition is optional, so the pre-existing Dashboard/onboarding call sites are untouched |
+| `Button` | Onboarding actions, sheet footers, empty-state CTAs | **Extended (Activity pass)**: `tone: 'danger'` (a filled destructive confirm — it must not read like the outline Cancel beside it) and an optional leading `icon` tinted with the label |
+| `Sheet` | Every Activity dialog: create/edit transaction, create/edit rule, option pickers, row actions, delete confirm | React Native's own `Modal` (`animationType="slide"`, transparent) over a `colors.overlay` backdrop: grabber, title row with a close button, scrollable body, pinned footer, `KeyboardAvoidingView`. No new dependency, and no `z-index` scale to respect (unlike `cross-app-pitfalls.md` #1's DOM counterpart) — the OS presents a native modal above the whole app |
+| `ConfirmSheet` | Deleting a transaction or a rule | `Sheet` + description + Cancel / destructive confirm. Native stand-in for `@repo/ui`'s `ConfirmDialog` |
+| `SegmentedTabs` | Activity's Transactions/Recurring switch, the sheets' expense/income toggle, the date-mode switch | Generic over the value type, with a per-option `tone?: 'positive' \| 'negative'` so the income/expense toggle carries semantic colour on its active state rather than neutral grey (`cross-app-pitfalls.md` #8) |
+| `Chip` | Filter chips, the reset chip, category pickers, description suggestions | Pressable pill with `selected` and an optional per-record `color`; a selected chip tints **with** that colour instead of switching to a fixed accent (`cross-app-pitfalls.md` #7) |
+| `ChipSelect` | Ledger type/account/category filters, the rule sheet's frequency and account | Closed state is a `Chip` with `ChevronDown`; opens a `Sheet` listing the options with a `Check` on the current one. Native stand-in for `@repo/ui`'s `Select` — a wheel picker would need `@react-native-picker/picker`, not approved for this pass. Its own open/closed boolean is disclosure state, not logic, so it stays single-file |
+| `Switch` | A recurring rule's active/paused toggle | Wraps React Native's built-in `Switch` with palette colours and a mandatory `accessibilityLabel` — keeps the platform's real `switch` role, haptics and animation, which a hand-rolled Reanimated version would lose |
+| `EmptyState` | "No transactions match", "No recurring rules" | Soft icon disc + title + subtitle + optional action. Unlike `ComingSoon`, every string is passed in already translated — a real product state, not a placeholder |
+| `ScreenHeader` | Every tab's title block (`headerShown: false`, so screens draw their own) | Title + optional subtitle + a trailing slot. Extracted from `DashboardScreen`'s inline header in the Activity pass, once a second screen needed the same shape; Dashboard now renders through it |
+| `RoundButton` | Activity's header `+`, each row's `MoreVertical` | The mock's `RoundBtn` — icon-only circular pressable with a `fill` (accent, explicit white glyph) and a `ghost` variant, plus a mandatory `accessibilityLabel` since it carries no text |
+| `ComingSoon` | The 3 still-unbuilt tabs (Accounts, Invest, Settings) | Placeholder so the tab bar has 5 real routes instead of a differently-shaped nav; not a permanent screen |
 | `SettingsPlaceholder` | Settings tab | One real affordance (`Link` into onboarding) so that route isn't dead code |
-| `visuals.ts` | Every account/category icon lookup | `ACCOUNT_TYPE_ICON` + `categoryIcon`, same slugs as desktop's `packages/routes/src/shared/visuals.ts`, `lucide-react-native` instead of `lucide-react` |
+| `visuals.ts` | Every account/category icon lookup | `ACCOUNT_TYPE_ICON` + `categoryIcon`, same slugs as desktop's `packages/routes/src/shared/visuals.ts`, `lucide-react-native` instead of `lucide-react`. Unchanged by the Activity pass — see §3 |
 
 ## 2. Charts (`apps/mobile/src/ui/charts`)
 
@@ -47,15 +57,29 @@ flow thickness means the same amount everywhere in the diagram, same principle a
 Every icon the mock hand-draws as inline SVG paths in `ui.jsx`'s `Icon` component maps onto a
 `lucide-react-native` icon, same choices as desktop's own `lucide-react` mapping
 (`packages/routes/src/shared/visuals.ts`) — duplicated, not shared, per the DOM/native rendering
-boundary. Only the subset Dashboard/onboarding/tab bar actually use has been mapped so far:
-`Home`, `Wallet`, `ArrowLeftRight`, `TrendingUp`, `Settings`, `Eye`, `EyeOff`, `ArrowDownRight`,
-`ArrowUpRight`, `Check`, `FilePlus`, `Folder`, plus the account-type/category icon sets
-(`ACCOUNT_TYPE_ICON`, `categoryIcon`) `visuals.ts` already covers.
+boundary. Mapped so far, for Dashboard/onboarding/tab bar: `Home`, `Wallet`, `ArrowLeftRight`,
+`TrendingUp`, `Settings`, `Eye`, `EyeOff`, `ArrowDownRight`, `ArrowUpRight`, `Check`, `FilePlus`,
+`Folder`. Added by the Activity pass: `Plus` (header action), `Search` (ledger search + its empty
+state), `X` (clear/close), `ChevronDown` (`ChipSelect`), `Repeat` (recurring cards and their empty
+state), `MoreVertical` (row actions), `Pencil` / `Trash2` (the row-actions sheet). Plus the
+account-type/category icon sets (`ACCOUNT_TYPE_ICON`, `categoryIcon`) `visuals.ts` covers.
+
+**Where these live, and why not in `visuals.ts`**: `visuals.ts` maps *data values* — an
+`AccountType`, a `Category.name` — onto an icon, which is the thing two targets must agree on. The
+icons above are UI affordances chosen by one component, so they are imported from
+`lucide-react-native` at their single use site, exactly as `DashboardScreen` already imports `Eye`,
+`EyeOff` and the two arrows. Re-exporting them through `visuals.ts` would add a lookup layer with no
+second consumer to justify it. The one rule that matters — `lucide-react-native` on native, never
+`lucide-react` — is enforced by `biome.json`'s `apps/mobile/**` override at every import site, not by
+funnelling them through one module.
 
 ## 4. Theme
 
-No new tokens this pass — `apps/mobile/src/theme/tokens.ts` already exposed everything the mock
-needs (`SPACING`, `FONT_SIZE`, `BORDER_RADIUS`, `ACCENT`, `COLORS`). `open-questions.md`'s §85 flag
+No new *token package* values in either pass — `apps/mobile/src/theme/tokens.ts` already exposed
+everything the mock needs (`SPACING`, `FONT_SIZE`, `BORDER_RADIUS`, `ACCENT`, `COLORS`). The Activity
+pass added two entries to the app-local `HEIGHT` scale (`chip: 36`, `focalControl: 64`), which is
+`apps/mobile`'s own centralized touch-height constant, not a `@repo/design-tokens` export —
+`@repo/design-tokens` states no control heights for either target. `open-questions.md`'s §85 flag
 ("whether `design-tokens` exports a conversion helper or a dual web/native shape... deferred to the
 mobile UI spec pass") is resolved as: no package change — `tokens.ts`'s existing
 oklch→hex/rem→dp conversion already covers it, nothing mobile-specific needed there.

@@ -75,3 +75,10 @@ export function addFrequency(date: IsoDate, freq: RecurringFrequency): IsoDate {
   const next = parseDate(date).add(frequencyDuration(freq));
   return isoDateSchema.parse(next.toString());
 }
+
+/** Shifts a calendar date by whole days, either direction — month/year/leap boundaries included.
+ * Backs the "Today / Yesterday" date shortcuts in an amount-entry form: a form only ever has
+ * "today" (from `todayIn`), never a date library of its own. */
+export function addDays(date: IsoDate, days: number): IsoDate {
+  return isoDateSchema.parse(parseDate(date).add({ days }).toString());
+}

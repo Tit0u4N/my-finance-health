@@ -63,7 +63,10 @@ export const ACCENT = oklchToHex(accentTokens.accent);
 /** Touchable heights, kept above the 44dp accessibility floor of both platforms. */
 export const HEIGHT = {
   badge: 28,
+  chip: 36,
   control: 48,
+  /** The New-transaction sheet's oversized amount entry (`Field`'s `focal` variant). */
+  focalControl: 64,
 } as const;
 
 /** Tracking, in density-independent pixels. The DOM side gets the equivalent from Tailwind's `tracking-*`. */

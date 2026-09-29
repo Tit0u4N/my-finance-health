@@ -166,7 +166,12 @@ export function useAccountsScreen(): UseAccountsScreenResult {
   const typeOptions = ACCOUNT_TYPES.map((type) => ({ value: type, label: t(`common:accountType.${type}`) }));
   const currencyOptions = CURRENCIES.map((currency) => ({ value: currency, label: currency }));
   const parsedBalance = parseAmountInput(draft.initialBalance);
-  const canSubmit = draft.name.trim().length > 0 && parsedBalance !== undefined && !createAccount.isPending;
+  // A blank initial balance is a legitimate "opens at zero" — which is why the submit below already
+  // sends `parsedBalance ?? 0`. Only *typed nonsense* blocks the submit, so the gate tests the text
+  // rather than the parse: `parseAmountInput` reports blank as `undefined` (same as "abc") and
+  // cannot tell the two apart on its own.
+  const isBalanceUsable = draft.initialBalance.trim() === '' || parsedBalance !== undefined;
+  const canSubmit = draft.name.trim().length > 0 && isBalanceUsable && !createAccount.isPending;
 
   return {
     ready: true,

@@ -14,6 +14,8 @@ const recurring = {
     panelTitle: 'Rules',
     rowCount_one: '{{count}} rule',
     rowCount_other: '{{count}} rules',
+    activeCount_one: '{{count}} active rule',
+    activeCount_other: '{{count}} active rules',
     emptyTitle: 'No recurring rules',
     emptySubtitle: 'Rules on the accounts in scope will show up here.',
     columnRule: 'Rule',

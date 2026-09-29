@@ -9,6 +9,7 @@ import { Card } from '@/ui/Card';
 import { Donut } from '@/ui/charts/Donut';
 import { MiniBar } from '@/ui/charts/MiniBar';
 import { Sankey } from '@/ui/charts/Sankey';
+import { ScreenHeader } from '@/ui/ScreenHeader';
 import { useDashboardScreen } from './useDashboardScreen';
 
 export function DashboardScreen() {
@@ -28,10 +29,7 @@ export function DashboardScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={{ backgroundColor: colors.background }}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.foreground }]}>{t('common:nav.home')}</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>{dashboard.subtitle}</Text>
-      </View>
+      <ScreenHeader subtitle={dashboard.subtitle} title={t('common:nav.home')} />
 
       <View style={[styles.hero, { backgroundColor: ACCENT }]}>
         <View style={styles.heroTop}>
@@ -166,7 +164,6 @@ const styles = StyleSheet.create({
   activityTitle: { padding: SPACING.md, paddingBottom: 0 },
   content: { gap: SPACING.md, padding: SPACING.gutter, paddingBottom: SPACING.section },
   donutWrap: { alignItems: 'center', paddingBottom: SPACING.sm },
-  header: { gap: 2 },
   hero: { borderRadius: BORDER_RADIUS.xl, padding: SPACING.gutter },
   heroDelta: { alignItems: 'center', flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   heroDeltaSub: { color: 'rgba(255,255,255,0.85)', fontSize: FONT_SIZE.bodySm },
@@ -221,6 +218,4 @@ const styles = StyleSheet.create({
   panelSubtitle: { fontSize: FONT_SIZE.caption, marginTop: 2 },
   panelTitle: { fontSize: FONT_SIZE.headingSm, fontWeight: '600' },
   sankeyWrap: { alignItems: 'center', marginTop: SPACING.sm },
-  subtitle: { fontSize: FONT_SIZE.bodySm },
-  title: { fontSize: FONT_SIZE.heading, fontWeight: '600' },
 });

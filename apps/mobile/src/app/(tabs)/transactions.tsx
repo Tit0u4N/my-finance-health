@@ -1,5 +1,5 @@
-import { ComingSoon } from '@/ui/ComingSoon';
+import { TransactionsScreen } from '@/screens/transactions/TransactionsScreen';
 
 export default function TransactionsRoute() {
-  return <ComingSoon title="Activity" />;
+  return <TransactionsScreen />;
 }

@@ -1,15 +1,5 @@
-// @repo/routes — level 3.
-// Parses a free-text amount input (comma or dot decimals) into major units, shared by the
-// account/transaction/recurring creation forms. Extracted from useAccountsScreen.ts once a
-// second form needed the identical parse.
-
-/** Trims and normalizes a comma decimal to a dot; `undefined` when the result isn't a finite number. */
-export function parseAmountInput(text: string): number | undefined {
-  const parsed = Number(text.trim().replace(',', '.'));
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-/** Major units (e.g. euros) to minor units (cents), rounded to the nearest integer. */
-export function toMinorUnits(major: number): number {
-  return Math.round(major * 100);
-}
+// Re-exported from @repo/app-core/selectors/moneyInput — moved there (2026-09-28 mobile Activity
+// pass) so apps/mobile can import the same parse without pulling in this DOM-only package. Kept
+// as a re-export here rather than updating every @repo/routes importer's path, since the functions
+// themselves are unchanged and this file's own path is part of @repo/routes's public shape.
+export { parseAmountInput, toMinorUnits } from '@repo/app-core/selectors/moneyInput';

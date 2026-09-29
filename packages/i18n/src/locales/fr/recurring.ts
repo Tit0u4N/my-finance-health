@@ -15,6 +15,8 @@ const recurring = {
     panelTitle: 'Règles',
     rowCount_one: '{{count}} règle',
     rowCount_other: '{{count}} règles',
+    activeCount_one: '{{count}} règle active',
+    activeCount_other: '{{count}} règles actives',
     emptyTitle: 'Aucune règle récurrente',
     emptySubtitle: "Les règles des comptes dans le périmètre s'affichent ici.",
     columnRule: 'Règle',

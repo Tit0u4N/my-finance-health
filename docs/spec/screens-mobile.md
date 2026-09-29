@@ -15,9 +15,13 @@ for it: not part of the product.
 
 ## Status
 
-Built in this pass: Dashboard (Home tab) and the 3-step onboarding flow. Every other tab
-(Accounts, Activity, Invest, Settings) is a routed placeholder (`ComingSoon`) — real content is a
-later pass, staged deliberately rather than landing all ~15 screens/5 charts/full nav in one diff.
+First pass (2026-09-27): Dashboard (Home tab) and the 3-step onboarding flow; every other tab a
+routed placeholder (`ComingSoon`), staged deliberately rather than landing all ~15 screens/5
+charts/full nav in one diff.
+
+Activity pass (2026-09-28): the **Activity tab** is real — both segments (ledger, recurring) with
+full CRUD, matching `open-questions.md` #19's decision for desktop. Accounts, Invest and Settings
+remain `ComingSoon`.
 
 ## Rendering boundary
 
@@ -48,7 +52,13 @@ freshly created local workspace is genuinely empty.
 | Screen | Source | Purpose | Reads | Writes | Derived values | Local-only UI state |
 |---|---|---|---|---|---|---|
 | Home (dashboard) | `screens-main.jsx` `Dashboard` | Month-to-date financial summary | accounts, transactions (current month, every account — the mobile mock has no account-scope filter, unlike desktop's Overview), exchange rates, categories | — | total balance (base-currency, converted — not the mock's raw same-currency sum); MTD income/expense; category spend breakdown (donut); cashflow sankey (income category → total → expense category + savings); net savings rate | amounts-hidden toggle (shared with desktop's own preference — `usePreferencesStore`, real, persisted) |
-| Accounts, Activity, Invest, Settings | — | Not built this pass | — | — | — | — |
+| Activity — shell | `screens-tx.jsx` header + tabs | Hosts both segments; the header's round `+` opens whichever create sheet the visible segment calls for | workspace settings (timezone → "today", base currency), accounts, categories | — | header subtitle: listed-transaction count on the ledger, active-rule count on recurring | which segment is visible |
+| Activity — ledger (Transactions segment) | `screens-tx.jsx` `TxAll` | The full transaction list, searchable and filterable, grouped by day | transactions for the current filter set (`useTransactions`, `keepPreviousData`), accounts, categories | `Transaction` create / update / delete | per-day buckets with a signed per-day total (base currency); per-row category colour/icon, account name, signed amount; relative day label inside the week, absolute beyond it | search text, type / account / category filter, which row's action sheet is open, which row is pending deletion |
+| Activity — recurring (Recurring segment) | `screens-tx.jsx` `TxRecurring` | One card per rule, soonest first, with the pause toggle | recurring rules (unscoped criteria), accounts, categories | `RecurringRule` create / update / delete, and the `active` toggle (the same `update` operation) | next occurrence per rule (`computeNextOccurrence`) and the card order it drives; relative "next" label; frequency label | which card's action sheet is open, which rule is pending deletion |
+| Activity — transaction sheet | `screens-tx.jsx` new-transaction sheet | Create and edit in one draft | categories, accounts, description suggestions (trailing year) | `Transaction` create / update | amount sign, derived from the picked category's `kind` — never from the expense/income toggle, which only re-filters the categories offered and resets the pick | draft (kind, amount, description, category, account, date mode + date, note), submit error |
+| Activity — recurring sheet | `screens-tx.jsx` new-rule sheet | Create and edit in one draft | categories, accounts | `RecurringRule` create / update | amount sign, same derivation as above | draft (kind, description, amount, frequency, account, category, start date), submit error |
+| Activity — row actions / delete confirm | — (native stand-in) | Edit or delete one row | — | — | — | which row, and whether the confirm step is showing |
+| Accounts, Invest, Settings | — | Not built yet | — | — | — | — |
 
 Dropped relative to both the mock and desktop's Overview, with a reason each:
 
@@ -67,9 +77,52 @@ Dropped relative to both the mock and desktop's Overview, with a reason each:
 - **Notification bell**: decorative-only in the mock (no notifications feature, no real unread
   state) — dropped rather than shipping dead chrome.
 
+### Activity tab — dropped or diverged (2026-09-28)
+
+- **No KPI tile row.** Desktop's ledger has Inflow/Outflow/Net tiles and its Recurring screen has
+  four monthly-commitment tiles; the mobile mock has neither on this tab, and `computePeriodTotals`
+  / `computeMonthlyCommitment` are already covered by desktop. The header subtitle carries the one
+  count each segment actually needs. `transactions:list.kpi*` / `recurring:list.kpi*` therefore stay
+  desktop-only keys.
+- **Per-screen account filter, not a cross-screen scope.** Desktop shares one
+  `AccountSelectionProvider` across Overview/Transactions/Recurring; mobile has no such store (see
+  "Cross-screen state" below), and the mock draws its own account chip inside the filter row. So the
+  ledger's account filter is local `useState`, and it is a *single* account (or "all"), matching the
+  chip — not desktop's multi-select.
+- **Recurring segment has no account filter at all**, matching the mock: its criteria are always
+  `{}`. Only the ledger filters.
+- **Text/chip date entry, not a native date picker.** The transaction sheet offers Today / Yesterday
+  / Custom, with Custom revealing a `YYYY-MM-DD` field; the rule sheet's start date is that field
+  directly. A real wheel/calendar picker needs `@react-native-community/datetimepicker`, an
+  unapproved dependency for this pass — flagged here rather than silently added. The consequence is
+  that both sheets validate the typed date with `safeParse` (desktop's forms can `parse`, because
+  their `DatePicker` constrains the value).
+- **Row actions are a sheet, not a dropdown menu.** Desktop uses `DropdownMenu` anchored to the row;
+  there is no native equivalent worth hand-rolling, so `MoreVertical` opens a bottom sheet listing
+  Edit / Delete. Delete then goes through `ConfirmSheet`, same two-step as desktop's `ConfirmDialog`.
+- **Option pickers are sheets, not wheels.** `ChipSelect` opens a `Sheet` of options with a check on
+  the current one — same reason as the date picker: no picker dependency is approved.
+- **No "Paused" badge.** The mock draws one next to the switch. The switch's own off state plus the
+  card's reduced opacity already say it, and no `recurring:` key exists for the word — adding one to
+  restate what the control shows would be redundant chrome.
+- **No sort control.** Desktop's ledger sorts by date or amount from its column headers; the mock has
+  no sort affordance and the criteria are fixed at `date:desc`, which is also what the day grouping
+  depends on.
+- **No search debounce.** Desktop debounces because each keystroke would otherwise write a router
+  search param; there is no URL here, and `keepPreviousData` keeps the list on screen while the next
+  criteria resolve.
+- **Rule cards show the category's icon and colour**, where the mock draws a generic `repeat` disc —
+  the category is the useful identity, and rendering `Category.color` on every view of the entity is
+  `cross-app-pitfalls.md` #7. The recurrence is carried by the frequency and next-occurrence badges.
+- **Both segments' hooks run whether or not their segment is visible.** React forbids a conditional
+  hook; the cost is one cached query for the hidden segment, bought back as an instant tab switch and
+  a header subtitle that can count either side.
+
 ## Cross-screen state
 
-`amountsHidden` is the only cross-screen state reused this pass — same store as desktop
+`amountsHidden` is the only cross-screen state reused so far — same store as desktop
 (`@repo/app-core`'s `PreferencesProvider`), already device-local and persisted
-(`open-questions.md #4`). No account-scope filter exists yet on mobile (see the Dropped list
-above), so there is nothing equivalent to desktop's `accSel` to share.
+(`open-questions.md #4`). Every money value on the Activity tab reads it too, through `AmountValue`.
+No account-scope filter exists on mobile (see the Dropped lists above), so there is nothing
+equivalent to desktop's `accSel` to share: the ledger's account chip is that screen's own state and
+resets when the tab unmounts.
