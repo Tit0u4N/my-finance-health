@@ -8,7 +8,7 @@ import { rangeFor } from '@repo/domain/time/workspaceTime';
 import { usePlatform } from '../../providers/usePlatform';
 import { useTransactions } from '../../queries/useTransactions';
 import { useWorkspaceSettings } from '../../queries/useWorkspaceSettings';
-import { computeDescSuggestions } from '../descSuggestions';
+import { computeDescSuggestions, type EmptyQueryRanking } from '../descSuggestions';
 import { startOfDayIso } from './startOfDayIso';
 
 export type UseDescSuggestionsResult = {
@@ -16,7 +16,11 @@ export type UseDescSuggestionsResult = {
   readonly isLoading: boolean;
 };
 
-export function useDescSuggestions(query: string, limit?: number): UseDescSuggestionsResult {
+export function useDescSuggestions(
+  query: string,
+  limit?: number,
+  emptyQueryRanking?: EmptyQueryRanking,
+): UseDescSuggestionsResult {
   const platform = usePlatform();
   const settingsQuery = useWorkspaceSettings();
   const settings = settingsQuery.data;
@@ -36,5 +40,5 @@ export function useDescSuggestions(query: string, limit?: number): UseDescSugges
     return { names: [], isLoading };
   }
 
-  return { names: computeDescSuggestions(transactionsQuery.data, query, limit), isLoading };
+  return { names: computeDescSuggestions(transactionsQuery.data, query, limit, emptyQueryRanking), isLoading };
 }

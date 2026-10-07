@@ -1,6 +1,7 @@
 import type { AccountType } from '@repo/domain/entities/account';
 import { Check, FilePlus, Folder } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BORDER_RADIUS, FONT_SIZE, SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
 import { AmountValue } from '@/ui/AmountValue';
@@ -21,10 +22,11 @@ type OnboardingScreenProps = {
 
 export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const { colors } = useColor();
+  const insets = useSafeAreaInsets();
   const onboarding = useOnboardingScreen(onDone);
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <Stepper step={onboarding.step} />
       <ScrollView contentContainerStyle={styles.content}>
         {onboarding.step === 0 && <Step0 onboarding={onboarding} />}

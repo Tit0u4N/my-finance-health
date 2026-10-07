@@ -30,6 +30,9 @@ import type { ChipSelectOption } from '@/ui/ChipSelect';
 import type { SegmentedOption } from '@/ui/SegmentedTabs';
 import { type CategoryChoice, categoryChoices, firstCategoryOfKind } from './categoryChoices';
 
+const FREQUENT_DESC_COUNT = 3;
+const AUTOCOMPLETE_DESC_COUNT = 5;
+
 export type TransactionDateMode = 'today' | 'yesterday' | 'custom';
 
 export type TransactionFormState = {
@@ -95,7 +98,13 @@ export function useTransactionForm(
 
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-  const { names: descSuggestions } = useDescSuggestions(draft?.desc ?? '');
+  // Empty field: just the three most used descriptions. Typing: a fuzzy autocomplete.
+  const isDescEmpty = (draft?.desc ?? '').trim() === '';
+  const { names: descSuggestions } = useDescSuggestions(
+    draft?.desc ?? '',
+    isDescEmpty ? FREQUENT_DESC_COUNT : AUTOCOMPLETE_DESC_COUNT,
+    'frequent',
+  );
 
   const yesterday = today === undefined ? undefined : addDays(today, -1);
   const dateForMode = (mode: TransactionDateMode, current: string): string => {

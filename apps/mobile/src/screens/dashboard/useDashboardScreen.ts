@@ -29,6 +29,7 @@ import { useColor } from '@/theme/useColor';
 import type { DonutSlice } from '@/ui/charts/Donut';
 import type { SankeyLink, SankeyNode } from '@/ui/charts/Sankey';
 import { categoryIcon } from '@/ui/visuals';
+import { type TransactionFormState, useTransactionForm } from '../transactions/useTransactionForm';
 
 const RECENT_ACTIVITY_LIMIT = 5;
 
@@ -84,6 +85,9 @@ export type UseDashboardScreenResult =
         }[];
       };
       readonly activity: readonly DashboardActivityRow[];
+      readonly addLabel: string;
+      readonly onAdd: () => void;
+      readonly transactionForm: TransactionFormState;
     };
 
 export function useDashboardScreen(): UseDashboardScreenResult {
@@ -119,6 +123,11 @@ export function useDashboardScreen(): UseDashboardScreenResult {
   const rates = ratesQuery.data;
   const categories = categoriesQuery.data;
   const transactions = transactionsQuery.data;
+  const { form: transactionForm, openCreate: openCreateTransaction } = useTransactionForm(
+    categories ?? [],
+    accounts ?? [],
+    today,
+  );
   const trendPoints = trendQuery.points;
 
   const ready =
@@ -219,6 +228,7 @@ export function useDashboardScreen(): UseDashboardScreenResult {
 
   return {
     activity,
+    addLabel: t('transactions:list.addTransaction'),
     balanceSubLabel: t('overview:kpi.balanceSub', { count: accounts.length, currency: settings.baseCurrency }),
     breakdown: {
       centerValueLabel: money(periodTotals.expense, { compact: true }),
@@ -230,10 +240,12 @@ export function useDashboardScreen(): UseDashboardScreenResult {
     kpis,
     netRateIsPositive: periodTotals.net >= 0,
     netRateLabel: t('overview:kpi.netRate', { percent: Math.round(periodTotals.rate * 100) }),
+    onAdd: openCreateTransaction,
     onToggleHidden: toggleAmountsHidden,
     ready: true,
     subtitle: dayLabel(today, locale),
     totalBalanceLabel: money(totalBalance),
+    transactionForm,
   };
 }
 

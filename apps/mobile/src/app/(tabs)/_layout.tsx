@@ -1,6 +1,7 @@
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Tabs } from 'expo-router';
 import { ArrowLeftRight, Home, Settings, TrendingUp, Wallet } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ACCENT } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
 
@@ -8,11 +9,15 @@ import { useColor } from '@/theme/useColor';
 export default function TabsLayout() {
   const { colors } = useColor();
   const { t } = useTranslation();
+  // Screens draw their own headers (`headerShown: false`), so nothing else keeps them out of the
+  // notch / status bar: the scene — and every nested Stack inside it — starts below the inset.
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: colors.background, paddingTop: insets.top },
         tabBarActiveTintColor: ACCENT,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },

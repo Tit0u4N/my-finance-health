@@ -26,6 +26,21 @@ describe('computeDescSuggestions', () => {
     expect(computeDescSuggestions(transactions, '')).toEqual(['Netflix', 'Monoprix', 'Carrefour Market']);
   });
 
+  it('ranks by frequency, then recency, when the query is empty and ranking is "frequent"', () => {
+    const transactions = [
+      transaction('Netflix', '2026-03-09T00:00:00.000Z'),
+      transaction('Carrefour Market', '2026-03-01T00:00:00.000Z'),
+      transaction('carrefour market', '2026-03-02T00:00:00.000Z'),
+      transaction('Monoprix', '2026-03-05T00:00:00.000Z'),
+    ];
+
+    expect(computeDescSuggestions(transactions, '', 3, 'frequent')).toEqual([
+      'carrefour market',
+      'Netflix',
+      'Monoprix',
+    ]);
+  });
+
   it('dedupes case-insensitively, keeping the most recent spelling', () => {
     const transactions = [
       transaction('carrefour market', '2026-03-01T00:00:00.000Z'),
