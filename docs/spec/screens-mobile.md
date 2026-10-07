@@ -36,6 +36,14 @@ since the parameter defaults to the previous all-`true` behaviour. `locale` stay
 dependency that belongs in `@repo/platform-expo` (`cross-app-pitfalls.md` #2), not added in this
 pass — left as a named follow-up rather than silently deferred.
 
+Invest pass (2026-10-07): the **Invest tab** is real (list, detail, add/edit position, record
+value, delete) — no `ComingSoon` placeholder remains. Mock `InvestPortfolio`/`InvestDetail` are
+followed (hero + portfolio trend, allocation bars, positions list; detail with price chart, range
+tabs, value snapshots). Diverged: no sortable table/curve select/notes panel/KPI tiles (desktop-only);
+edit/delete live on detail (pencil + "Delete position"), not per-row; record-value date is typed
+`YYYY-MM-DD`. Added `useInvestmentsValueHistory` to app-core (fan-out sibling of
+`useAccountsBalanceHistory`, so mobile never imports `@tanstack/react-query`).
+
 ## Rendering boundary
 
 `apps/mobile` shares no UI component with web/desktop (CLAUDE.md) — every screen below is its own
