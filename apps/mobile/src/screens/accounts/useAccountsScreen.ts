@@ -8,10 +8,8 @@
 import { useFormattingLocale } from '@repo/app-core/i18n/useFormattingLocale';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
-import { useRepositories } from '@repo/app-core/providers/useRepositories';
-import { queryKeys } from '@repo/app-core/queries/queryKeys';
-import { unwrapResult } from '@repo/app-core/queries/unwrapResult';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
+import { useAccountsBalanceHistory } from '@repo/app-core/queries/useAccountsBalanceHistory';
 import { useExchangeRates } from '@repo/app-core/queries/useExchangeRates';
 import { useTransactions } from '@repo/app-core/queries/useTransactions';
 import { useWorkspaceSettings } from '@repo/app-core/queries/useWorkspaceSettings';
@@ -23,7 +21,6 @@ import type { Account } from '@repo/domain/entities/account';
 import { isoDateTimeSchema } from '@repo/domain/primitives/dateTime';
 import { toMoney } from '@repo/domain/primitives/money';
 import { rangeFor } from '@repo/domain/time/workspaceTime';
-import { useQueries } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ACCOUNT_TYPE_ICON } from '@/ui/visuals';
 import { type AccountFormState, useAccountForm } from './useAccountForm';
@@ -64,7 +61,6 @@ export type UseAccountsScreenResult =
 export function useAccountsScreen(): UseAccountsScreenResult {
   const { t } = useTranslation();
   const platform = usePlatform();
-  const repositories = useRepositories();
   const locale = useFormattingLocale();
 
   const accountsQuery = useAccounts();
@@ -79,12 +75,10 @@ export function useAccountsScreen(): UseAccountsScreenResult {
   const accounts = accountsQuery.data ?? [];
   const accountForm = useAccountForm(accounts);
 
-  const historyQueries = useQueries({
-    queries: accounts.map((account) => ({
-      queryFn: () => unwrapResult(repositories.accounts.getBalanceHistory(account.id, HISTORY_RANGE)),
-      queryKey: queryKeys.accountBalanceHistory(account.id, HISTORY_RANGE),
-    })),
-  });
+  const historyQueries = useAccountsBalanceHistory(
+    accounts.map((account) => account.id),
+    HISTORY_RANGE,
+  );
 
   const settings = settingsQuery.data;
   const window = settings ? rangeFor(HISTORY_RANGE, nowIso, settings.timezone) : undefined;
