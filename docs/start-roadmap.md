@@ -72,7 +72,8 @@ These five rules drive the whole structure. Violating any one of them compromise
 | Available modes | online only | local or online | local or online |
 | Secrets vault | none | system keyring via the `keyring` library | `expo-secure-store` |
 | Biometric unlock | none | `tauri-plugin-biometry` (Touch ID / Windows Hello, opt-in — `docs/spec/open-questions.md` #23) | `expo-local-authentication`, not built |
-| File system | not available | Tauri `fs` and `dialog` plugins | `expo-file-system`, `expo-document-picker` |
+| File system | not available | Tauri `fs` and `dialog` plugins | `expo-file-system` (files and folder picker) |
+| Key-value storage | `localStorage` | `localStorage` | `expo-sqlite/kv-store` |
 | UI tests | Vitest + Testing Library | Vitest + Testing Library | Vitest + `vitest-native` + Testing Library Native |
 | End-to-end tests | Playwright | WebdriverIO + tauri-driver | Maestro |
 | Distribution | Static CDN | Signed bundles + Tauri updater | EAS Build and EAS Update |
@@ -250,7 +251,7 @@ The platform contract distinguishes mandatory services from optional services. A
 | Secrets | no | system keyring | system keyring |
 | Encrypted SQL driver | absent | available | available |
 | File system | absent | available | available, in the app sandbox |
-| User file selection | absent | native dialog, free location | document picker, with import into the app workspace |
+| User file selection | absent | native dialog, free location | folder picker (`expo-file-system`), with import into the app workspace |
 | Resume of a remembered location | absent | available, subject to persistent authorization | not applicable, the file lives inside the app |
 | Cryptographic random generation | available | available | available |
 | System localization | available | available | available |

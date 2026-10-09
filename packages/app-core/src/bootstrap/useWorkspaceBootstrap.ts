@@ -34,6 +34,10 @@ export type UseWorkspaceBootstrapResult = {
    *  Releasing the opener's actual session (SQL connection, occupancy lock) is the caller's job,
    *  the same way `onSessionOpen` already hands session lifetime to the app, not this hook. */
   readonly lock: (ref: WorkspaceRef) => void;
+  /** Back to the workspace list from any state (a failed open, a locked workspace the user does
+   *  not want to unlock) — reloads the recent list, so a workspace imported or created since the
+   *  last visit shows up. */
+  readonly chooseAnother: () => Promise<void>;
 };
 
 async function resolve(
@@ -79,5 +83,9 @@ export function useWorkspaceBootstrap({ opener }: UseWorkspaceBootstrapDeps): Us
 
   const lock = (ref: WorkspaceRef): void => dispatch({ type: 'locked', ref });
 
-  return { state, open, unlock, create, lock };
+  const chooseAnother = async (): Promise<void> => {
+    dispatch({ type: 'recent-loaded', recent: await listRecentWorkspaces(platform.keyValueStore) });
+  };
+
+  return { state, open, unlock, create, lock, chooseAnother };
 }

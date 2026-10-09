@@ -15,7 +15,7 @@ type FieldProps = {
   /** Renders a trailing clear button whenever `value` is non-empty. */
   readonly onClear?: () => void;
   readonly autoFocus?: boolean;
-  readonly returnKeyType?: 'done' | 'search';
+  readonly returnKeyType?: 'done' | 'search' | 'go';
   /** Commits a draft on blur — the exchange-rate rows' "type, then leave the field" pattern
    * (desktop's `Input` `onBlur={rate.onCommit}`). */
   readonly onBlur?: () => void;
@@ -23,6 +23,12 @@ type FieldProps = {
   readonly variant?: 'default' | 'focal';
   /** Spoken name when `label` is absent. */
   readonly accessibilityLabel?: string;
+  /** Masks the text and switches the keyboard off autocorrect/autocapitalize — the passphrase fields. */
+  readonly isSecret?: boolean;
+  /** Shown under the input in the negative tone; also announced as the field's error. */
+  readonly error?: string;
+  /** Fired by the keyboard's return key — submits a one-field form. */
+  readonly onSubmitEditing?: () => void;
 };
 
 /** Native counterpart of the mockup's labelled text input (ui.jsx's `Field`). Logic-free, so it
@@ -40,6 +46,9 @@ export function Field({
   onBlur,
   variant = 'default',
   accessibilityLabel,
+  isSecret = false,
+  error,
+  onSubmitEditing,
 }: FieldProps) {
   const { colors } = useColor();
   const isFocal = variant === 'focal';
@@ -66,6 +75,10 @@ export function Field({
           {...(returnKeyType ? { returnKeyType } : {})}
           {...(onBlur === undefined ? {} : { onBlur })}
           {...(accessibilityLabel === undefined ? {} : { accessibilityLabel })}
+          {...(onSubmitEditing === undefined ? {} : { onSubmitEditing })}
+          {...(isSecret
+            ? { autoCapitalize: 'none', autoCorrect: false, secureTextEntry: true, textContentType: 'password' }
+            : {})}
           value={value}
         />
         {showClear && (
@@ -74,6 +87,11 @@ export function Field({
           </Pressable>
         )}
       </View>
+      {error !== undefined && (
+        <Text accessibilityLiveRegion="polite" style={[styles.error, { color: colors.neg }]}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
@@ -81,6 +99,7 @@ export function Field({
 const styles = StyleSheet.create({
   clearButton: { padding: SPACING.xs },
   container: { gap: 6 },
+  error: { fontSize: FONT_SIZE.label },
   input: { flex: 1, fontSize: FONT_SIZE.body, height: '100%' },
   inputFocal: { fontSize: FONT_SIZE.valueHero, fontWeight: '600', textAlign: 'center' },
   inputRow: {

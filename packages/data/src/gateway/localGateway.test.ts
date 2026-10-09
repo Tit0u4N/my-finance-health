@@ -183,12 +183,22 @@ describe('createLocalGateway', () => {
     expect(isOk(result) && result.value.map((t) => t.id)).toEqual(['t1']);
   });
 
-  it('text filter matches case- and accent-insensitively via mfh_lower', async () => {
+  it('text filter matches case- and accent-insensitively', async () => {
     await gateway.write('transaction', transaction({ id: 't1', desc: 'Café Central', note: undefined }));
 
     const result = await gateway.readCollection('transaction', { filter: { text: 'CAFÉ' } });
 
     expect(isOk(result) && result.value.map((t) => t.id)).toEqual(['t1']);
+  });
+
+  it('applies limit after the text filter, not before', async () => {
+    await gateway.write('transaction', transaction({ id: 't1', desc: 'Rent', note: undefined }));
+    await gateway.write('transaction', transaction({ id: 't2', desc: 'Café one', note: undefined }));
+    await gateway.write('transaction', transaction({ id: 't3', desc: 'Café two', note: undefined }));
+
+    const result = await gateway.readCollection('transaction', { filter: { text: 'café' }, limit: 1 });
+
+    expect(isOk(result) && result.value).toHaveLength(1);
   });
 
   it('a filter naming a column the entity lacks excludes every row (matches memoryGateway)', async () => {

@@ -57,7 +57,7 @@ the same rendering-boundary reason).
 
 | Screen | Source | Purpose | Reads | Writes | Local-only UI state |
 |---|---|---|---|---|---|
-| Onboarding — choose workspace | `onboarding.jsx` step 0 | Presentational only in this pass — `EXPO_PUBLIC_STORAGE_MODE=inMemory`'s fixture workspace is always already open, so there is no empty-workspace state for a real "create/open" action to land on yet (`@repo/platform-expo` is still a placeholder). Mirrors apps/desktop's own "bootstrap-only UI ahead of its backing infra" precedent. | — | — | selected option (`create` \| `open`) |
+| Onboarding — choose workspace | `onboarding.jsx` step 0 | Still presentational inside the app stage — a workspace is already open by the time it shows. The real create/import/unlock lives in the **Bootstrap stage** below, which runs before the app stage under `EXPO_PUBLIC_STORAGE_MODE=classic`. | — | — | selected option (`create` \| `open`) |
 | Onboarding — add accounts | `onboarding.jsx` step 1 | Seed at least one account before entering the app | live `Account` list (so a mid-flow add shows up immediately) | `Account` (create, one or more) — a **real** `useCreateAccount` mutation against the fixture repositories, same hook apps/desktop's own onboarding-equivalent work would use | draft account form |
 | Onboarding — pick categories | `onboarding.jsx` step 2 | Enable/disable the seed category set | seed category list (static, not repository-backed — see caveat below) | `Category` (create the enabled subset) via `useCreateCategory` | per-category on/off toggle |
 
@@ -65,8 +65,28 @@ the same rendering-boundary reason).
 (`createMockWorkspace.ts`) already ships its own seed accounts/categories (the same ones the
 Dashboard row below reads). Running onboarding today adds *more* accounts/categories alongside
 that seed rather than starting from empty — there's no real empty-workspace state to demonstrate
-against yet. This resolves on its own once `@repo/platform-expo`'s real adapter lands and a
-freshly created local workspace is genuinely empty.
+against in `inMemory` mode. Under `classic` it resolves as predicted: a freshly created local
+workspace is genuinely empty, so steps 1–2 now seed a real, empty workspace.
+
+### Bootstrap stage (`EXPO_PUBLIC_STORAGE_MODE=classic`, 2026-10-07)
+
+`@repo/platform-expo` is real, so mobile has a local mode (`open-questions.md` #25).
+`apps/mobile/src/root/LocalAppRoot.tsx` mirrors desktop's `LocalApp.tsx`: bootstrap stage (platform +
+translations only) until the workspace is `ready`, then `AppStageProviders` around the Expo Router
+`Stack`. All UI lives in `apps/mobile/src/bootstrap/` (View + ViewModel pairs, native components, no
+sharing with desktop's DOM ones; English copy, like desktop's bootstrap — no i18n namespace yet).
+
+| View | Purpose | Notes |
+|---|---|---|
+| Workspace list | Recent sandbox workspaces, *Create a workspace*, *Import a workspace* | `needs-designation` |
+| Create sheet | Name, base currency, passphrase ×2 (min 8, `@repo/app-core/bootstrap/newPassphrase`) | Path chosen by the core in the sandbox — no save dialog |
+| Import sheet | Pick a folder → list the `.mfhdb` files that have a `.mfhmeta` beside them → copy into the sandbox → straight to unlock | Folder must directly contain the file |
+| Unlock | Passphrase, *Choose another workspace* | `needs-unlock`; no biometric option yet |
+| Progress / error | Spinner labelled by the cosmetic `migrating`/`replaying` side-channel; error copy from the shared `describeBootstrapError`, retry, choose another | |
+
+`useWorkspaceBootstrap` gained `chooseAnother()` (reload the recent list, return to the list) for the
+unlock/error screens and Settings → Data's *Switch workspace*. A dev build is required (SQLCipher
+comes from `expo-sqlite`'s config plugin; Expo Go cannot run it).
 
 ## App stage
 
@@ -161,20 +181,23 @@ Dropped relative to both the mock and desktop's Overview, with a reason each:
   explicit import into, and export out of, the app-reserved directory. Settings → Data instead shows
   real workspace facts (timezone, base currency, record count) unconditionally, and renders
   `settings:database.emptyState` ("Not available on this platform") in place of file actions while
-  `platform.capabilities.canWriteFile` is false — which it honestly is today (see the Status section
-  above). The Data *row* on the root menu is never hidden by this gate — only the row's own screen
+  `platform.capabilities.canWriteFile` is false (the `inMemory` fixture). Under `classic` it is true,
+  and a *Backup and transfer* group appears: **Export workspace** (folder picker → dated subfolder,
+  e.g. into iCloud Drive), **Lock workspace**, **Switch workspace** — gated on a real local session
+  (`useWorkspaceSession()`), so the fixture mode never shows an export with nothing behind it. The Data *row* on the root menu is never hidden by this gate — only the row's own screen
   content is — so the destination stays reachable by deep link and back-stack.
 - **No "Reset everything" action.** No `resetWorkspace` mutation exists anywhere in
   `@repo/app-core`'s mutations, and desktop's own `useDatabaseScreen.ts` already ships this action
   with no handler wired up. Shipping an inert destructive button on a brand-new screen is exactly the
   dead chrome this doc's other "Dropped" lists already refuse (the notification bell, the "Paused"
   badge).
-- **No "Switch file" / "Create backup" / "Export CSV" actions**, for the same file-capability reason.
-  These land once `@repo/platform-expo`'s real adapter ships explicit import/export.
+- **No "Switch file" / "Create backup" / "Export CSV" actions** under those names: the mobile
+  equivalents are *Export workspace* / *Switch workspace* (above). Rolling backups and CSV export
+  are not built.
 - **"Encrypted at rest" badge is capability-gated, not hardcoded on.** The mock's Settings identity
-  card always shows it. `platform.capabilities.hasEncryptedSqlDriver` is honestly false on mobile
-  today (the in-memory fixture has no SQLCipher driver), so the badge is absent on both the Settings
-  root card and the About screen until it is true.
+  card always shows it. `platform.capabilities.hasEncryptedSqlDriver` is false in the in-memory fixture and true under
+  `classic`, so the badge appears on both the Settings root card and the About screen only for a real
+  encrypted workspace.
 - **Gradient monogram avatar → solid accent fill.** Same call the Dashboard pass already made for
   its hero card: `expo-linear-gradient` is an unapproved new dependency.
 - **Account detail's header shows only balance + two badges, no KPI tile row.** Matches the mock

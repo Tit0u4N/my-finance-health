@@ -1,6 +1,6 @@
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Link } from 'expo-router';
-import { ArrowLeft, Database, FilePlus } from 'lucide-react-native';
+import { ArrowLeft, Database, FilePlus, Lock, Repeat, Upload } from 'lucide-react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
@@ -16,8 +16,8 @@ type DataScreenProps = {
 
 /** Settings → Data — mobile's counterpart of the desktop-only Database screen. Real workspace
  * facts regardless of file capability, plus the one real affordance carried over from the old
- * SettingsPlaceholder route (a link into onboarding); file actions (switch file, backup, export)
- * only ever appear once `platform.capabilities.canWriteFile` is honestly true. */
+ * SettingsPlaceholder route (a link into onboarding); file actions (export, lock, switch
+ * workspace) only appear for a real local workspace on a platform that can write files. */
 export function DataScreen({ onBack }: DataScreenProps) {
   const { colors } = useColor();
   const { t } = useTranslation();
@@ -52,6 +52,44 @@ export function DataScreen({ onBack }: DataScreenProps) {
             ))}
           </SectionGroup>
 
+          {screen.fileActions && (
+            <SectionGroup title="Backup and transfer">
+              <SettingsRow
+                icon={Upload}
+                iconColor={colors.pos}
+                onPress={screen.fileActions.onExport}
+                showSeparator
+                subtitle="Save an encrypted copy to iCloud Drive, Files or any folder"
+                title="Export workspace"
+              />
+              <SettingsRow
+                icon={Lock}
+                iconColor={colors.muted}
+                onPress={screen.fileActions.onLock}
+                showSeparator
+                title="Lock workspace"
+              />
+              <SettingsRow
+                icon={Repeat}
+                iconColor={colors.muted}
+                onPress={screen.fileActions.onSwitchWorkspace}
+                subtitle="Import or open another workspace"
+                title="Switch workspace"
+              />
+            </SectionGroup>
+          )}
+          {screen.fileActions?.exportStatus && (
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[
+                styles.status,
+                { color: screen.fileActions.exportStatus.tone === 'success' ? colors.pos : colors.neg },
+              ]}
+            >
+              {screen.fileActions.exportStatus.text}
+            </Text>
+          )}
+
           <Link asChild href="/onboarding">
             <SettingsRow icon={FilePlus} iconColor={colors.pos} title={screen.newWorkspaceLabel} />
           </Link>
@@ -83,5 +121,6 @@ const styles = StyleSheet.create({
   metadataRow: { flexDirection: 'row', justifyContent: 'space-between', padding: SPACING.md },
   metadataValue: { fontSize: 13, fontWeight: '600' },
   screen: { flex: 1 },
+  status: { fontSize: 13, paddingHorizontal: SPACING.xs },
   title: { flex: 1, fontSize: 20, fontWeight: '600' },
 });

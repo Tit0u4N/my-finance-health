@@ -1,3 +1,4 @@
+import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstrapError';
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { Platform } from '@repo/platform/platform';
 import type { BiometricUnlockService } from '@repo/platform/services/biometricUnlock';
@@ -7,7 +8,6 @@ import type { ReactNode } from 'react';
 import { BootstrapError } from './BootstrapError';
 import { BootstrapProgress } from './BootstrapProgress';
 import { CreateWorkspaceForm } from './CreateWorkspaceForm';
-import { describeBootstrapError } from './describeBootstrapError';
 import { UnlockWorkspaceForm } from './UnlockWorkspaceForm';
 import type { BiometricIntent } from './useBiometricEnrollment';
 import type { UseBootstrapScreenResult } from './useBootstrapScreen';

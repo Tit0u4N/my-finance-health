@@ -14,6 +14,7 @@ function createFakeBootstrap(): UseWorkspaceBootstrapResult {
     unlock: vi.fn(() => Promise.resolve()),
     create: vi.fn(() => Promise.resolve()),
     lock: vi.fn(),
+    chooseAnother: vi.fn(() => Promise.resolve()),
   };
 }
 

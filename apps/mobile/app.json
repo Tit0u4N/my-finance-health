@@ -13,7 +13,23 @@
     "android": {
       "package": "app.myfinancehealth.mobile"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      [
+        "expo-file-system",
+        {
+          "enableFileSharing": true,
+          "supportsOpeningDocumentsInPlace": true
+        }
+      ],
+      "expo-localization"
+    ],
     "experiments": {
       "reactCompiler": true,
       "typedRoutes": true

@@ -6,7 +6,7 @@
 // derivation never produces that key and the two are not related by any computation, so neither
 // key gives access to the other.
 
-import { argon2id } from '@noble/hashes/argon2.js';
+import { argon2idAsync } from '@noble/hashes/argon2.js';
 
 export type KdfSpec = {
   readonly salt: Uint8Array;
@@ -17,8 +17,10 @@ export type KdfSpec = {
 
 export const JOURNAL_KEY_LENGTH = 32;
 
-export function deriveJournalKey(secret: string, spec: KdfSpec): Uint8Array {
-  return argon2id(secret, spec.salt, {
+// Async variant: output is identical to the sync `argon2id`, but it yields to the event loop
+// between blocks — on a phone's JS thread the 64 MiB derivation would otherwise freeze the UI.
+export function deriveJournalKey(secret: string, spec: KdfSpec): Promise<Uint8Array> {
+  return argon2idAsync(secret, spec.salt, {
     m: spec.memoryKiB,
     t: spec.iterations,
     p: spec.parallelism,

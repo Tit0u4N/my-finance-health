@@ -92,6 +92,18 @@ describe('useWorkspaceBootstrap', () => {
     await waitFor(() => expect(result.current.state).toEqual({ kind: 'needs-unlock', ref }));
   });
 
+  it('chooseAnother() returns to needs-designation with the up-to-date recent list', async () => {
+    const opener = createFakeOpener();
+    const { result } = renderBootstrap(opener);
+    await waitFor(() => expect(result.current.state.kind).toBe('needs-designation'));
+    await result.current.unlock(ref, 'my-passphrase');
+    await waitFor(() => expect(result.current.state.kind).toBe('ready'));
+
+    await act(() => result.current.chooseAnother());
+
+    expect(result.current.state).toEqual({ kind: 'needs-designation', recent: [ref] });
+  });
+
   it('a failed step moves state to failed, carrying the domain error', async () => {
     const error: DomainError = { kind: 'unauthorized', message: 'wrong passphrase' };
     const opener = createFakeOpener({

@@ -103,6 +103,11 @@ export function createTauriFileSystem(): FileSystemService {
       return path ? normalize(path) : null;
     },
 
+    pickDirectory: async () => {
+      const selection = await openDialog({ multiple: false, directory: true });
+      return typeof selection === 'string' ? normalize(selection) : null;
+    },
+
     pickSaveLocation: async (options) => {
       const filters = filtersFor(options?.extensions);
       const selection = await saveDialog({

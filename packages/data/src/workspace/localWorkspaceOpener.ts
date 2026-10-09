@@ -156,7 +156,7 @@ export function createLocalWorkspaceOpener(deps: CreateLocalWorkspaceOpenerDeps)
 
     let journalKey: Uint8Array;
     try {
-      journalKey = deriveJournalKey(secret, { salt: journalSaltBytes, ...kdf });
+      journalKey = await deriveJournalKey(secret, { salt: journalSaltBytes, ...kdf });
       await sqlDriver.unlock(paths.database, secret, { salt: dbSalt, ...kdf });
     } catch (error) {
       return failAfterLock(validationError(`local workspace: failed to unlock (${String(error)})`));

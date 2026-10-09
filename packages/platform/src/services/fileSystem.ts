@@ -42,6 +42,8 @@ export type FileSystemService = {
   appDataDirectory(): Promise<string>;
   /** Opens the native file picker; resolves the chosen path, or null if the user cancelled. */
   pickFile(options?: FilePickerOptions): Promise<string | null>;
+  /** Opens the native folder picker; resolves the chosen directory, or null if the user cancelled. Mobile's export/import target (start-roadmap.md §9, "Mobile case"). */
+  pickDirectory(): Promise<string | null>;
   /** `pickFile`'s counterpart for designating a file that does not exist yet — creating a local workspace. */
   pickSaveLocation(options?: SaveLocationOptions): Promise<string | null>;
 };

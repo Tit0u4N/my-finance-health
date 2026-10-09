@@ -5,8 +5,10 @@
 // useDatabaseScreen.ts in one deliberate way: `isAvailable` is a field on the ready result, not an
 // early-return arm, because the record counts and workspace facts below are real content
 // regardless of file capability — only the file-management actions (switch file, backup, export,
-// reset) need it, and none of those exist on mobile today.
+// reset) need it. Those actions additionally need a *local* session (`useWorkspaceSession()`):
+// the in-memory fixture mode has a capable platform but no file to export.
 
+import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstrapError';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
@@ -15,8 +17,25 @@ import { useExchangeRates } from '@repo/app-core/queries/useExchangeRates';
 import { useRecurringRules } from '@repo/app-core/queries/useRecurringRules';
 import { useTransactions } from '@repo/app-core/queries/useTransactions';
 import { useWorkspaceSettings } from '@repo/app-core/queries/useWorkspaceSettings';
+import { exportLocalWorkspace } from '@repo/data/workspace/workspaceTransfer';
+import { isErr } from '@repo/domain/primitives/result';
+import type { FileSystemService } from '@repo/platform/services/fileSystem';
+import { useState } from 'react';
+import { useWorkspaceSession } from '@/root/WorkspaceSessionContext';
 
 export type DataMetadataRow = { readonly label: string; readonly value: string };
+
+export type ExportStatus = { readonly tone: 'success' | 'error'; readonly text: string };
+
+/** What the open local workspace can do with its file. English copy only, like the bootstrap flow
+ * these actions belong to (no i18n namespace for them yet). */
+export type DataFileActions = {
+  readonly isExporting: boolean;
+  readonly exportStatus: ExportStatus | undefined;
+  readonly onExport: () => void;
+  readonly onLock: () => void;
+  readonly onSwitchWorkspace: () => void;
+};
 
 export type UseDataScreenResult =
   | { readonly ready: false }
@@ -24,6 +43,8 @@ export type UseDataScreenResult =
       readonly ready: true;
       readonly title: string;
       readonly isAvailable: boolean;
+      /** Present only for a real local workspace on a platform that can write files. */
+      readonly fileActions: DataFileActions | undefined;
       readonly emptyTitle: string;
       readonly emptySubtitle: string;
       readonly workspacePanelTitle: string;
@@ -35,6 +56,46 @@ export type UseDataScreenResult =
 export function useDataScreen(): UseDataScreenResult {
   const { t } = useTranslation();
   const platform = usePlatform();
+  const session = useWorkspaceSession();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportStatus, setExportStatus] = useState<ExportStatus | undefined>(undefined);
+
+  const onExport = (): void => {
+    if (isExporting || !(session && platform.fileSystem)) {
+      return;
+    }
+    const fileSystem: FileSystemService = platform.fileSystem;
+    setExportStatus(undefined);
+    setIsExporting(true);
+    void (async () => {
+      try {
+        const target = await fileSystem.pickDirectory();
+        if (target === null) {
+          return;
+        }
+        const exported = await exportLocalWorkspace({
+          fileSystem,
+          clock: platform.clock,
+          databasePath: session.databasePath,
+          targetDirectory: target,
+        });
+        setExportStatus(
+          isErr(exported)
+            ? { tone: 'error', text: describeBootstrapError(exported.error) }
+            : {
+                tone: 'success',
+                text: `Saved “${exported.value.directory.split('/').pop()}” (${exported.value.fileCount} files).`,
+              },
+        );
+      } catch {
+        setExportStatus({ tone: 'error', text: 'Could not open the folder picker.' });
+      } finally {
+        setIsExporting(false);
+      }
+    })();
+  };
+
+  const canUseFiles = platform.capabilities.canWriteFile && session !== null;
 
   const settingsQuery = useWorkspaceSettings();
   const accountsQuery = useAccounts();
@@ -66,6 +127,10 @@ export function useDataScreen(): UseDataScreenResult {
   return {
     emptySubtitle: t('settings:database.emptyState.subtitle'),
     emptyTitle: t('settings:database.emptyState.title'),
+    fileActions:
+      canUseFiles && session
+        ? { isExporting, exportStatus, onExport, onLock: session.onLock, onSwitchWorkspace: session.onSwitchWorkspace }
+        : undefined,
     isAvailable: platform.capabilities.canWriteFile,
     metadata: [
       { label: t('settings:database.metadata.timezone'), value: settings.timezone },

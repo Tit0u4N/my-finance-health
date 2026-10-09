@@ -1,3 +1,4 @@
+import { validateNewPassphrase } from '@repo/app-core/bootstrap/newPassphrase';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
@@ -7,8 +8,6 @@ import type { BiometricUnlockService } from '@repo/platform/services/biometricUn
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { useState } from 'react';
 import { useBiometricAvailability } from './useBiometricAvailability';
-
-const MIN_PASSPHRASE_LENGTH = 8;
 
 export type UseCreateWorkspaceFormDeps = {
   readonly fileSystem: FileSystemService;
@@ -43,16 +42,13 @@ export function useCreateWorkspaceForm({
   const [remember, setRemember] = useState(false);
   const biometric = useBiometricAvailability(biometricUnlock);
 
-  const canSubmit = secret.length >= MIN_PASSPHRASE_LENGTH && secret === confirmSecret;
+  const canSubmit = validateNewPassphrase(secret, confirmSecret) === undefined;
 
   const onSubmit = async (): Promise<void> => {
     setError(undefined);
-    if (secret.length < MIN_PASSPHRASE_LENGTH) {
-      setError(`Passphrase must be at least ${MIN_PASSPHRASE_LENGTH} characters.`);
-      return;
-    }
-    if (secret !== confirmSecret) {
-      setError('Passphrases do not match.');
+    const passphraseError = validateNewPassphrase(secret, confirmSecret);
+    if (passphraseError) {
+      setError(passphraseError);
       return;
     }
     let path: string | null;

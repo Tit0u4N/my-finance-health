@@ -74,19 +74,31 @@ function amountSignCondition(mapping: EntityTableMapping, amountSign: GatewayFil
   return { sql: `${quoteIdent('amount')} ${amountSign === 'positive' ? '>' : '<'} 0`, params: [] };
 }
 
-/** `instr`, not `LIKE`: `%`/`_` in user search text need no escaping, and semantics match JS
- * `String.includes` exactly. `mfh_lower` (registered on the connection by sql.rs) does
- * full-Unicode lowercasing — SQLite's built-in `lower()` is ASCII-only. */
-function textCondition(mapping: EntityTableMapping, text: GatewayFilter['text']): Condition | null {
+/**
+ * Text search runs in JS over the rows SQL already narrowed, never as a SQL function: SQLite's
+ * built-in `lower()` is ASCII-only, and not every SqlDriver can register a Unicode-aware one
+ * (expo-sqlite cannot). `toLowerCase().includes` is exactly memoryGateway's own matcher, so the
+ * two gateways agree by construction. An entity with no text column never matches, like any other
+ * filter naming a column the table lacks.
+ */
+function textMatcher(
+  mapping: EntityTableMapping,
+  text: GatewayFilter['text'],
+): ((row: Record<string, unknown>) => boolean) | null {
   if (!text) {
     return null;
   }
   const textColumns = textColumnsFor(mapping);
   if (textColumns.length === 0) {
-    return unsupportedColumn();
+    return () => false;
   }
-  const concatExpr = textColumns.map((name) => `COALESCE(${quoteIdent(name)}, '')`).join(" || ' ' || ");
-  return { sql: `instr(mfh_lower(${concatExpr}), mfh_lower(?)) > 0`, params: [text] };
+  const needle = text.toLowerCase();
+  return (row) =>
+    textColumns
+      .map((name) => (typeof row[name] === 'string' ? row[name] : ''))
+      .join(' ')
+      .toLowerCase()
+      .includes(needle);
 }
 
 function dateRangeCondition(mapping: EntityTableMapping, dateRange: GatewayFilter['dateRange']): Condition | null {
@@ -118,7 +130,6 @@ function buildWhere(mapping: EntityTableMapping, filter: GatewayFilter | undefin
     categoryCondition(mapping, filter.categoryId),
     investmentCondition(mapping, filter.investmentId),
     amountSignCondition(mapping, filter.amountSign),
-    textCondition(mapping, filter.text),
     dateRangeCondition(mapping, filter.dateRange),
   ].filter((condition): condition is Condition => condition !== null);
 
@@ -193,13 +204,17 @@ export function createLocalGateway({ driver, journal }: CreateLocalGatewayDeps):
       const mapping = TABLE_MAPPINGS[entity];
       const { clause, params } = buildWhere(mapping, criteria.filter);
       const orderBy = buildOrderBy(mapping, criteria.sort);
-      const limitClause = criteria.limit === undefined ? '' : ' LIMIT ?';
-      const sql = `SELECT * FROM ${quoteIdent(mapping.table)} ${clause} ${orderBy}${limitClause}`;
-      const finalParams = criteria.limit === undefined ? params : [...params, criteria.limit];
+      const matchesText = textMatcher(mapping, criteria.filter?.text);
+      // A text filter is applied after the query, so SQL's LIMIT would cut rows the filter might
+      // have kept — it is applied in JS after the filter instead.
+      const limitInSql = criteria.limit !== undefined && matchesText === null;
+      const sql = `SELECT * FROM ${quoteIdent(mapping.table)} ${clause} ${orderBy}${limitInSql ? ' LIMIT ?' : ''}`;
+      const finalParams = limitInSql ? [...params, criteria.limit] : params;
 
       const result = await driver.execute(sql, finalParams);
+      const rows = matchesText ? result.rows.filter(matchesText) : result.rows;
       const records: EntityRecordMap[typeof entity][] = [];
-      for (const row of result.rows) {
+      for (const row of criteria.limit === undefined ? rows : rows.slice(0, criteria.limit)) {
         const parsed = mapping.fromRow(row);
         if (isErr(parsed)) {
           return parsed;
