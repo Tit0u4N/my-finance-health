@@ -39,7 +39,7 @@ type BootstrapScreenProps = {
 export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScreenProps) {
   const { colors } = useColor();
   const insets = useSafeAreaInsets();
-  const screen = useBootstrapScreen(bootstrap, progress);
+  const screen = useBootstrapScreen(bootstrap, progress, platform);
 
   return (
     <KeyboardAvoidingView

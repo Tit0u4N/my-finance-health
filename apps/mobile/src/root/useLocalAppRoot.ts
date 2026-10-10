@@ -7,12 +7,14 @@
 // written from a callback built during render is what React Compiler flags as unsafe.
 
 import { useWorkspaceBootstrap } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
+import { JOURNAL_KEY_LENGTH } from '@repo/data/local/crypto/keys';
 import { createLocalWorkspaceOpener, type LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
 import type { Platform } from '@repo/platform/platform';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import type { SqlDriver } from '@repo/platform/services/sqlDriver';
 import { QueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { deriveArgon2id } from '@/platform/argon2';
 import { useLocalWorkspaceSession } from './useLocalWorkspaceSession';
 
 export type LocalBootstrapProgress = 'migrating' | 'replaying' | null;
@@ -27,6 +29,7 @@ export function useLocalAppRoot(platform: Platform) {
     keyValueStore: platform.keyValueStore,
     clock: platform.clock,
     random: platform.random,
+    deriveJournalKey: (secret, { salt, ...cost }) => deriveArgon2id(secret, salt, cost, JOURNAL_KEY_LENGTH),
     onProgress: setProgress,
     onSessionOpen: setSession,
   });

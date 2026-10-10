@@ -2,7 +2,8 @@ import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener'
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
 import type { Platform } from '@repo/platform/platform';
-import { StyleSheet, Text } from 'react-native';
+import { FolderOpen } from 'lucide-react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
 import { Button } from '@/ui/Button';
@@ -21,7 +22,7 @@ type CreateWorkspaceSheetProps = {
   readonly isOpen: boolean;
   readonly platform: Platform;
   readonly onClose: () => void;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput) => void;
+  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, backupFolder: string | null) => void;
 };
 
 /** New encrypted workspace, stored on this device. The passphrase is the only key: nothing can
@@ -39,7 +40,8 @@ export function CreateWorkspaceSheet({ isOpen, platform, onClose, onCreate }: Cr
       title="New workspace"
     >
       <Text style={[styles.hint, { color: colors.muted }]}>
-        Stored encrypted on this device. There is no way to recover it without the passphrase.
+        Stored encrypted in this app's private storage on this device. There is no way to recover it without the
+        passphrase.
       </Text>
       <Field label="Name" onChangeText={form.onNameChange} value={form.name} />
       <OptionGrid
@@ -62,10 +64,29 @@ export function CreateWorkspaceSheet({ isOpen, platform, onClose, onCreate }: Cr
         value={form.confirmSecret}
         {...(form.error === undefined ? {} : { error: form.error })}
       />
+      <View style={styles.location}>
+        <Text style={[styles.locationTitle, { color: colors.foreground }]}>Save a copy to</Text>
+        <Text style={[styles.hint, { color: colors.muted }]}>
+          {form.backupFolder === null
+            ? 'Optional. Pick a folder — iCloud Drive, On My iPhone, another provider — and a copy is saved there as soon as the workspace is created.'
+            : 'A copy will be saved in the folder you picked as soon as the workspace is created.'}
+        </Text>
+        <Button
+          icon={FolderOpen}
+          label={form.backupFolder === null ? 'Choose a folder…' : 'Choose another folder…'}
+          onPress={() => void form.onChooseBackupFolder()}
+          tone="outline"
+        />
+        {form.backupFolder !== null && (
+          <Button label="Don't save a copy" onPress={form.onClearBackupFolder} tone="outline" />
+        )}
+      </View>
     </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
   hint: { fontSize: 13, lineHeight: 18, marginBottom: SPACING.xs },
+  location: { gap: SPACING.xs, marginTop: SPACING.sm },
+  locationTitle: { fontSize: 15, fontWeight: '600' },
 });

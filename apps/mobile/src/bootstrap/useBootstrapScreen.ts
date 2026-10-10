@@ -7,7 +7,12 @@ import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstr
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
+import { exportLocalWorkspace } from '@repo/data/workspace/workspaceTransfer';
+import { isErr } from '@repo/domain/primitives/result';
+import type { Platform } from '@repo/platform/platform';
+import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { useState } from 'react';
+import { Alert } from 'react-native';
 import type { LocalBootstrapProgress } from '@/root/useLocalAppRoot';
 
 export type BootstrapView =
@@ -25,7 +30,7 @@ export type UseBootstrapScreenResult = {
   readonly onCloseSheets: () => void;
   readonly onOpen: (ref: WorkspaceRef) => void;
   readonly onUnlock: (ref: WorkspaceRef, secret: string) => void;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput) => void;
+  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, backupFolder: string | null) => void;
   /** An imported workspace is opened like any remembered one — straight to its passphrase prompt. */
   readonly onImported: (ref: WorkspaceRef) => void;
   readonly onChooseAnother: () => void;
@@ -68,9 +73,39 @@ export function viewForState(
   }
 }
 
+/** Saves the copy the user asked for in the create form. The workspace is already created and
+ * open by then, so a failure is reported but never undoes the creation. */
+async function saveCreationCopy(platform: Platform, ref: WorkspaceRef, folder: string): Promise<void> {
+  if (ref.mode !== 'local') {
+    return;
+  }
+  try {
+    const exported = await exportLocalWorkspace({
+      fileSystem: platform.fileSystem as FileSystemService,
+      clock: platform.clock,
+      databasePath: ref.path,
+      targetDirectory: folder,
+    });
+    if (isErr(exported)) {
+      Alert.alert(
+        'Workspace created',
+        `It could not be copied to the folder you picked. ${describeBootstrapError(exported.error)} You can retry from Settings → Data.`,
+      );
+      return;
+    }
+    Alert.alert('Copy saved', `“${exported.value.directory.split('/').pop()}” was saved in the folder you picked.`);
+  } catch {
+    Alert.alert(
+      'Workspace created',
+      'It could not be copied to the folder you picked. You can retry from Settings → Data.',
+    );
+  }
+}
+
 export function useBootstrapScreen(
   bootstrap: UseWorkspaceBootstrapResult,
   progress: LocalBootstrapProgress,
+  platform: Platform,
 ): UseBootstrapScreenResult {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -97,9 +132,14 @@ export function useBootstrapScreen(
     onCloseSheets,
     onOpen: (ref) => run(ref, () => bootstrap.open(ref)),
     onUnlock: (ref, secret) => run(ref, () => bootstrap.unlock(ref, secret)),
-    onCreate: (ref, input) => {
+    onCreate: (ref, input, backupFolder) => {
       onCloseSheets();
-      run(ref, () => bootstrap.create(ref, input));
+      run(ref, async () => {
+        await bootstrap.create(ref, input);
+        if (backupFolder !== null) {
+          await saveCreationCopy(platform, ref, backupFolder);
+        }
+      });
     },
     onImported: (ref) => {
       onCloseSheets();

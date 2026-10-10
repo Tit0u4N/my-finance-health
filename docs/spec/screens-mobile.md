@@ -79,7 +79,7 @@ sharing with desktop's DOM ones; English copy, like desktop's bootstrap — no i
 | View | Purpose | Notes |
 |---|---|---|
 | Workspace list | Recent sandbox workspaces, *Create a workspace*, *Import a workspace* | `needs-designation` |
-| Create sheet | Name, base currency, passphrase ×2 (min 8, `@repo/app-core/bootstrap/newPassphrase`) | Path chosen by the core in the sandbox — no save dialog |
+| Create sheet | Name, base currency, passphrase ×2 (min 8, `@repo/app-core/bootstrap/newPassphrase`) | Workspace lives in the app sandbox (path chosen by the core, stated in the sheet). Optional *Save a copy to…* folder picker (iCloud Drive, On My iPhone…): the copy is written right after creation and an alert names the folder |
 | Import sheet | Pick a folder → list the `.mfhdb` files that have a `.mfhmeta` beside them → copy into the sandbox → straight to unlock | Folder must directly contain the file |
 | Unlock | Passphrase, *Choose another workspace* | `needs-unlock`; no biometric option yet |
 | Progress / error | Spinner labelled by the cosmetic `migrating`/`replaying` side-channel; error copy from the shared `describeBootstrapError`, retry, choose another | |

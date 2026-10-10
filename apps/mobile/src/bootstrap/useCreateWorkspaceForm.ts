@@ -1,6 +1,8 @@
-// ViewModel behind CreateWorkspaceSheet.tsx. A mobile workspace is always created in the app
-// sandbox, at a path the core chooses (`sandboxWorkspacePath`) — there is no save dialog and no
-// location to designate, unlike desktop's create form.
+// ViewModel behind CreateWorkspaceSheet.tsx. A mobile workspace always lives in the app sandbox, at
+// a path the core chooses (`sandboxWorkspacePath`): the OS cannot open a database in place inside
+// iCloud Drive or another provider's folder. The place the user *does* get to designate is where a
+// copy of the workspace is saved right after creation (a folder from the system picker — iCloud
+// Drive, "On My iPhone", …); it is optional and can always be done later from Settings → Data.
 
 import { MIN_PASSPHRASE_LENGTH, validateNewPassphrase } from '@repo/app-core/bootstrap/newPassphrase';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
@@ -17,7 +19,7 @@ const DEFAULT_NAME = 'My Finance Health';
 
 export type UseCreateWorkspaceFormDeps = {
   readonly platform: Platform;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput) => void;
+  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, backupFolder: string | null) => void;
 };
 
 export type UseCreateWorkspaceFormResult = {
@@ -30,6 +32,10 @@ export type UseCreateWorkspaceFormResult = {
   readonly confirmSecret: string;
   readonly onConfirmSecretChange: (secret: string) => void;
   readonly error: string | undefined;
+  /** The folder picked for the post-creation copy; null until the user picks one. */
+  readonly backupFolder: string | null;
+  readonly onChooseBackupFolder: () => Promise<void>;
+  readonly onClearBackupFolder: () => void;
   readonly canSubmit: boolean;
   readonly isSubmitting: boolean;
   readonly onSubmit: () => Promise<void>;
@@ -46,8 +52,20 @@ export function useCreateWorkspaceForm({
   const [confirmSecret, setConfirmSecret] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backupFolder, setBackupFolder] = useState<string | null>(null);
 
   const canSubmit = validateNewPassphrase(secret, confirmSecret) === undefined && !isSubmitting;
+
+  const onChooseBackupFolder = async (): Promise<void> => {
+    try {
+      const folder = await (platform.fileSystem as FileSystemService).pickDirectory();
+      if (folder !== null) {
+        setBackupFolder(folder);
+      }
+    } catch {
+      setError('Could not open the folder picker.');
+    }
+  };
 
   const onSubmit = async (): Promise<void> => {
     const passphraseError = validateNewPassphrase(secret, confirmSecret);
@@ -63,6 +81,7 @@ export function useCreateWorkspaceForm({
       onCreate(
         { mode: 'local', id: path, path, label: workspaceLabelFromPath(path) },
         { timezone, baseCurrency, secret },
+        backupFolder,
       );
     } catch {
       setError('Could not prepare a place for the workspace on this device.');
@@ -81,6 +100,9 @@ export function useCreateWorkspaceForm({
     confirmSecret,
     onConfirmSecretChange: setConfirmSecret,
     error,
+    backupFolder,
+    onChooseBackupFolder,
+    onClearBackupFolder: () => setBackupFolder(null),
     canSubmit,
     isSubmitting,
     onSubmit,

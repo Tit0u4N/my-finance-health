@@ -14,6 +14,7 @@ import { createExpoLocalization } from '@repo/platform-expo/services/localizatio
 import { createExpoRandom } from '@repo/platform-expo/services/random';
 import { createExpoSqlDriver } from '@repo/platform-expo/services/sqlDriver';
 import ky from 'ky';
+import { deriveArgon2id } from './argon2';
 
 export function createMobilePlatform(): Platform {
   return {
@@ -34,6 +35,6 @@ export function createMobilePlatform(): Platform {
     localization: createExpoLocalization(),
     http: { instance: ky.create() },
     fileSystem: createExpoFileSystem(),
-    sqlDriver: createExpoSqlDriver(),
+    sqlDriver: createExpoSqlDriver({ deriveKey: deriveArgon2id }),
   };
 }

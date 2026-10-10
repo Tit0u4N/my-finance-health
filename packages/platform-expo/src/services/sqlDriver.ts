@@ -7,10 +7,10 @@
 // cipher pragma is touched, so SQLCipher 4's defaults apply on both sides. The derived key never
 // leaves this module (start-roadmap.md §9: "unlock the database", not "open it with this key").
 
-import { argon2idAsync } from '@noble/hashes/argon2.js';
 import type { SqlDriver, SqlKeyDerivation, SqlQueryResult } from '@repo/platform/services/sqlDriver';
 import { File, Paths } from 'expo-file-system';
 import { openDatabaseAsync, type SQLiteBindValue, type SQLiteDatabase } from 'expo-sqlite';
+import { type DeriveKey, deriveInScript } from './argon2Script';
 import { decodeBase64, encodeBase64, toHex } from './base64';
 
 const KEY_LENGTH = 32;
@@ -65,7 +65,13 @@ function locateDatabase(databasePath: string): { readonly directory: string; rea
   return { directory: decodeURIComponent(directoryUri.replace(/^file:\/\//, '')), name: file.name };
 }
 
-export function createExpoSqlDriver(): SqlDriver {
+export type ExpoSqlDriverOptions = {
+  /** Replaces the Argon2id engine — same bytes out. The app supplies a native one (it cannot live
+   * in this package: native Argon2 libraries are React Native modules). */
+  readonly deriveKey?: DeriveKey;
+};
+
+export function createExpoSqlDriver({ deriveKey = deriveInScript }: ExpoSqlDriverOptions = {}): SqlDriver {
   let database: SQLiteDatabase | null = null;
 
   async function closeCurrent(): Promise<void> {
@@ -82,13 +88,7 @@ export function createExpoSqlDriver(): SqlDriver {
   }
 
   async function deriveKeyHex(secret: string, derivation: SqlKeyDerivation): Promise<string> {
-    const key = await argon2idAsync(secret, decodeBase64(derivation.salt), {
-      m: derivation.memoryKiB,
-      t: derivation.iterations,
-      p: derivation.parallelism,
-      dkLen: KEY_LENGTH,
-    });
-    return toHex(key);
+    return toHex(await deriveKey(secret, decodeBase64(derivation.salt), derivation, KEY_LENGTH));
   }
 
   return {

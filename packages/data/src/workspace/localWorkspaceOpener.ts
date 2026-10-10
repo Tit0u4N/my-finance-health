@@ -30,7 +30,7 @@ import type { SqlDriver } from '@repo/platform/services/sqlDriver';
 import type { PersistenceGateway } from '../gateway/gateway';
 import { createLocalGateway } from '../gateway/localGateway';
 import { decodeBase64, encodeBase64 } from '../local/crypto/base64';
-import { deriveJournalKey } from '../local/crypto/keys';
+import { deriveJournalKey, type KdfSpec } from '../local/crypto/keys';
 import { getOrCreateDeviceId } from '../local/deviceId';
 import { type KdfCostParams, openOperationsJournal } from '../local/journal/operationsJournal';
 import {
@@ -70,6 +70,9 @@ export type CreateLocalWorkspaceOpenerDeps = {
   readonly clock: Clock;
   readonly random: RandomService;
   readonly lockStalenessMs?: number;
+  /** Overrides how the journal key is derived — same bytes, different engine. A phone supplies its
+   * native Argon2 here, since the default pure-JS one is far too slow on it. */
+  readonly deriveJournalKey?: (secret: string, spec: KdfSpec) => Promise<Uint8Array>;
   /** Cosmetic progress only — not part of the WorkspaceOpener port or BootstrapState, since a
    * single `unlock()`/`create()` call cannot report more than the one step it eventually resolves
    * to. The app may use this to label a spinner while the promise is in flight. */
@@ -94,6 +97,7 @@ type UnlockedContext = {
 export function createLocalWorkspaceOpener(deps: CreateLocalWorkspaceOpenerDeps): WorkspaceOpener {
   const { fileSystem, sqlDriver, keyValueStore, clock, random } = deps;
   const lockStalenessMs = deps.lockStalenessMs ?? DEFAULT_LOCK_STALENESS_MS;
+  const deriveKey = deps.deriveJournalKey ?? deriveJournalKey;
 
   function lockDepsFor(paths: WorkspacePaths, deviceId: string) {
     return { fileSystem, clock, random, lockPath: paths.lock, deviceId };
@@ -156,7 +160,7 @@ export function createLocalWorkspaceOpener(deps: CreateLocalWorkspaceOpenerDeps)
 
     let journalKey: Uint8Array;
     try {
-      journalKey = await deriveJournalKey(secret, { salt: journalSaltBytes, ...kdf });
+      journalKey = await deriveKey(secret, { salt: journalSaltBytes, ...kdf });
       await sqlDriver.unlock(paths.database, secret, { salt: dbSalt, ...kdf });
     } catch (error) {
       return failAfterLock(validationError(`local workspace: failed to unlock (${String(error)})`));
