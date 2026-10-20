@@ -323,7 +323,7 @@ The recent-workspaces list falls under the key-value storage contract; the API k
 
 Three technical consequences to handle explicitly:
 
-**Mobile cannot open a file in place.** Mobile systems sandbox storage: a file picked from the document manager is provided as a copy, and the embedded SQLite engine works in the app-reserved directory. The desktop notion of location designation is therefore not transposable there. The retained mobile behaviour is import of the file into the app workspace on creation or resume, and explicit export when the user wants to retrieve their file. The platform contract exposes this difference as a capability, not as a special case coded in the core.
+**Mobile cannot open a file in place.** Mobile systems sandbox storage: a file picked from the document manager is provided as a copy, and the embedded SQLite engine works in the app-reserved directory. The desktop notion of location designation is therefore not transposable there. The retained mobile behaviour is import of the file into the app workspace on creation or resume, and explicit export when the user wants to retrieve their file — plus, where the system offers one, creation directly inside the app's own synced folder (iOS iCloud Drive container, see "Workspace in a synced folder" → "Mobile case"). The platform contract exposes this difference as a capability, not as a special case coded in the core.
 
 **The encryption key becomes file-specific, not device-specific.** A portable workspace encrypted by a key kept in the local keyring is no longer openable elsewhere. Two consistent policies exist, and the choice must be explicit: either the key stays tied to the device and the file is unreadable elsewhere, or it is derived from a user-supplied secret at opening and the file stays portable at the cost of an unlock. The second policy is the only one compatible with truly nomadic file usage. Contract and core are identical in both cases; only the policy changes.
 
@@ -413,7 +413,7 @@ Two additional safety mechanisms: a file hash captured at opening and checked pe
 
 #### Mobile case
 
-None of the above applies to mobile, where storage sandboxing forces the database to live in the app-reserved directory. Sharing goes through explicit import and export. The journal exists nevertheless on this platform, for reconstruction and future merge.
+Mobile cannot open a file in place in a folder the user picks, so by default the database lives in the app-reserved directory and sharing goes through explicit import and export. One exception: a folder the **system itself** syncs and hands to the app — iCloud Drive's app container on iOS — is a real directory the engine can open in place. The platform contract exposes it as `FileSystemService.syncedDirectory()` (null where none exists, e.g. Android), and a workspace created there falls under every safeguard of this section, exactly as a desktop workspace in a synced folder does (`open-questions.md` #25). The journal exists on mobile in both cases, for reconstruction and future merge.
 
 Security point to assume explicitly for online mode: on web, there is no system vault. An API key there is exposed to the browser context, regardless of storage method. The web platform's secrets contract declares this capability as absent, and the core applies a degraded policy for this target accordingly: the key is only kept for the session, never persisted. This behaviour follows from the capability declaration; it is not hardcoded for web.
 

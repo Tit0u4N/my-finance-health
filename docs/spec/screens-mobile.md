@@ -78,8 +78,8 @@ sharing with desktop's DOM ones; English copy, like desktop's bootstrap — no i
 
 | View | Purpose | Notes |
 |---|---|---|
-| Workspace list | Recent sandbox workspaces, *Create a workspace*, *Import a workspace* | `needs-designation` |
-| Create sheet | Name, base currency, passphrase ×2 (min 8, `@repo/app-core/bootstrap/newPassphrase`) | Workspace lives in the app sandbox (path chosen by the core, stated in the sheet). Optional *Save a copy to…* folder picker (iCloud Drive, On My iPhone…): the copy is written right after creation and an alert names the folder |
+| Workspace list | Recent workspaces, then an *In iCloud Drive* section listing the workspaces found by scanning the synced folder (`useSyncedWorkspaces` → `findWorkspaceFolders`) that are not already recent — including those created on another device. *Create a workspace*, *Import a workspace* | `needs-designation`; the iCloud section is absent while the folder is unavailable |
+| Create sheet | Name, *Location* (*iCloud Drive* / *This device*, shown only when `syncedDirectory()` is non-null; iCloud preselected), base currency, passphrase ×2 (min 8, `@repo/app-core/bootstrap/newPassphrase`) | Each workspace gets its own folder named after it (`newWorkspacePath`): `iCloud Drive › my finance health › <name>/` or `On My iPhone › my finance health › MyFinanceHealth/workspaces/<name>/`. For a device workspace only, optional *Save a copy to…* folder picker: the copy is written right after creation and an alert names the folder |
 | Import sheet | Pick a folder → list the `.mfhdb` files that have a `.mfhmeta` beside them → copy into the sandbox → straight to unlock | Folder must directly contain the file |
 | Unlock | Passphrase, *Choose another workspace* | `needs-unlock`; no biometric option yet |
 | Progress / error | Spinner labelled by the cosmetic `migrating`/`replaying` side-channel; error copy from the shared `describeBootstrapError`, retry, choose another | |

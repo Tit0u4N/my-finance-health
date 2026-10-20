@@ -4,10 +4,14 @@
 // (principle 4: adapters are silent).
 //
 // The core does plain `/` string arithmetic on paths (dirname, basename, join), so every path this
-// adapter hands out must survive that. Three kinds exist:
+// adapter hands out must survive that. Four kinds exist:
 //   - sandbox paths, relative to the app's Documents directory — "MyFinanceHealth/workspaces/…".
 //     Relative on purpose: the iOS container's absolute path changes across app updates and
 //     reinstalls, so an absolute path remembered in the recent-workspaces list would go stale.
+//   - `cloud:/…` paths, inside the system-synced app folder (iCloud Drive's, see
+//     cloudContainer.ts). Plain files the app may open in place — SQLite included — resolved
+//     against the folder's current location at every call. Reads first make sure the file is on
+//     the device: iCloud may have evicted it, or another device may have written a newer version.
 //   - `external:<n>/…` paths, rooted at a directory the user picked. A picked Android directory
 //     is a SAF `content://` URI whose children cannot be built by appending "/name", and an iOS
 //     one only grants access through the object the picker returned — so the picked Directory is
@@ -16,6 +20,13 @@
 
 import type { FileInfo, FileSystemService } from '@repo/platform/services/fileSystem';
 import { Directory, File, FileMode, Paths } from 'expo-file-system';
+import {
+  CLOUD_ROOT,
+  type CloudContainer,
+  cloudRelativePath,
+  isCloudPath,
+  nameBehindPlaceholder,
+} from './cloudContainer';
 
 const APP_DIRECTORY = 'MyFinanceHealth';
 const EXTERNAL_PREFIX = 'external:';
@@ -28,9 +39,9 @@ function nameOf(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1);
 }
 
-function attempt<T>(read: () => T | null): T | null {
+async function attempt<T>(read: () => Promise<T | null>): Promise<T | null> {
   try {
-    return read();
+    return await read();
   } catch {
     return null;
   }
@@ -45,7 +56,13 @@ function parentOf(path: string): string {
   return path.slice(0, path.lastIndexOf('/'));
 }
 
-export function createExpoFileSystem(): FileSystemService {
+export type ExpoFileSystemOptions = {
+  /** The synced app folder's native primitives. Absent, `cloud:` paths do not exist and
+   * `syncedDirectory()` is null — Android, or an iOS build without the iCloud module. */
+  readonly cloud?: CloudContainer;
+};
+
+export function createExpoFileSystem({ cloud }: ExpoFileSystemOptions = {}): FileSystemService {
   const externalRoots = new Map<string, Directory>();
   let externalCounter = 0;
 
@@ -77,19 +94,39 @@ export function createExpoFileSystem(): FileSystemService {
     return current;
   }
 
-  function sandboxFile(path: string): File {
+  async function cloudRoot(): Promise<Directory> {
+    const uri = cloud ? await cloud.documentsDirectory() : null;
+    if (uri === null) {
+      throw new Error('file system: iCloud Drive is not available on this device right now');
+    }
+    return new Directory(uri);
+  }
+
+  /** The File object behind a sandbox, cloud or URI path — never an external one. */
+  async function plainFile(path: string): Promise<File> {
+    if (isCloudPath(path)) {
+      return new File(await cloudRoot(), cloudRelativePath(path));
+    }
     return URI_SCHEME.test(path) ? new File(path) : new File(Paths.document, path);
   }
 
-  function sandboxDirectory(path: string): Directory {
+  async function plainDirectory(path: string): Promise<Directory> {
+    if (isCloudPath(path)) {
+      const root = await cloudRoot();
+      const relative = cloudRelativePath(path);
+      return relative === '' ? root : new Directory(root, relative);
+    }
     return URI_SCHEME.test(path) ? new Directory(path) : new Directory(Paths.document, path);
   }
 
   /** The existing file at `path`, or null — never creates anything. */
-  function findFile(path: string): File | null {
+  async function findFile(path: string): Promise<File | null> {
     const external = parseExternal(path);
     if (!external) {
-      const file = sandboxFile(path);
+      const file = await plainFile(path);
+      if (isCloudPath(path)) {
+        await cloud?.ensureDownloaded(file.uri);
+      }
       return file.exists ? file : null;
     }
     const parent = walkDirectories(external.root, external.segments.slice(0, -1), path);
@@ -97,8 +134,8 @@ export function createExpoFileSystem(): FileSystemService {
     return entry instanceof File ? entry : null;
   }
 
-  function requireFile(path: string): File {
-    const file = findFile(path);
+  async function requireFile(path: string): Promise<File> {
+    const file = await findFile(path);
     if (!file) {
       throw new Error(`file system: no file at "${path}"`);
     }
@@ -106,10 +143,10 @@ export function createExpoFileSystem(): FileSystemService {
   }
 
   /** A fresh, empty file at `path` (replacing any existing one) with its parent folders created. */
-  function createFreshFile(path: string): File {
+  async function createFreshFile(path: string): Promise<File> {
     const external = parseExternal(path);
     if (!external) {
-      const file = sandboxFile(path);
+      const file = await plainFile(path);
       file.create({ intermediates: true, overwrite: true });
       return file;
     }
@@ -118,9 +155,9 @@ export function createExpoFileSystem(): FileSystemService {
     return parent.createFile(nameOf(path), OPAQUE_MIME_TYPE);
   }
 
-  function directoryAt(path: string): Directory {
+  function directoryAt(path: string): Promise<Directory> {
     const external = parseExternal(path);
-    return external ? walkDirectories(external.root, external.segments, path) : sandboxDirectory(path);
+    return external ? Promise.resolve(walkDirectories(external.root, external.segments, path)) : plainDirectory(path);
   }
 
   function isExternal(path: string): boolean {
@@ -128,16 +165,16 @@ export function createExpoFileSystem(): FileSystemService {
   }
 
   return {
-    readFile: (path) => run(() => requireFile(path).bytes()),
+    readFile: (path) => run(async () => (await requireFile(path)).bytes()),
 
     writeFile: (path, data) =>
-      run(() => {
-        createFreshFile(path).write(data);
+      run(async () => {
+        (await createFreshFile(path)).write(data);
       }),
 
     appendFile: (path, data) =>
-      run(() => {
-        const file = findFile(path) ?? createFreshFile(path);
+      run(async () => {
+        const file = (await findFile(path)) ?? (await createFreshFile(path));
         const handle = file.open(FileMode.Append);
         try {
           handle.writeBytes(data);
@@ -148,19 +185,19 @@ export function createExpoFileSystem(): FileSystemService {
 
     truncateFile: (path, length) =>
       run(async () => {
-        const kept = (await requireFile(path).bytes()).slice(0, length);
-        createFreshFile(path).write(kept);
+        const kept = (await (await requireFile(path)).bytes()).slice(0, length);
+        (await createFreshFile(path)).write(kept);
       }),
 
     deleteFile: (path) =>
-      run(() => {
-        findFile(path)?.delete();
+      run(async () => {
+        (await findFile(path))?.delete();
       }),
 
     fileInfo: (path) =>
-      run((): FileInfo | null => {
+      run(async (): Promise<FileInfo | null> => {
         // A path whose parent folder is gone is "no such file", not an error — callers probe with this.
-        const file = attempt(() => findFile(path));
+        const file = await attempt(() => findFile(path));
         return file ? { sizeBytes: file.size, modifiedAt: new Date(file.modificationTime ?? 0).toISOString() } : null;
       }),
 
@@ -168,23 +205,23 @@ export function createExpoFileSystem(): FileSystemService {
       run(async () => {
         if (isExternal(from) || isExternal(to)) {
           // A picked folder can't be moved within natively — copy, then drop the source.
-          createFreshFile(to).write(await requireFile(from).bytes());
-          requireFile(from).delete();
+          (await createFreshFile(to)).write(await (await requireFile(from)).bytes());
+          (await requireFile(from)).delete();
           return;
         }
-        const source = requireFile(from);
+        const source = await requireFile(from);
         const parent = parentOf(to);
         if (parent !== '' && !URI_SCHEME.test(to)) {
-          sandboxDirectory(parent).create({ intermediates: true, idempotent: true });
+          (await plainDirectory(parent)).create({ intermediates: true, idempotent: true });
         }
-        source.moveSync(sandboxFile(to), { overwrite: true });
+        source.moveSync(await plainFile(to), { overwrite: true });
       }),
 
     createDirectory: (path) =>
-      run(() => {
+      run(async () => {
         const external = parseExternal(path);
         if (!external) {
-          sandboxDirectory(path).create({ intermediates: true, idempotent: true });
+          (await plainDirectory(path)).create({ intermediates: true, idempotent: true });
           return;
         }
         const parent = walkDirectories(external.root, external.segments.slice(0, -1), path);
@@ -194,19 +231,32 @@ export function createExpoFileSystem(): FileSystemService {
       }),
 
     listDirectory: (path) =>
-      run(() =>
-        directoryAt(path)
-          .list()
-          .map((entry) => `${path}/${entry.name}`),
-      ),
+      run(async () => {
+        const names = (await directoryAt(path)).list().map((entry) => entry.name);
+        // An evicted iCloud file is listed as its `.<name>.icloud` placeholder; the core only ever
+        // knows it by its real name (reading it downloads it, see findFile).
+        const visible = isCloudPath(path) ? [...new Set(names.map(nameBehindPlaceholder))] : names;
+        return visible.map((name) => `${path}/${name}`);
+      }),
 
     resolvePath: (...segments) => segments.join('/'),
 
     appDataDirectory: () =>
-      run(() => {
-        sandboxDirectory(APP_DIRECTORY).create({ intermediates: true, idempotent: true });
+      run(async () => {
+        (await plainDirectory(APP_DIRECTORY)).create({ intermediates: true, idempotent: true });
         return APP_DIRECTORY;
       }),
+
+    syncedDirectory: async () => {
+      if (!cloud) {
+        return null;
+      }
+      try {
+        return (await cloud.documentsDirectory()) === null ? null : CLOUD_ROOT;
+      } catch {
+        return null;
+      }
+    },
 
     pickFile: async () => {
       const picked = await File.pickFileAsync({ multipleFiles: false });
@@ -227,8 +277,8 @@ export function createExpoFileSystem(): FileSystemService {
       return token;
     },
 
-    // Mobile never designates a not-yet-existing file: a workspace is created in the sandbox at a
-    // path the core chooses (workspaceTransfer.ts's `sandboxWorkspacePath`).
+    // Mobile never designates a not-yet-existing file: a workspace is created at a path the core
+    // chooses (workspaceTransfer.ts's `newWorkspacePath`), in the sandbox or the synced folder.
     pickSaveLocation: () => Promise.resolve(null),
   };
 }

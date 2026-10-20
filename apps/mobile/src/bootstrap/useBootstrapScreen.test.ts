@@ -2,7 +2,7 @@ import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import { notFoundError } from '@repo/domain/primitives/errors';
 import type { RepositorySet } from '@repo/domain/repositories/repositorySet';
 import { describe, expect, it } from 'vitest';
-import { progressLabel, viewForState } from './useBootstrapScreen';
+import { progressLabel, viewForState, withSyncedWorkspaces } from './useBootstrapScreen';
 
 const ref: WorkspaceRef = { mode: 'local', id: 'w1', path: 'MyFinanceHealth/workspaces/a/Home.mfhdb', label: 'Home' };
 
@@ -11,6 +11,7 @@ describe('viewForState', () => {
     expect(viewForState({ kind: 'needs-designation', recent: [ref] }, null)).toEqual({
       kind: 'picker',
       recent: [ref],
+      synced: [],
     });
   });
 
@@ -38,5 +39,35 @@ describe('progressLabel', () => {
     expect(progressLabel('migrating')).toBe('Applying updates…');
     expect(progressLabel('replaying')).toBe('Restoring recent changes…');
     expect(progressLabel(null)).toBe('Opening…');
+  });
+});
+
+describe('withSyncedWorkspaces', () => {
+  const cloudRef: WorkspaceRef = {
+    mode: 'local',
+    id: 'cloud:/Shared/Shared.mfhdb',
+    path: 'cloud:/Shared/Shared.mfhdb',
+    label: 'Shared',
+  };
+  const recentCloudRef: WorkspaceRef = {
+    ...cloudRef,
+    id: 'cloud:/Home/Home.mfhdb',
+    path: 'cloud:/Home/Home.mfhdb',
+    label: 'Home',
+  };
+
+  it('lists synced workspaces the recent list does not already show', () => {
+    const view = withSyncedWorkspaces({ kind: 'picker', recent: [recentCloudRef], synced: [] }, [
+      cloudRef,
+      recentCloudRef,
+    ]);
+
+    expect(view).toEqual({ kind: 'picker', recent: [recentCloudRef], synced: [cloudRef] });
+  });
+
+  it('leaves every other view untouched', () => {
+    const view = { kind: 'unlock', workspaceRef: ref } as const;
+
+    expect(withSyncedWorkspaces(view, [cloudRef])).toBe(view);
   });
 });

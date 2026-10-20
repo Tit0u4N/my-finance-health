@@ -8,10 +8,11 @@
 // leaves this module (start-roadmap.md §9: "unlock the database", not "open it with this key").
 
 import type { SqlDriver, SqlKeyDerivation, SqlQueryResult } from '@repo/platform/services/sqlDriver';
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import { openDatabaseAsync, type SQLiteBindValue, type SQLiteDatabase } from 'expo-sqlite';
 import { type DeriveKey, deriveInScript } from './argon2Script';
 import { decodeBase64, encodeBase64, toHex } from './base64';
+import { type CloudContainer, cloudRelativePath, isCloudPath } from './cloudContainer';
 
 const KEY_LENGTH = 32;
 const BUSY_TIMEOUT_MS = 5000;
@@ -58,9 +59,23 @@ function fromRow(row: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(row).map(([column, value]) => [column, fromColumnValue(value)]));
 }
 
-/** The plain filesystem directory and file name SQLite needs, from a sandbox-relative path. */
-function locateDatabase(databasePath: string): { readonly directory: string; readonly name: string } {
-  const file = new File(Paths.document, databasePath);
+/** The database's File, from a sandbox-relative or `cloud:` path (fileSystem.ts's path spaces). A
+ * cloud database is downloaded first if iCloud evicted it: SQLite must find real bytes on disk. */
+async function databaseFile(databasePath: string, cloud: CloudContainer | undefined): Promise<File> {
+  if (!isCloudPath(databasePath)) {
+    return new File(Paths.document, databasePath);
+  }
+  const root = cloud ? await cloud.documentsDirectory() : null;
+  if (root === null || !cloud) {
+    throw new Error('iCloud Drive is not available on this device right now');
+  }
+  const file = new File(new Directory(root), cloudRelativePath(databasePath));
+  await cloud.ensureDownloaded(file.uri);
+  return file;
+}
+
+/** The plain filesystem directory and file name SQLite needs. */
+function locateDatabase(file: File): { readonly directory: string; readonly name: string } {
   const directoryUri = file.parentDirectory.uri.replace(/\/$/, '');
   return { directory: decodeURIComponent(directoryUri.replace(/^file:\/\//, '')), name: file.name };
 }
@@ -69,9 +84,11 @@ export type ExpoSqlDriverOptions = {
   /** Replaces the Argon2id engine — same bytes out. The app supplies a native one (it cannot live
    * in this package: native Argon2 libraries are React Native modules). */
   readonly deriveKey?: DeriveKey;
+  /** Same primitives as the file system's, so `cloud:` databases open in place. */
+  readonly cloud?: CloudContainer;
 };
 
-export function createExpoSqlDriver({ deriveKey = deriveInScript }: ExpoSqlDriverOptions = {}): SqlDriver {
+export function createExpoSqlDriver({ deriveKey = deriveInScript, cloud }: ExpoSqlDriverOptions = {}): SqlDriver {
   let database: SQLiteDatabase | null = null;
 
   async function closeCurrent(): Promise<void> {
@@ -95,7 +112,7 @@ export function createExpoSqlDriver({ deriveKey = deriveInScript }: ExpoSqlDrive
     unlock: async (databasePath, secret, derivation) => {
       await closeCurrent();
       const keyHex = await deriveKeyHex(secret, derivation);
-      const { directory, name } = locateDatabase(databasePath);
+      const { directory, name } = locateDatabase(await databaseFile(databasePath, cloud));
       const opened = await openDatabaseAsync(name, undefined, directory);
       try {
         await opened.execAsync(`PRAGMA key = "x'${keyHex}'";`);

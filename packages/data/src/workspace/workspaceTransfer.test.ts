@@ -11,9 +11,10 @@ import { workspacePathsFor } from '../local/workspacePaths';
 import {
   exportLocalWorkspace,
   findImportableWorkspaces,
+  findWorkspaceFolders,
   importLocalWorkspace,
   listWorkspaceFiles,
-  sandboxWorkspacePath,
+  newWorkspacePath,
 } from './workspaceTransfer';
 
 function setup() {
@@ -94,12 +95,11 @@ describe('findImportableWorkspaces', () => {
 
 describe('importLocalWorkspace', () => {
   it('copies the workspace into the sandbox and returns a ref pointing at the copy', async () => {
-    const { platform, fileSystem } = setup();
+    const { fileSystem } = setup();
     await seedWorkspace(fileSystem, '/picked');
 
     const result = await importLocalWorkspace({
       fileSystem,
-      random: platform.random,
       sourceDatabasePath: '/picked/Home.mfhdb',
     });
 
@@ -115,12 +115,11 @@ describe('importLocalWorkspace', () => {
   });
 
   it('renames siblings along with the database when the label has to be sanitized', async () => {
-    const { platform, fileSystem } = setup();
+    const { fileSystem } = setup();
     await seedWorkspace(fileSystem, '/picked', 'My: budget?');
 
     const result = await importLocalWorkspace({
       fileSystem,
-      random: platform.random,
       sourceDatabasePath: '/picked/My: budget?.mfhdb',
     });
 
@@ -138,12 +137,11 @@ describe('importLocalWorkspace', () => {
   });
 
   it('refuses a database whose descriptor is missing', async () => {
-    const { platform, fileSystem } = setup();
+    const { fileSystem } = setup();
     await fileSystem.writeFile('/picked/Home.mfhdb', new Uint8Array([1]));
 
     const result = await importLocalWorkspace({
       fileSystem,
-      random: platform.random,
       sourceDatabasePath: '/picked/Home.mfhdb',
     });
 
@@ -151,11 +149,10 @@ describe('importLocalWorkspace', () => {
   });
 
   it('reports not-found for a database that does not exist', async () => {
-    const { platform, fileSystem } = setup();
+    const { fileSystem } = setup();
 
     const result = await importLocalWorkspace({
       fileSystem,
-      random: platform.random,
       sourceDatabasePath: '/picked/Nope.mfhdb',
     });
 
@@ -163,20 +160,56 @@ describe('importLocalWorkspace', () => {
   });
 });
 
-describe('sandboxWorkspacePath', () => {
-  it('puts each workspace in its own folder under the app data directory', async () => {
-    const { platform, fileSystem } = setup();
+describe('newWorkspacePath', () => {
+  it('gives each workspace a folder named like it, holding a database named like it', async () => {
+    const { fileSystem } = setup();
 
-    const first = await sandboxWorkspacePath(fileSystem, platform.random, 'Home');
-    const second = await sandboxWorkspacePath(fileSystem, platform.random, 'Home');
+    expect(await newWorkspacePath(fileSystem, 'cloud:', 'Home')).toBe('cloud:/Home/Home.mfhdb');
+  });
 
-    expect(first).not.toBe(second);
-    expect(first).toMatch(/^\/app-data\/workspaces\/[^/]+\/Home\.mfhdb$/);
+  it('suffixes the name when that folder already holds a workspace', async () => {
+    const { fileSystem } = setup();
+    await seedWorkspace(fileSystem, '/root/Home');
+    await seedWorkspace(fileSystem, '/root/Home 2', 'Home 2');
+
+    expect(await newWorkspacePath(fileSystem, '/root', 'Home')).toBe('/root/Home 3/Home 3.mfhdb');
   });
 
   it('falls back to a default name when the label has no usable characters', async () => {
-    const { platform, fileSystem } = setup();
+    const { fileSystem } = setup();
 
-    expect(await sandboxWorkspacePath(fileSystem, platform.random, '???')).toMatch(/\/workspace\.mfhdb$/);
+    expect(await newWorkspacePath(fileSystem, '/root', '???')).toBe('/root/workspace/workspace.mfhdb');
+  });
+});
+
+describe('findWorkspaceFolders', () => {
+  it('finds the workspaces one folder below the root, whichever device created them', async () => {
+    const { fileSystem } = setup();
+    await seedWorkspace(fileSystem, 'cloud:/Home');
+    await seedWorkspace(fileSystem, 'cloud:/Home 2026-10-07 1200');
+    await fileSystem.writeFile('cloud:/Loose/Orphan.mfhdb', new Uint8Array([9]));
+    await fileSystem.writeFile('cloud:/notes.txt', new Uint8Array([1]));
+
+    expect(await findWorkspaceFolders(fileSystem, 'cloud:')).toEqual([
+      'cloud:/Home 2026-10-07 1200/Home.mfhdb',
+      'cloud:/Home/Home.mfhdb',
+    ]);
+  });
+
+  it('skips entries it cannot list instead of failing', async () => {
+    const { fileSystem } = setup();
+    await seedWorkspace(fileSystem, '/root/Home');
+    const listDirectory = fileSystem.listDirectory;
+    const flaky = {
+      ...fileSystem,
+      listDirectory: (path: string) =>
+        path === '/root'
+          ? Promise.resolve(['/root/Broken', '/root/Home'])
+          : path === '/root/Broken'
+            ? Promise.reject(new Error('evicted'))
+            : listDirectory(path),
+    };
+
+    expect(await findWorkspaceFolders(flaky, '/root')).toEqual(['/root/Home/Home.mfhdb']);
   });
 });

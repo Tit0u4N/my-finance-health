@@ -290,6 +290,62 @@ describe('picked folders', () => {
   });
 });
 
+describe('cloud: paths (the synced app folder)', () => {
+  const ICLOUD = 'file:///icloud/Documents';
+
+  function cloudFileSystem(documentsDirectory: string | null = ICLOUD) {
+    const ensureDownloaded = vi.fn((_uri: string) => Promise.resolve());
+    const fs = createExpoFileSystem({
+      cloud: { documentsDirectory: () => Promise.resolve(documentsDirectory), ensureDownloaded },
+    });
+    return { fs, ensureDownloaded };
+  }
+
+  it('offers no synced directory without the native container, or while it is unavailable', async () => {
+    expect(await createExpoFileSystem().syncedDirectory()).toBeNull();
+    expect(await cloudFileSystem(null).fs.syncedDirectory()).toBeNull();
+  });
+
+  it('names the synced directory "cloud:", never its absolute location', async () => {
+    expect(await cloudFileSystem().fs.syncedDirectory()).toBe('cloud:');
+  });
+
+  it('writes to the real file inside the container and reads it back after a download check', async () => {
+    const { fs, ensureDownloaded } = cloudFileSystem();
+
+    await fs.writeFile('cloud:/Home/Home.mfhmeta', bytes(4, 2));
+
+    expect(store.files.get(`${ICLOUD}/Home/Home.mfhmeta`)).toEqual(bytes(4, 2));
+    expect(await fs.readFile('cloud:/Home/Home.mfhmeta')).toEqual(bytes(4, 2));
+    expect(ensureDownloaded).toHaveBeenCalledWith(`${ICLOUD}/Home/Home.mfhmeta`);
+  });
+
+  it('lists an evicted file under its real name, once, instead of its .icloud placeholder', async () => {
+    const { fs } = cloudFileSystem();
+    store.files.set(`${ICLOUD}/Home/Home.mfhdb`, bytes(1));
+    store.files.set(`${ICLOUD}/Home/.Home.mfhmeta.icloud`, bytes(0));
+
+    expect([...(await fs.listDirectory('cloud:/Home'))].sort()).toEqual([
+      'cloud:/Home/Home.mfhdb',
+      'cloud:/Home/Home.mfhmeta',
+    ]);
+  });
+
+  it('lists the folder root itself', async () => {
+    const { fs } = cloudFileSystem();
+    store.files.set(`${ICLOUD}/notes.txt`, bytes(1));
+
+    expect(await fs.listDirectory('cloud:')).toEqual(['cloud:/notes.txt']);
+  });
+
+  it('rejects cloud: paths while the folder is unavailable, and probes report them absent', async () => {
+    const { fs } = cloudFileSystem(null);
+
+    await expect(fs.readFile('cloud:/Home/Home.mfhdb')).rejects.toThrow(/iCloud/);
+    expect(await fs.fileInfo('cloud:/Home/Home.mfhdb')).toBeNull();
+  });
+});
+
 describe('pickFile', () => {
   it('resolves the picked file URI, or null when cancelled', async () => {
     const fs = createExpoFileSystem();

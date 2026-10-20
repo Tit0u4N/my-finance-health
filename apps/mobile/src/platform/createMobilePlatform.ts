@@ -1,7 +1,8 @@
 // apps/mobile — composes the real Expo adapters into one `Platform` (start-roadmap.md §6: only
 // apps wire concrete adapters). Capabilities are declared honestly, the way desktop's are:
-//   - the file system is the app sandbox plus folders the user picks for export/import, so
-//     `canWriteFile`/`canPickFile` are true but a remembered location is not resumable
+//   - the file system is the app sandbox, the iCloud Drive app folder when available
+//     (`syncedDirectory()`, iCloudContainer.ts), plus folders the user picks for export/import, so
+//     `canWriteFile`/`canPickFile` are true but a remembered *picked* location is not resumable
 //     (`canResumeLocation`: a picked iOS folder only stays accessible for the session);
 //   - no secret vault and no biometric unlock yet — both stay off until their adapters exist
 //     (expo-secure-store / expo-local-authentication, start-roadmap.md §8).
@@ -15,8 +16,10 @@ import { createExpoRandom } from '@repo/platform-expo/services/random';
 import { createExpoSqlDriver } from '@repo/platform-expo/services/sqlDriver';
 import ky from 'ky';
 import { deriveArgon2id } from './argon2';
+import { createICloudContainer } from './iCloudContainer';
 
 export function createMobilePlatform(): Platform {
+  const cloud = createICloudContainer();
   return {
     capabilities: {
       canWriteFile: true,
@@ -34,7 +37,7 @@ export function createMobilePlatform(): Platform {
     random: createExpoRandom(),
     localization: createExpoLocalization(),
     http: { instance: ky.create() },
-    fileSystem: createExpoFileSystem(),
-    sqlDriver: createExpoSqlDriver({ deriveKey: deriveArgon2id }),
+    fileSystem: createExpoFileSystem(cloud ? { cloud } : {}),
+    sqlDriver: createExpoSqlDriver({ deriveKey: deriveArgon2id, ...(cloud ? { cloud } : {}) }),
   };
 }

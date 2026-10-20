@@ -62,11 +62,7 @@ export function useImportWorkspace({ platform, onImported }: UseImportWorkspaceD
     setMessage(undefined);
     setIsBusy(true);
     try {
-      const result = await importLocalWorkspace({
-        fileSystem,
-        random: platform.random,
-        sourceDatabasePath: candidate.path,
-      });
+      const result = await importLocalWorkspace({ fileSystem, sourceDatabasePath: candidate.path });
       if (isErr(result)) {
         setMessage(describeBootstrapError(result.error));
         return;

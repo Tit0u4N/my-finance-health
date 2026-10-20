@@ -40,6 +40,13 @@ export type FileSystemService = {
   resolvePath(...segments: readonly string[]): string;
   /** A directory the app owns, outside any synced folder — start-roadmap.md §9's rolling-backup location. */
   appDataDirectory(): Promise<string>;
+  /**
+   * A directory the system itself keeps in sync across the user's devices and that the app may
+   * open files in place inside (iCloud Drive's app folder on iOS), or null when the host has none
+   * or it is unavailable right now (no account signed in, entitlement missing, sync turned off).
+   * Workspaces created there fall under start-roadmap.md §9's synced-folder safeguards.
+   */
+  syncedDirectory(): Promise<string | null>;
   /** Opens the native file picker; resolves the chosen path, or null if the user cancelled. */
   pickFile(options?: FilePickerOptions): Promise<string | null>;
   /** Opens the native folder picker; resolves the chosen directory, or null if the user cancelled. Mobile's export/import target (start-roadmap.md §9, "Mobile case"). */

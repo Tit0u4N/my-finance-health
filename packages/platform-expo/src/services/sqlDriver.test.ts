@@ -27,11 +27,19 @@ vi.mock('expo-sqlite', () => ({
 
 vi.mock('expo-file-system', () => ({
   Paths: { document: 'file:///documents/' },
+  Directory: class {
+    readonly uri: string;
+    constructor(uri: string) {
+      this.uri = uri.endsWith('/') ? uri : `${uri}/`;
+    }
+  },
   File: class {
+    readonly uri: string;
     readonly name: string;
     readonly parentDirectory: { uri: string };
-    constructor(base: string, path: string) {
-      const full = `${base}${path}`;
+    constructor(base: string | { uri: string }, path: string) {
+      const full = `${typeof base === 'string' ? base : base.uri}${path}`;
+      this.uri = full;
       this.name = full.slice(full.lastIndexOf('/') + 1);
       this.parentDirectory = { uri: `${full.slice(0, full.lastIndexOf('/'))}/` };
     }
@@ -93,6 +101,27 @@ describe('createExpoSqlDriver.unlock', () => {
       'PRAGMA journal_mode = DELETE; PRAGMA busy_timeout = 5000;',
       'PRAGMA cipher_integrity_check',
     ]);
+  });
+
+  it('opens a cloud: database in place inside the synced folder, after making sure it is downloaded', async () => {
+    const ensureDownloaded = vi.fn().mockResolvedValue(undefined);
+    const driver = createExpoSqlDriver({
+      cloud: { documentsDirectory: () => Promise.resolve('file:///icloud/Documents'), ensureDownloaded },
+    });
+
+    await driver.unlock('cloud:/Home/Home.mfhdb', 'password', DERIVATION);
+
+    expect(ensureDownloaded).toHaveBeenCalledWith('file:///icloud/Documents/Home/Home.mfhdb');
+    expect(openDatabaseAsync).toHaveBeenCalledWith('Home.mfhdb', undefined, '/icloud/Documents/Home');
+  });
+
+  it('refuses a cloud: database when the synced folder is unavailable', async () => {
+    const driver = createExpoSqlDriver({
+      cloud: { documentsDirectory: () => Promise.resolve(null), ensureDownloaded: vi.fn() },
+    });
+
+    await expect(driver.unlock('cloud:/Home/Home.mfhdb', 'password', DERIVATION)).rejects.toThrow(/iCloud/);
+    expect(openDatabaseAsync).not.toHaveBeenCalled();
   });
 
   it('closes the connection and reports a wrong passphrase when the probe read fails', async () => {

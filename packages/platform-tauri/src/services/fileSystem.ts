@@ -96,6 +96,10 @@ export function createTauriFileSystem(): FileSystemService {
 
     appDataDirectory: async () => normalize(await appDataDir()),
 
+    // Desktop designates any location, synced or not, through the save dialog — there is no
+    // separate app-owned synced folder to offer.
+    syncedDirectory: () => Promise.resolve(null),
+
     pickFile: async (options) => {
       const filters = filtersFor(options?.extensions);
       const selection = await openDialog({ multiple: false, directory: false, ...(filters ? { filters } : {}) });

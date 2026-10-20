@@ -1,9 +1,11 @@
 // @repo/data — level 1.
-// Moving a local workspace in and out of the app (start-roadmap.md §9, "Mobile case"): mobile
-// cannot open a file in place, so the database lives in the app sandbox and the user retrieves or
-// brings back a copy explicitly — to iCloud Drive, another device, desktop. Which files make up a
-// workspace, how the export folder is named and what counts as importable are the core's
-// decisions (principle 4: adapters are silent); the platform only supplies read/write/list.
+// Where mobile workspaces live and how they move (start-roadmap.md §9, "Mobile case"). Mobile
+// cannot open a file in place in a folder the user picks, so a workspace lives either in the app
+// sandbox or in the system-synced app folder (`FileSystemService.syncedDirectory`, iCloud Drive's
+// on iOS), one folder per workspace; copies go out and come back explicitly — to another
+// provider, another device, desktop. Which files make up a workspace, how folders are named and
+// what counts as importable are the core's decisions (principle 4: adapters are silent); the
+// platform only supplies read/write/list.
 //
 // A workspace is the `.mfhdb`, its cleartext `.mfhmeta`, and every journal segment
 // (`<base>.<device>.<index>.mfhj`). The `.mfhlock` is never copied — it describes who is using
@@ -21,7 +23,6 @@ import {
 import { err, ok, type Result } from '@repo/domain/primitives/result';
 import type { Clock } from '@repo/platform/services/clock';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
-import type { RandomService } from '@repo/platform/services/random';
 import { type WorkspacePaths, workspaceLabelFromPath, workspacePathsFor } from '../local/workspacePaths';
 import type { LocalWorkspaceRef } from './workspaceRef';
 
@@ -120,21 +121,57 @@ export async function findImportableWorkspaces(
     .sort();
 }
 
-/** Creates `<root>/workspaces/<uuid>/` and returns the database path to create inside it. */
-export async function sandboxWorkspacePath(
-  fileSystem: FileSystemService,
-  random: RandomService,
-  label: string,
-): Promise<string> {
-  const root = await fileSystem.appDataDirectory();
-  const directory = fileSystem.resolvePath(root, WORKSPACES_DIRECTORY, random.uuid());
+/** Where workspaces kept on this device only live: `<app data>/workspaces`. */
+export async function deviceWorkspacesDirectory(fileSystem: FileSystemService): Promise<string> {
+  return fileSystem.resolvePath(await fileSystem.appDataDirectory(), WORKSPACES_DIRECTORY);
+}
+
+async function isFolderTaken(fileSystem: FileSystemService, directory: string): Promise<boolean> {
+  try {
+    return (await fileSystem.listDirectory(directory)).length > 0;
+  } catch {
+    // The folder does not exist yet.
+    return false;
+  }
+}
+
+/**
+ * Creates `<root>/<label>/` and returns the database path to create inside it,
+ * `<root>/<label>/<label>.mfhdb`. One folder per workspace, named the way the user named it, so a
+ * file browser (the Files app, Finder through iCloud Drive) shows something recognizable — the
+ * vault layout. A folder that already holds files gets the next free " 2", " 3"… suffix.
+ */
+export async function newWorkspacePath(fileSystem: FileSystemService, root: string, label: string): Promise<string> {
+  const base = sanitizeLabel(label);
+  let name = base;
+  for (let attemptIndex = 2; await isFolderTaken(fileSystem, fileSystem.resolvePath(root, name)); attemptIndex += 1) {
+    name = `${base} ${attemptIndex}`;
+  }
+  const directory = fileSystem.resolvePath(root, name);
   await fileSystem.createDirectory(directory);
-  return fileSystem.resolvePath(directory, `${sanitizeLabel(label)}${DATABASE_EXTENSION}`);
+  return fileSystem.resolvePath(directory, `${name}${DATABASE_EXTENSION}`);
+}
+
+/**
+ * Every workspace found one folder below `root` — the layout `newWorkspacePath` and
+ * `exportLocalWorkspace` both produce. This is how a device finds the workspaces another device
+ * created in the synced folder, which its own recent list has never seen. Unreadable entries
+ * (plain files, folders iCloud has not materialized yet) are skipped, never fatal.
+ */
+export async function findWorkspaceFolders(fileSystem: FileSystemService, root: string): Promise<readonly string[]> {
+  const found: string[] = [];
+  for (const entry of await fileSystem.listDirectory(root)) {
+    try {
+      found.push(...(await findImportableWorkspaces(fileSystem, entry)));
+    } catch {
+      // Not a folder, or not readable right now.
+    }
+  }
+  return found.sort();
 }
 
 export type ImportLocalWorkspaceInput = {
   readonly fileSystem: FileSystemService;
-  readonly random: RandomService;
   /** The picked `.mfhdb`; its descriptor and journal segments are read from the same folder. */
   readonly sourceDatabasePath: string;
 };
@@ -148,7 +185,7 @@ export type ImportLocalWorkspaceInput = {
 export async function importLocalWorkspace(
   input: ImportLocalWorkspaceInput,
 ): Promise<Result<LocalWorkspaceRef, DomainError>> {
-  const { fileSystem, random, sourceDatabasePath } = input;
+  const { fileSystem, sourceDatabasePath } = input;
   const source = workspacePathsFor(fileSystem, sourceDatabasePath);
   if (!(await fileSystem.fileInfo(source.database))) {
     return err(notFoundError('LocalWorkspace', sourceDatabasePath));
@@ -157,7 +194,11 @@ export async function importLocalWorkspace(
     return err(integrityError(`workspace import: "${fileNameOf(source.meta)}" must sit next to the database`));
   }
   try {
-    const databasePath = await sandboxWorkspacePath(fileSystem, random, source.baseName);
+    const databasePath = await newWorkspacePath(
+      fileSystem,
+      await deviceWorkspacesDirectory(fileSystem),
+      source.baseName,
+    );
     const destination = workspacePathsFor(fileSystem, databasePath);
     if (await fileSystem.fileInfo(destination.database)) {
       return err(conflictError(`workspace import: a file already exists at "${databasePath}"`));

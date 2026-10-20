@@ -14,10 +14,16 @@ import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import type { LocalBootstrapProgress } from '@/root/useLocalAppRoot';
+import { useSyncedWorkspaces } from './useSyncedWorkspaces';
 
 export type BootstrapView =
   | { readonly kind: 'loading'; readonly label: string }
-  | { readonly kind: 'picker'; readonly recent: readonly WorkspaceRef[] }
+  | {
+      readonly kind: 'picker';
+      readonly recent: readonly WorkspaceRef[];
+      /** Found in the synced folder (iCloud Drive) and not already among `recent`. */
+      readonly synced: readonly WorkspaceRef[];
+    }
   | { readonly kind: 'unlock'; readonly workspaceRef: WorkspaceRef }
   | { readonly kind: 'error'; readonly message: string };
 
@@ -57,7 +63,7 @@ export function viewForState(
     case 'idle':
       return { kind: 'loading', label: 'Loading…' };
     case 'needs-designation':
-      return { kind: 'picker', recent: state.recent };
+      return { kind: 'picker', recent: state.recent, synced: [] };
     case 'needs-unlock':
       return { kind: 'unlock', workspaceRef: state.ref };
     case 'migrating':
@@ -71,6 +77,15 @@ export function viewForState(
     default:
       return state satisfies never;
   }
+}
+
+/** Adds the synced folder's workspaces to the picker, minus those already listed as recent. */
+export function withSyncedWorkspaces(view: BootstrapView, synced: readonly WorkspaceRef[]): BootstrapView {
+  if (view.kind !== 'picker') {
+    return view;
+  }
+  const recentIds = new Set(view.recent.map((ref) => ref.id));
+  return { ...view, synced: synced.filter((ref) => !recentIds.has(ref.id)) };
 }
 
 /** Saves the copy the user asked for in the create form. The workspace is already created and
@@ -111,6 +126,7 @@ export function useBootstrapScreen(
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [lastRef, setLastRef] = useState<WorkspaceRef | undefined>(undefined);
   const [isPending, setIsPending] = useState(false);
+  const synced = useSyncedWorkspaces(platform, !isPending && bootstrap.state.kind === 'needs-designation');
 
   function run(ref: WorkspaceRef, action: () => Promise<void>): void {
     setLastRef(ref);
@@ -124,7 +140,9 @@ export function useBootstrapScreen(
   };
 
   return {
-    view: isPending ? { kind: 'loading', label: progressLabel(progress) } : viewForState(bootstrap.state, progress),
+    view: isPending
+      ? { kind: 'loading', label: progressLabel(progress) }
+      : withSyncedWorkspaces(viewForState(bootstrap.state, progress), synced),
     isCreateOpen,
     isImportOpen,
     onStartCreate: () => setIsCreateOpen(true),

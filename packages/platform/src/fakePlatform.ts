@@ -141,13 +141,20 @@ function createFakeFileSystem(clock: Clock): FileSystemService {
     },
     listDirectory: (path) => {
       const prefix = path.endsWith('/') ? path : `${path}/`;
-      // Non-recursive, like the real contract: only direct children.
-      return Promise.resolve(
-        [...files.keys()].filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes('/')),
-      );
+      // Non-recursive, like the real contract: only direct children — files, and folders whether
+      // created explicitly or implied by a file below them.
+      const children = new Set<string>();
+      for (const key of [...files.keys(), ...directories]) {
+        if (key.startsWith(prefix) && key.length > prefix.length) {
+          const rest = key.slice(prefix.length);
+          children.add(`${prefix}${rest.split('/')[0]}`);
+        }
+      }
+      return Promise.resolve([...children]);
     },
     resolvePath: (...segments) => segments.join('/'),
     appDataDirectory: () => Promise.resolve('/app-data'),
+    syncedDirectory: () => Promise.resolve(null),
     pickFile: () => Promise.resolve(null),
     pickDirectory: () => Promise.resolve(null),
     pickSaveLocation: () => Promise.resolve(null),

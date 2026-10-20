@@ -5,7 +5,7 @@
 
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { Platform } from '@repo/platform/platform';
-import { AlertTriangle, Database, FolderInput, Plus } from 'lucide-react-native';
+import { AlertTriangle, Cloud, Database, FolderInput, Plus } from 'lucide-react-native';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -79,6 +79,7 @@ function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapS
           onImport={screen.onStartImport}
           onOpen={screen.onOpen}
           recent={view.recent}
+          synced={view.synced}
         />
       );
     case 'unlock':
@@ -114,18 +115,19 @@ function Progress({ label }: { readonly label: string }) {
 
 type WorkspaceListProps = {
   readonly recent: BootstrapViewPicker['recent'];
+  readonly synced: BootstrapViewPicker['synced'];
   readonly onOpen: ReturnType<typeof useBootstrapScreen>['onOpen'];
   readonly onCreate: () => void;
   readonly onImport: () => void;
 };
 type BootstrapViewPicker = Extract<BootstrapView, { kind: 'picker' }>;
 
-function WorkspaceList({ recent, onOpen, onCreate, onImport }: WorkspaceListProps) {
+function WorkspaceList({ recent, synced, onOpen, onCreate, onImport }: WorkspaceListProps) {
   const { colors } = useColor();
 
   return (
     <View style={styles.list}>
-      <ScreenHeader subtitle="Your data stays encrypted on this device." title="my finance health" />
+      <ScreenHeader subtitle="Your data stays encrypted, on this device or in your iCloud." title="my finance health" />
       {recent.length > 0 && (
         <SectionGroup title="Workspaces">
           {recent.map((workspace, index) => (
@@ -135,6 +137,20 @@ function WorkspaceList({ recent, onOpen, onCreate, onImport }: WorkspaceListProp
               key={workspace.id}
               onPress={() => onOpen(workspace)}
               showSeparator={index < recent.length - 1}
+              title={workspace.label}
+            />
+          ))}
+        </SectionGroup>
+      )}
+      {synced.length > 0 && (
+        <SectionGroup title="In iCloud Drive">
+          {synced.map((workspace, index) => (
+            <SettingsRow
+              icon={Cloud}
+              iconColor={colors.pos}
+              key={workspace.id}
+              onPress={() => onOpen(workspace)}
+              showSeparator={index < synced.length - 1}
               title={workspace.label}
             />
           ))}
