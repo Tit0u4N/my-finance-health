@@ -68,7 +68,8 @@ describe('deriveArgon2id', () => {
     expect(toHex(key)).toBe(toHex(await reference('password', SALT, 65_536, 2, 1, 32)));
     const real = nativeCalls.at(-1);
     expect(real).toMatchObject({ memory: 65_536, passes: 2, parallelism: 1, tagLength: 32, version: 0x13 });
-  });
+    // Two real 64 MiB Argon2 derivations in pure JS: ~1 s locally, past the 5 s default on CI runners.
+  }, 30_000);
 
   it('checks the native engine once, not on every derivation', async () => {
     const { deriveArgon2id } = await freshModule();
