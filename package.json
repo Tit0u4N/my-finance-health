@@ -32,6 +32,7 @@
     "test:e2e": "turbo run test:e2e",
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "release:version": "bun scripts/bump-version.ts",
     "prepare": "lefthook install"
   },
   "dependencies": {},

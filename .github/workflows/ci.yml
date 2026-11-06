@@ -1,9 +1,12 @@
 name: CI
 
+# Branch model (CONTRIBUTING.md § Releases): day-to-day work merges into `release/<major>`, and only a
+# release (or hotfix) pull request merges into `main`. Lint, typecheck and test run everywhere; the
+# heavy `build` job only runs on pull requests into `main` and on `main` itself.
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'release/**']
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
@@ -42,10 +45,6 @@ jobs:
           - name: test
             tasks: test
             args: --concurrency=2
-          # `bundle` is the Metro export of apps/mobile: a JS sanity check that needs no native build.
-          - name: build
-            tasks: build bundle
-            args: ''
     steps:
       - uses: actions/checkout@v7
         with:
@@ -58,6 +57,45 @@ jobs:
           # On pull requests only the packages changed since the base, and their dependents, run.
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
         run: bun turbo run ${{ matrix.tasks }} ${{ matrix.args }} ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      # Pushes only happen on `main` and `release/**`, whose caches pull requests into them restore.
+      - name: Prune unused Turbo cache entries
+        if: github.event_name == 'push'
+        run: .github/scripts/prune-turbo-cache.sh "$TURBO_CACHE_DIR" .turbo/runs
+
+  # `bundle` is the Metro export of apps/mobile: a JS sanity check that needs no native build.
+  build:
+    name: build
+    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: build
+      - name: Run Turbo
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+        run: bun turbo run build bundle ${{ github.event_name == 'pull_request' && '--affected' || '' }}
       - name: Prune unused Turbo cache entries
         if: github.ref == 'refs/heads/main'
         run: .github/scripts/prune-turbo-cache.sh "$TURBO_CACHE_DIR" .turbo/runs
+
+  # Only a release branch (or an urgent hotfix) may merge into `main`.
+  branch-policy:
+    name: branch policy
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            release/* | hotfix/*) echo "$HEAD_REF may merge into main." ;;
+            *)
+              echo "::error::Only release/<major> and hotfix/<description> branches merge into main; target the current release branch instead (CONTRIBUTING.md § Releases)."
+              exit 1
+              ;;
+          esac
