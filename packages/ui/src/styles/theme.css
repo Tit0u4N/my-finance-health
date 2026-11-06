@@ -9,20 +9,20 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --mfh-background: oklch(0.9726 0.0026 106.45);
+  --mfh-background: oklch(0.9702 0.0041 271.37);
   --mfh-surface: oklch(1 0 0);
-  --mfh-surface-alt: oklch(0.9848 0.0013 106.42);
+  --mfh-surface-alt: oklch(0.9846 0.0017 247.84);
   --mfh-elevated: oklch(1 0 0);
-  --mfh-border: oklch(0.9362 0.004 106.48);
-  --mfh-border-strong: oklch(0.8842 0.0054 106.51);
-  --mfh-foreground: oklch(0.1689 0.0021 286.18);
-  --mfh-muted: oklch(0.5477 0.0046 106.55);
-  --mfh-subtle: oklch(0.6918 0.0043 106.51);
-  --mfh-chip-bg: oklch(0.9573 0.004 106.47);
+  --mfh-border: oklch(0.9271 0.0075 260.73);
+  --mfh-border-strong: oklch(0.8715 0.0123 259.82);
+  --mfh-foreground: oklch(0.1767 0.0114 260.64);
+  --mfh-muted: oklch(0.5444 0.035 265.11);
+  --mfh-subtle: oklch(0.7098 0.0273 261.12);
+  --mfh-chip-bg: oklch(0.9548 0.0058 264.53);
   --mfh-pos: oklch(0.5273 0.1371 150.07);
-  --mfh-neg: oklch(0.5054 0.1905 27.52);
+  --mfh-neg: oklch(0.5534 0.1739 38.4);
   --mfh-pos-soft: oklch(0.9624 0.0434 156.74);
-  --mfh-neg-soft: oklch(0.9356 0.0309 17.72);
+  --mfh-neg-soft: oklch(0.9542 0.0372 75.16);
   --mfh-overlay: oklch(0.1689 0.0021 286.18 / 0.45);
 
   /* Fixed brand accent — same value in light and dark, no runtime accent switching. */
@@ -110,9 +110,9 @@
   --mfh-subtle: oklch(0.4845 0.0047 106.57);
   --mfh-chip-bg: oklch(0.2234 0.0058 285.92);
   --mfh-pos: oklch(0.7729 0.1535 163.22);
-  --mfh-neg: oklch(0.7106 0.1661 22.22);
+  --mfh-neg: oklch(0.7576 0.159 55.93);
   --mfh-pos-soft: oklch(0.7729 0.1535 163.22 / 0.14);
-  --mfh-neg-soft: oklch(0.7106 0.1661 22.22 / 0.14);
+  --mfh-neg-soft: oklch(0.7576 0.159 55.93 / 0.14);
   --mfh-overlay: oklch(0 0 0 / 0.55);
 }
 
