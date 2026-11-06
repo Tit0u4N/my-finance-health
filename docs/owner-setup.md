@@ -187,13 +187,15 @@ Never commit these values. Keep them in your shell profile or CI secrets (§7).
 
 Two workflows live in `.github/workflows/`:
 
-- `ci.yml` — on every pull request and push to `main`: Biome lint, then `typecheck`, `test` and
-  `build` + `bundle` (web and desktop Vite builds, Metro export of the mobile JS) through Turbo. On
-  pull requests only the packages affected since the base branch run.
+- `ci.yml` — on every pull request and on pushes to `main` and `release/**`: Biome lint, `typecheck`
+  and `test` through Turbo. `build` + `bundle` (web and desktop Vite builds, Metro export of the
+  mobile JS) only run on pull requests into `main` (release and hotfix PRs) and on `main` itself; a
+  `branch policy` check rejects pull requests into `main` from any other branch. On pull requests
+  only the packages affected since the base branch run. Branch model: CONTRIBUTING.md § Releases.
 - `desktop.yml` — Tauri bundles for macOS (arm64 and x86_64), Windows x64 and Linux x64. Runs on
-  pull requests touching `apps/desktop/**` or `packages/**`, on `main` for the same paths, and by hand
+  pull requests into `main` touching `apps/desktop/**` or `packages/**`, on `main` for the same paths, and by hand
   (Actions → Desktop → Run workflow); bundles are attached to the run as artifacts. A `v*` tag also
-  creates a **draft** GitHub release with them: bump `version` in `tauri.conf.json` and `Cargo.toml`
+  creates a **draft** GitHub release with them: bump the version with `bun run release:version <x.y.z>`
   before tagging, then review and publish the draft.
 
 Both work with **no secret at all**: builds are then unsigned and Turbo uses the GitHub Actions cache
