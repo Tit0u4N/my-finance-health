@@ -1,0 +1,214 @@
+name: Desktop
+
+on:
+  push:
+    tags: ['v*']
+    # Builds on main keep the Rust and Turbo caches warm: GitHub only shares main's caches with pull requests.
+    branches: [main]
+    paths: &desktop-paths
+      - apps/desktop/**
+      - packages/**
+      - bun.lock
+      - package.json
+      - turbo.json
+      - .github/actions/**
+      - .github/scripts/**
+      - .github/workflows/desktop.yml
+  pull_request:
+    paths: *desktop-paths
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+env:
+  TURBO_CACHE_DIR: ${{ github.workspace }}/.turbo/cache
+  TURBO_RUN_SUMMARY: 'true'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # Shipped bundles open real encrypted workspaces, not the in-memory demo (apps/desktop/.env.example).
+  VITE_STORAGE_MODE: classic
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          # The oldest supported Ubuntu keeps the AppImage and .deb compatible with older glibc.
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    env:
+      # `secrets` is not allowed in step conditions: each signing step checks these flags instead.
+      HAS_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE != '' }}
+      HAS_WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE != '' }}
+      HAS_UPDATER_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+      BUNDLE_DIR: apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libdbus-1-dev libxdo-dev patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+          key: ${{ matrix.target }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: desktop-${{ matrix.target }}
+
+      # Values are only exported when present: Tauri treats an empty variable as a request to sign.
+      - name: Import macOS signing certificate
+        if: runner.os == 'macOS' && env.HAS_APPLE_CERTIFICATE == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password=$(openssl rand -base64 32)
+          certificate="$RUNNER_TEMP/certificate.p12"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$certificate"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$certificate" -k "$keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain"
+          security list-keychains -d user -s "$keychain" "$HOME/Library/Keychains/login.keychain-db"
+          rm "$certificate"
+          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then
+            APPLE_SIGNING_IDENTITY=$(security find-identity -v -p codesigning "$keychain" | grep -o '"Developer ID Application: [^"]*"' | head -n 1 | tr -d '"')
+          fi
+          echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY" >> "$GITHUB_ENV"
+          if [ -n "$APPLE_ID" ]; then
+            {
+              echo "APPLE_ID=$APPLE_ID"
+              echo "APPLE_PASSWORD=$APPLE_PASSWORD"
+              echo "APPLE_TEAM_ID=$APPLE_TEAM_ID"
+            } >> "$GITHUB_ENV"
+          fi
+
+      # PFX import only works for certificates whose key is exportable; an HSM or cloud-signing
+      # certificate needs `bundle.windows.signCommand` instead (docs/owner-setup.md §7).
+      - name: Import Windows signing certificate
+        if: runner.os == 'Windows' && env.HAS_WINDOWS_CERTIFICATE == 'true'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP 'certificate.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          $certificate = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password |
+            Where-Object HasPrivateKey | Select-Object -First 1
+          Remove-Item $pfx
+          $config = @{
+            bundle = @{
+              windows = @{
+                certificateThumbprint = $certificate.Thumbprint
+                digestAlgorithm = 'sha256'
+                timestampUrl = 'http://timestamp.digicert.com'
+              }
+            }
+          } | ConvertTo-Json -Depth 4
+          $configPath = Join-Path $env:RUNNER_TEMP 'tauri.signing.json'
+          Set-Content -Path $configPath -Value $config
+          "TAURI_WINDOWS_SIGNING_CONFIG=$configPath" >> $env:GITHUB_ENV
+
+      # Only consumed once `bundle.createUpdaterArtifacts` is turned on; the updater stays off until then.
+      - name: Export Tauri updater key
+        if: env.HAS_UPDATER_KEY == 'true'
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          {
+            echo "TAURI_SIGNING_PRIVATE_KEY<<TAURI_KEY_EOF"
+            echo "$TAURI_SIGNING_PRIVATE_KEY"
+            echo "TAURI_KEY_EOF"
+            echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      # The frontend is built by `beforeBuildCommand` through Turbo, so an unchanged frontend is a cache hit.
+      # pwsh everywhere: under Git Bash on Windows, the MSYS perl would break the vendored OpenSSL build.
+      - name: Build desktop bundles
+        working-directory: apps/desktop
+        shell: pwsh
+        run: |
+          if ($IsWindows) {
+            $env:OPENSSL_SRC_PERL = 'C:\Strawberry\perl\bin\perl.exe'
+          }
+          $tauriArgs = @('--target', '${{ matrix.target }}', '--ci')
+          if ($env:TAURI_WINDOWS_SIGNING_CONFIG) {
+            $tauriArgs += @('--config', $env:TAURI_WINDOWS_SIGNING_CONFIG)
+          }
+          bun run tauri build @tauriArgs
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.target }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            ${{ env.BUNDLE_DIR }}/dmg/*.dmg
+            ${{ env.BUNDLE_DIR }}/msi/*.msi
+            ${{ env.BUNDLE_DIR }}/nsis/*.exe
+            ${{ env.BUNDLE_DIR }}/deb/*.deb
+            ${{ env.BUNDLE_DIR }}/rpm/*.rpm
+            ${{ env.BUNDLE_DIR }}/appimage/*.AppImage
+
+      - name: Prune unused Turbo cache entries
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: .github/scripts/prune-turbo-cache.sh "$TURBO_CACHE_DIR" .turbo/runs
+
+  release:
+    name: draft release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: desktop-*
+          path: bundles
+          merge-multiple: true
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mapfile -d '' assets < <(find bundles -type f -print0)
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --generate-notes \
+            --title "my finance health $GITHUB_REF_NAME"

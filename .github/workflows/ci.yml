@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TURBO_CACHE_DIR: ${{ github.workspace }}/.turbo/cache
+  TURBO_RUN_SUMMARY: 'true'
+  # Vercel Remote Cache, used on top of the GitHub cache when the owner configures it.
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: bun run lint
+
+  turbo:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: typecheck
+            tasks: typecheck
+            args: ''
+          # Several Vitest processes at once starve the CPU-bound Argon2 tests of the 4-core runner.
+          - name: test
+            tasks: test
+            args: --concurrency=2
+          # `bundle` is the Metro export of apps/mobile: a JS sanity check that needs no native build.
+          - name: build
+            tasks: build bundle
+            args: ''
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: ${{ matrix.name }}
+      - name: Run Turbo
+        env:
+          # On pull requests only the packages changed since the base, and their dependents, run.
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+        run: bun turbo run ${{ matrix.tasks }} ${{ matrix.args }} ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      - name: Prune unused Turbo cache entries
+        if: github.ref == 'refs/heads/main'
+        run: .github/scripts/prune-turbo-cache.sh "$TURBO_CACHE_DIR" .turbo/runs

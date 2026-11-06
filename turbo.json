@@ -33,9 +33,35 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "index.html", "postcss.config.js", "vite.config.ts", "tsconfig.json", "package.json"],
+      "inputs": [
+        "src/**",
+        "public/**",
+        ".env*",
+        "index.html",
+        "postcss.config.js",
+        "vite.config.ts",
+        "tsconfig.json",
+        "package.json"
+      ],
       "outputs": ["dist/**"],
-      "env": []
+      "env": ["VITE_*"]
+    },
+    "bundle": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "modules/**",
+        "assets/**",
+        ".env*",
+        "index.js",
+        "app.json",
+        "babel.config.js",
+        "metro.config.js",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "outputs": ["dist/**"],
+      "env": ["EXPO_PUBLIC_*"]
     }
   }
 }

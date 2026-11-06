@@ -165,10 +165,10 @@ export APPLE_SIGNING_IDENTITY="Developer ID Application: <Name> (<TEAMID>)"
 export APPLE_ID="<apple id email>"
 export APPLE_PASSWORD="<app-specific password>"
 export APPLE_TEAM_ID="<TEAMID>"
-bun turbo build --filter=desktop
+cd apps/desktop && bun run tauri build
 ```
 
-Never commit these values. Keep them in your shell profile or CI secrets.
+Never commit these values. Keep them in your shell profile or CI secrets (§7).
 
 ---
 
@@ -176,10 +176,45 @@ Never commit these values. Keep them in your shell profile or CI secrets.
 
 | Feature | Owner action | Status |
 |---|---|---|
-| Desktop auto-update (`canUpdate`, currently `false`) | Generate the updater key pair: `bunx tauri signer generate -w ~/.tauri/mfh.key`. Keep the private key and its password secret (CI secret `TAURI_SIGNING_PRIVATE_KEY`). Choose where update manifests are hosted. | not wired |
+| Desktop auto-update (`canUpdate`, currently `false`) | Generate the updater key pair: `bunx tauri signer generate -w ~/.tauri/mfh.key`. Keep the private key and its password secret (CI secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, §7). Choose where update manifests are hosted. | not wired |
 | Face ID / fingerprint unlock on mobile (`hasBiometricUnlock`, currently `false`) | No account needed. The Face ID usage text goes in `app.json` with the `expo-local-authentication` plugin, then a prebuild. Test it on a real device. | deferred |
 | Online mode (remote API workspaces) | Host the API, own its domain and TLS, and decide where API keys are issued | not wired |
 | App Store / Play Store listings | Privacy policy URL, screenshots, app privacy questionnaire. Data stays on device or in the user's own iCloud: declare no collection unless online mode lands. | before store release |
+
+---
+
+## 7. Continuous integration — GitHub secrets and variables
+
+Two workflows live in `.github/workflows/`:
+
+- `ci.yml` — on every pull request and push to `main`: Biome lint, then `typecheck`, `test` and
+  `build` + `bundle` (web and desktop Vite builds, Metro export of the mobile JS) through Turbo. On
+  pull requests only the packages affected since the base branch run.
+- `desktop.yml` — Tauri bundles for macOS (arm64 and x86_64), Windows x64 and Linux x64. Runs on
+  pull requests touching `apps/desktop/**` or `packages/**`, on `main` for the same paths, and by hand
+  (Actions → Desktop → Run workflow); bundles are attached to the run as artifacts. A `v*` tag also
+  creates a **draft** GitHub release with them: bump `version` in `tauri.conf.json` and `Cargo.toml`
+  before tagging, then review and publish the draft.
+
+Both work with **no secret at all**: builds are then unsigned and Turbo uses the GitHub Actions cache
+only. Each secret below switches one thing on. Add them at GitHub → repository Settings → Secrets and
+variables → Actions.
+
+| Name | Kind | Where it comes from | What it unlocks |
+|---|---|---|---|
+| `TURBO_TOKEN` | secret | Vercel → Account Settings → Tokens | Vercel Remote Cache, shared between CI and your machine |
+| `TURBO_TEAM` | variable | your Vercel team slug | goes with `TURBO_TOKEN` |
+| `APPLE_CERTIFICATE` | secret | "Developer ID Application" certificate (§5) exported from Keychain Access as `.p12`, then `base64 -i cert.p12 \| pbcopy` | signed macOS bundles |
+| `APPLE_CERTIFICATE_PASSWORD` | secret | the password chosen at `.p12` export | goes with `APPLE_CERTIFICATE` |
+| `APPLE_SIGNING_IDENTITY` | secret, optional | `Developer ID Application: <Name> (<TEAMID>)` | picks the identity; found in the certificate when absent |
+| `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | secrets | Apple ID email, app-specific password from appleid.apple.com, Team ID (§5) | notarization; only used when the certificate is set |
+| `WINDOWS_CERTIFICATE` | secret | code-signing certificate (§5) as `.pfx`, then base64: `[Convert]::ToBase64String([IO.File]::ReadAllBytes('cert.pfx'))` | signed Windows installers |
+| `WINDOWS_CERTIFICATE_PASSWORD` | secret | the `.pfx` password | goes with `WINDOWS_CERTIFICATE` |
+| `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | secrets | content of `~/.tauri/mfh.key` and its password (§6) | updater signatures, once `bundle.createUpdaterArtifacts` is on |
+
+Certificates sold since mid-2023 usually keep their key in hardware or a cloud service and cannot be
+exported as `.pfx`. In that case, leave `WINDOWS_CERTIFICATE` empty and sign through
+`bundle.windows.signCommand` in `tauri.conf.json` with the provider's tool instead.
 
 ---
 
@@ -193,6 +228,7 @@ Never commit these values. Keep them in your shell profile or CI secrets.
 - [ ] Verify the folder in Files › iCloud Drive and in Finder (§2)
 - [ ] Expo account + `eas.json` (§3)
 - [ ] Google Play Console account (§4)
-- [ ] macOS Developer ID + notarization env (§5)
-- [ ] Windows code-signing certificate (§5, optional)
-- [ ] Tauri updater keys (§6, when auto-update is wired)
+- [ ] macOS Developer ID + notarization env (§5), then the `APPLE_*` CI secrets (§7)
+- [ ] Windows code-signing certificate (§5, optional), then the `WINDOWS_*` CI secrets (§7)
+- [ ] Tauri updater keys (§6, when auto-update is wired), then the `TAURI_SIGNING_*` CI secrets (§7)
+- [ ] Vercel Remote Cache: `TURBO_TOKEN` secret + `TURBO_TEAM` variable (§7, optional)

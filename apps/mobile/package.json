@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
+    "bundle": "expo export --platform all",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
