@@ -8,25 +8,25 @@ Per the decision taken for this pass (`open-questions.md` #11), only **theme mod
 
 ## 1. Color roles
 
-Semantic roles, replacing `colorTokens` in `colors.ts`. Source: `THEMES.light` / `THEMES.dark` in `ui.jsx`.
+Semantic roles, replacing `colorTokens` in `colors.ts`. Source: `THEMES.light` / `THEMES.dark` in `ui.jsx`, then amended by the validated brand guidelines (charte graphique v1.1, 2026-11-06): light neutrals moved from warm grey to cool "slate" greys, and `neg`/`negSoft` moved from red to orange in both themes (calmer, and easier to tell from `pos` with colour-vision deficiency). Dark neutrals are unchanged.
 
 | Role | Light | Dark | Replaces (current `colorTokens` key) |
 |---|---|---|---|
-| `background` | `#F6F6F4` | `#0B0B0C` | `background` |
+| `background` | `#F4F5F8` | `#0B0B0C` | `background` |
 | `surface` | `#FFFFFF` | `#141416` | *(new — current tokens have no surface/background split)* |
-| `surfaceAlt` | `#FAFAF9` | `#0F0F11` | *(new)* — recessed surface: input fields, chip tracks, code blocks |
+| `surfaceAlt` | `#F9FAFB` | `#0F0F11` | *(new)* — recessed surface: input fields, chip tracks, code blocks |
 | `elevated` | `#FFFFFF` | `#1B1B1E` | *(new)* — modals, dropdowns, tooltips (things that float above `surface`) |
-| `border` | `#EAEAE7` | `#26262A` | `border` |
-| `borderStrong` | `#D9D9D5` | `#34343A` | *(new)* — dashed drop-zones, focus-adjacent dividers |
-| `foreground` | `#0F0F10` | `#F5F5F4` | `foreground` |
-| `muted` (text) | `#71716E` | `#8B8B88` | `mutedForeground` — **name collision**: current `colors.ts` uses `muted` for a *background* role. Rename the background role to `chipBg` (below) to free `muted` for text, matching the mock's own naming. |
-| `subtle` | `#9C9C99` | `#5F5F5C` | *(new)* — third text tier, below `muted` (timestamps, placeholder text) |
-| `chipBg` | `#F1F1EE` | `#1B1B1E` | `muted` (background sense) — renamed, see above |
+| `border` | `#E4E7EC` | `#26262A` | `border` |
+| `borderStrong` | `#D0D5DD` | `#34343A` | *(new)* — dashed drop-zones, focus-adjacent dividers |
+| `foreground` | `#0E1116` | `#F5F5F4` | `foreground` |
+| `muted` (text) | `#667085` | `#8B8B88` | `mutedForeground` — **name collision**: current `colors.ts` uses `muted` for a *background* role. Rename the background role to `chipBg` (below) to free `muted` for text, matching the mock's own naming. |
+| `subtle` | `#98A2B3` | `#5F5F5C` | *(new)* — third text tier, below `muted` (timestamps, placeholder text) |
+| `chipBg` | `#EEF0F4` | `#1B1B1E` | `muted` (background sense) — renamed, see above |
 | `pos` (positive/income) | `#15803D` | `#34D399` | *(new)* |
-| `neg` (negative/expense) | `#B91C1C` | `#F87171` | *(new)* |
+| `neg` (negative/expense) | `#C2410C` | `#FB923C` | *(new)* |
 | `posSoft` | `#DCFCE7` | `rgba(52,211,153,0.14)` | *(new)* — badge/pill backgrounds behind `pos` text |
-| `negSoft` | `#FEE2E2` | `rgba(248,113,113,0.14)` | *(new)* |
-| `overlay` | `rgba(15,15,16,0.45)` | `rgba(0,0,0,0.55)` | *(new)* — modal/sheet backdrop |
+| `negSoft` | `#FFEDD5` | `rgba(251,146,60,0.14)` | *(new)* |
+| `overlay` | `rgba(14,17,22,0.45)` | `rgba(0,0,0,0.55)` | *(new)* — modal/sheet backdrop |
 
 `primary`/`primaryForeground`/`accent`/`accentForeground` are dropped as generic roles; the app has exactly one brand accent (§2), not an interchangeable "primary vs accent" pair — the mock never uses two different brand hues at once.
 
