@@ -1963,7 +1963,7 @@ dependencies = [
 
 [[package]]
 name = "my-finance-health-desktop"
-version = "0.0.0"
+version = "1.0.0"
 dependencies = [
  "argon2",
  "base64 0.22.1",

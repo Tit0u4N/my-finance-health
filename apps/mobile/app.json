@@ -2,14 +2,17 @@
   "expo": {
     "name": "my finance health",
     "slug": "my-finance-health",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "scheme": "myfinancehealth",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.myfinancehealth.mobile"
+      "bundleIdentifier": "app.myfinancehealth.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "app.myfinancehealth.mobile",
@@ -17,7 +20,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "monochromeImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#635BFF"
-      }
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
     },
     "plugins": [
       "expo-router",
