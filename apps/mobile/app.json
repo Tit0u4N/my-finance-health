@@ -10,6 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.myfinancehealth.mobile",
+      "appleTeamId": "35V4HB4GBP",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
