@@ -47,9 +47,16 @@ async function attempt<T>(read: () => Promise<T | null>): Promise<T | null> {
   }
 }
 
-/** Runs `job` so that a synchronous throw reaches the caller as a rejection, like every other method of the contract. */
-function run<T>(job: () => T | Promise<T>): Promise<T> {
-  return new Promise((resolve) => resolve(job()));
+/**
+ * Runs `job` so that a synchronous throw reaches the caller as a rejection, like every other method
+ * of the contract — and names the operation and path in the error. A native failure only carries
+ * the system's own message ("The file couldn’t be saved."), which says nothing about which file.
+ */
+function run<T>(operation: string, target: string, job: () => T | Promise<T>): Promise<T> {
+  return new Promise<T>((resolve) => resolve(job())).catch((error: unknown) => {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`file system: ${operation} "${target}" failed — ${reason}`, { cause: error });
+  });
 }
 
 function parentOf(path: string): string {
@@ -165,44 +172,45 @@ export function createExpoFileSystem({ cloud }: ExpoFileSystemOptions = {}): Fil
   }
 
   return {
-    readFile: (path) => run(async () => (await requireFile(path)).bytes()),
+    readFile: (path) => run('readFile', path, async () => (await requireFile(path)).bytes()),
 
     writeFile: (path, data) =>
-      run(async () => {
+      run('writeFile', path, async () => {
         (await createFreshFile(path)).write(data);
       }),
 
     appendFile: (path, data) =>
-      run(async () => {
+      run('appendFile', path, async () => {
         const file = (await findFile(path)) ?? (await createFreshFile(path));
         const handle = file.open(FileMode.Append);
         try {
-          handle.writeBytes(data);
+          // Async since SDK 58: not awaiting it closes the handle before the bytes are written.
+          await handle.writeBytes(data);
         } finally {
           handle.close();
         }
       }),
 
     truncateFile: (path, length) =>
-      run(async () => {
+      run('truncateFile', path, async () => {
         const kept = (await (await requireFile(path)).bytes()).slice(0, length);
         (await createFreshFile(path)).write(kept);
       }),
 
     deleteFile: (path) =>
-      run(async () => {
+      run('deleteFile', path, async () => {
         (await findFile(path))?.delete();
       }),
 
     fileInfo: (path) =>
-      run(async (): Promise<FileInfo | null> => {
+      run('fileInfo', path, async (): Promise<FileInfo | null> => {
         // A path whose parent folder is gone is "no such file", not an error — callers probe with this.
         const file = await attempt(() => findFile(path));
         return file ? { sizeBytes: file.size, modifiedAt: new Date(file.modificationTime ?? 0).toISOString() } : null;
       }),
 
     rename: (from, to) =>
-      run(async () => {
+      run('rename', `${from} → ${to}`, async () => {
         if (isExternal(from) || isExternal(to)) {
           // A picked folder can't be moved within natively — copy, then drop the source.
           (await createFreshFile(to)).write(await (await requireFile(from)).bytes());
@@ -218,7 +226,7 @@ export function createExpoFileSystem({ cloud }: ExpoFileSystemOptions = {}): Fil
       }),
 
     createDirectory: (path) =>
-      run(async () => {
+      run('createDirectory', path, async () => {
         const external = parseExternal(path);
         if (!external) {
           (await plainDirectory(path)).create({ intermediates: true, idempotent: true });
@@ -231,7 +239,7 @@ export function createExpoFileSystem({ cloud }: ExpoFileSystemOptions = {}): Fil
       }),
 
     listDirectory: (path) =>
-      run(async () => {
+      run('listDirectory', path, async () => {
         const names = (await directoryAt(path)).list().map((entry) => entry.name);
         // An evicted iCloud file is listed as its `.<name>.icloud` placeholder; the core only ever
         // knows it by its real name (reading it downloads it, see findFile).
@@ -242,7 +250,7 @@ export function createExpoFileSystem({ cloud }: ExpoFileSystemOptions = {}): Fil
     resolvePath: (...segments) => segments.join('/'),
 
     appDataDirectory: () =>
-      run(async () => {
+      run('appDataDirectory', APP_DIRECTORY, async () => {
         (await plainDirectory(APP_DIRECTORY)).create({ intermediates: true, idempotent: true });
         return APP_DIRECTORY;
       }),
