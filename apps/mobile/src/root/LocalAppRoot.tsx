@@ -14,6 +14,7 @@ import { BootstrapScreen } from '@/bootstrap/BootstrapScreen';
 import { createMobilePlatform } from '@/platform/createMobilePlatform';
 import { StarterCategoriesScreen } from '@/screens/starter/StarterCategoriesScreen';
 import { ThemeModeSync } from '@/theme/ThemeModeSync';
+import { LockLostNotice } from './LockLostNotice';
 import { useLocalAppRoot } from './useLocalAppRoot';
 import { WorkspaceSessionContext } from './WorkspaceSessionContext';
 
@@ -41,8 +42,17 @@ function LocalAppRootBody({
   readonly platform: Platform;
   readonly children: ReactNode;
 }): ReactElement {
-  const { bootstrap, progress, queryClient, session, lock, switchWorkspace, isStarterPending, dismissStarter } =
-    useLocalAppRoot(platform);
+  const {
+    bootstrap,
+    progress,
+    queryClient,
+    session,
+    lock,
+    switchWorkspace,
+    isStarterPending,
+    dismissStarter,
+    lockLost,
+  } = useLocalAppRoot(platform);
 
   if (bootstrap.state.kind === 'ready' && session) {
     return (
@@ -64,6 +74,7 @@ function LocalAppRootBody({
 
   return (
     <BootstrapStageProviders platform={platform}>
+      {lockLost && bootstrap.state.kind === 'needs-unlock' && <LockLostNotice />}
       <BootstrapScreen bootstrap={bootstrap} platform={platform} progress={progress} />
     </BootstrapStageProviders>
   );

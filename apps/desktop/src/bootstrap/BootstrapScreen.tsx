@@ -22,6 +22,8 @@ export type BootstrapScreenProps = {
    * useLocalApp.ts's docblock on why this can't be a real BootstrapState transition). */
   readonly progress: 'migrating' | 'replaying' | null;
   readonly onBiometricIntent: (intent: BiometricIntent) => void;
+  /** Another device took the occupancy lock over, so this one was locked (audit P6). */
+  readonly lockLost?: boolean;
 };
 
 type Translate = ReturnType<typeof useTranslation>['t'];
@@ -87,7 +89,13 @@ function renderBootstrapBody(
   }
 }
 
-export function BootstrapScreen({ platform, bootstrap, progress, onBiometricIntent }: BootstrapScreenProps) {
+export function BootstrapScreen({
+  platform,
+  bootstrap,
+  progress,
+  onBiometricIntent,
+  lockLost = false,
+}: BootstrapScreenProps) {
   const { t } = useTranslation();
   const screen = useBootstrapScreen(bootstrap, onBiometricIntent);
   const fileSystem = platform.fileSystem as FileSystemService;
@@ -99,6 +107,11 @@ export function BootstrapScreen({ platform, bootstrap, progress, onBiometricInte
           — the numbered scale sidesteps the collision (see EmptyState.tsx's max-w-80 for the same fix). */}
       <div className="w-full max-w-112">
         <Panel title={t('bootstrap:picker.title')}>
+          {lockLost && screen.state.kind === 'needs-unlock' && (
+            <p role="alert" className="mb-4 text-body-sm text-neg">
+              {t('bootstrap:unlock.lockLost')}
+            </p>
+          )}
           {renderBootstrapBody(screen, fileSystem, platform.biometricUnlock, progress, t)}
         </Panel>
       </div>

@@ -81,6 +81,8 @@ const bootstrap = {
     remember: 'Mémoriser avec {{label}}',
     rememberHere: 'Mémoriser avec {{label}} sur cet appareil',
     unlockWith: 'Déverrouiller avec {{label}}',
+    lockLost:
+      'Cet espace a été ouvert sur un autre appareil : il a été verrouillé ici pour protéger vos données. Déverrouillez-le à nouveau pour continuer.',
     biometricFallback: 'Déverrouillage biométrique',
   },
   import: {

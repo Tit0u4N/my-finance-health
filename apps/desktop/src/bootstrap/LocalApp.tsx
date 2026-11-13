@@ -26,8 +26,17 @@ export function LocalApp(): ReactElement {
 }
 
 function LocalAppBootstrap({ platform }: { readonly platform: Platform }): ReactElement {
-  const { bootstrap, progress, queryClient, router, lock, onBiometricIntent, isStarterPending, dismissStarter } =
-    useLocalApp(platform);
+  const {
+    bootstrap,
+    progress,
+    queryClient,
+    router,
+    lock,
+    onBiometricIntent,
+    isStarterPending,
+    dismissStarter,
+    lockLost,
+  } = useLocalApp(platform);
 
   if (bootstrap.state.kind === 'ready' && router) {
     return (
@@ -45,6 +54,7 @@ function LocalAppBootstrap({ platform }: { readonly platform: Platform }): React
   return (
     <BootstrapStageProviders platform={platform}>
       <BootstrapScreen
+        lockLost={lockLost}
         platform={platform}
         bootstrap={bootstrap}
         progress={progress}
