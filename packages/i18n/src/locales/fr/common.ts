@@ -18,6 +18,11 @@ const common = {
     loadingWorkspace: 'Chargement de votre espace…',
     notFound: 'Introuvable',
   },
+  update: {
+    ready: 'Une mise à jour est prête.',
+    restart: 'Redémarrer',
+    later: 'Plus tard',
+  },
   error: {
     couldNotSaveChanges: "Impossible d'enregistrer les modifications. Réessayez.",
   },

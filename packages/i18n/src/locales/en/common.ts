@@ -22,6 +22,12 @@ const common = {
     loadingWorkspace: 'Loading your workspace…',
     notFound: 'Not found',
   },
+  // apps/mobile's over-the-air update toast (expo-updates): shown once a new JS bundle is downloaded.
+  update: {
+    ready: 'An update is ready.',
+    restart: 'Restart',
+    later: 'Later',
+  },
   error: {
     couldNotSaveChanges: 'Could not save the changes. Try again.',
   },
