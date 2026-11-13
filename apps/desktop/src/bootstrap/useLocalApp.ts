@@ -15,6 +15,7 @@
 // Compiler flags as unsafe, even though the callback here only ever runs later, from a user
 // action.
 
+import { useFirstRunGate } from '@repo/app-core/bootstrap/useFirstRunGate';
 import { useWorkspaceBootstrap } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { createLocalWorkspaceOpener, type LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
 import type { Platform } from '@repo/platform/platform';
@@ -46,7 +47,7 @@ export function useLocalApp(platform: Platform) {
     onSessionOpen: setSession,
   });
 
-  const bootstrap = useWorkspaceBootstrap({ opener });
+  const { bootstrap, isStarterPending, dismissStarter } = useFirstRunGate(useWorkspaceBootstrap({ opener }));
   useLocalWorkspaceSession(session);
   const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock);
 
@@ -78,5 +79,15 @@ export function useLocalApp(platform: Platform) {
     return createAppRouter({ routeTree, context: { queryClient, repositories: bootstrap.state.repositories } });
   }, [bootstrap.state, queryClient]);
 
-  return { platform, bootstrap, progress, queryClient, router, lock, onBiometricIntent };
+  return {
+    platform,
+    bootstrap,
+    progress,
+    queryClient,
+    router,
+    lock,
+    onBiometricIntent,
+    isStarterPending,
+    dismissStarter,
+  };
 }

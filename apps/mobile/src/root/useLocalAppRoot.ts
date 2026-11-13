@@ -6,6 +6,7 @@
 // state (`onSessionOpen: setSession`) rather than a ref — same reasoning as desktop's hook: a ref
 // written from a callback built during render is what React Compiler flags as unsafe.
 
+import { useFirstRunGate } from '@repo/app-core/bootstrap/useFirstRunGate';
 import { useWorkspaceBootstrap } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { JOURNAL_KEY_LENGTH } from '@repo/data/local/crypto/keys';
 import { createLocalWorkspaceOpener, type LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
@@ -34,7 +35,8 @@ export function useLocalAppRoot(platform: Platform) {
     onSessionOpen: setSession,
   });
 
-  const bootstrap = useWorkspaceBootstrap({ opener });
+  const gate = useFirstRunGate(useWorkspaceBootstrap({ opener }));
+  const { bootstrap } = gate;
   useLocalWorkspaceSession(session);
 
   // One QueryClient for the app's lifetime, emptied whenever a session ends: the next workspace
@@ -61,5 +63,14 @@ export function useLocalAppRoot(platform: Platform) {
     void closeSession().then(() => bootstrap.chooseAnother());
   };
 
-  return { bootstrap, progress, queryClient, session, lock, switchWorkspace };
+  return {
+    bootstrap,
+    progress,
+    queryClient,
+    session,
+    lock,
+    switchWorkspace,
+    isStarterPending: gate.isStarterPending,
+    dismissStarter: gate.dismissStarter,
+  };
 }

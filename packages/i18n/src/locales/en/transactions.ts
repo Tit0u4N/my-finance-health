@@ -38,6 +38,7 @@ const transactions = {
     descPlaceholder: 'e.g. Carrefour Market',
     descNoSuggestions: 'No matching description',
     categoryLabel: 'Category',
+    noCategories: 'No category of this type yet. Add some in Settings → Categories.',
     accountLabel: 'Account',
     noteLabel: 'Note (optional)',
     notePlaceholder: 'Add a note',

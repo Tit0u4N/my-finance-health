@@ -12,6 +12,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { useState } from 'react';
 import { BootstrapScreen } from '@/bootstrap/BootstrapScreen';
 import { createMobilePlatform } from '@/platform/createMobilePlatform';
+import { StarterCategoriesScreen } from '@/screens/starter/StarterCategoriesScreen';
 import { ThemeModeSync } from '@/theme/ThemeModeSync';
 import { useLocalAppRoot } from './useLocalAppRoot';
 import { WorkspaceSessionContext } from './WorkspaceSessionContext';
@@ -40,7 +41,8 @@ function LocalAppRootBody({
   readonly platform: Platform;
   readonly children: ReactNode;
 }): ReactElement {
-  const { bootstrap, progress, queryClient, session, lock, switchWorkspace } = useLocalAppRoot(platform);
+  const { bootstrap, progress, queryClient, session, lock, switchWorkspace, isStarterPending, dismissStarter } =
+    useLocalAppRoot(platform);
 
   if (bootstrap.state.kind === 'ready' && session) {
     return (
@@ -54,7 +56,7 @@ function LocalAppRootBody({
           onLockWorkspace={lock}
         >
           <ThemeModeSync />
-          {children}
+          {isStarterPending ? <StarterCategoriesScreen onDone={dismissStarter} /> : children}
         </AppStageProviders>
       </WorkspaceSessionContext.Provider>
     );

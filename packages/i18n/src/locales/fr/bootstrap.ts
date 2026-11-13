@@ -92,6 +92,33 @@ const bootstrap = {
       'Aucun espace de travail dans ce dossier. Choisissez le dossier qui contient directement le fichier .mfhdb.',
     readError: 'Impossible de lire ce dossier.',
   },
+  starter: {
+    title: 'Choisissez vos catégories',
+    hint: 'Cochez celles avec lesquelles démarrer. Vous pourrez les renommer, en ajouter ou en retirer à tout moment dans les Réglages.',
+    income: 'Revenus',
+    expense: 'Dépenses',
+    confirm_one: 'Ajouter {{count}} catégorie',
+    confirm_other: 'Ajouter {{count}} catégories',
+    confirmNone: 'Continuer sans catégorie',
+    skip: 'Passer pour le moment',
+    error: "Impossible d'ajouter les catégories. Réessayez.",
+    categories: {
+      salary: 'Salaire',
+      freelance: 'Freelance',
+      interest: 'Intérêts',
+      refunds: 'Remboursements',
+      rent: 'Loyer',
+      groceries: 'Courses',
+      utilities: 'Factures',
+      transport: 'Transports',
+      eatingOut: 'Restaurants',
+      subscriptions: 'Abonnements',
+      health: 'Santé',
+      leisure: 'Loisirs',
+      shopping: 'Shopping',
+      otherExpense: 'Autres',
+    },
+  },
 } as const;
 
 export default bootstrap;
