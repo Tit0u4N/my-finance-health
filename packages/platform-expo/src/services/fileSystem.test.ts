@@ -65,12 +65,21 @@ vi.mock('expo-file-system', () => {
     }
     open() {
       const uri = this.uri;
+      let isClosed = false;
       return {
-        writeBytes: (bytes: Uint8Array) => {
+        // Async since SDK 58, like the native handle: the write lands after the call returns, and
+        // fails if the handle was closed in between.
+        writeBytes: async (bytes: Uint8Array) => {
+          await Promise.resolve();
+          if (isClosed) {
+            throw new Error('The file couldn’t be saved.');
+          }
           const existing = store.files.get(uri) ?? new Uint8Array();
           store.files.set(uri, new Uint8Array([...existing, ...bytes]));
         },
-        close: () => undefined,
+        close: () => {
+          isClosed = true;
+        },
       };
     }
     static pickFileAsync() {
@@ -277,6 +286,14 @@ describe('picked folders', () => {
 
     expect(await fs.fileInfo(`${token}/nope`)).toBeNull();
     await expect(fs.readFile('external:99/x')).rejects.toThrow(/not a folder picked/);
+  });
+
+  it('names the operation and the path in a failure, around the underlying reason', async () => {
+    const { fs } = await pickedFolder();
+
+    await expect(fs.writeFile('external:99/x', new Uint8Array([1]))).rejects.toThrow(
+      /^file system: writeFile "external:99\/x" failed — .*not a folder picked/,
+    );
   });
 
   it('copies across the sandbox boundary on rename, since a picked folder cannot be moved within', async () => {
