@@ -103,6 +103,15 @@ const settings = {
       baseCurrency: 'Devise de référence',
     },
     notAvailableYet: 'Pas encore disponible',
+    transfer: {
+      title: 'Sauvegarde et transfert',
+      exportTitle: "Exporter l'espace de travail",
+      exportSubtitle: 'Enregistrer une copie chiffrée dans iCloud Drive, Fichiers ou n’importe quel dossier',
+      exportSaved: '« {{name}} » enregistré ({{count}} fichiers).',
+      lock: "Verrouiller l'espace de travail",
+      switchTitle: "Changer d'espace de travail",
+      switchSubtitle: 'Importer ou ouvrir un autre espace de travail',
+    },
     actions: {
       switchFile: 'Changer de fichier',
       createBackup: 'Créer une sauvegarde',

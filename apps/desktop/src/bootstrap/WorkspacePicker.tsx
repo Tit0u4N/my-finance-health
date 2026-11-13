@@ -1,3 +1,4 @@
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { LocalWorkspaceRef, WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { Button } from '@repo/ui/components/Button';
@@ -13,6 +14,7 @@ export type WorkspacePickerProps = {
 };
 
 export function WorkspacePicker({ recent, fileSystem, onOpen, onStartCreate }: WorkspacePickerProps) {
+  const { t } = useTranslation();
   const { onBrowse, error } = useWorkspacePicker({ fileSystem, onOpen });
   const localRecent = recent.filter((entry): entry is LocalWorkspaceRef => entry.mode === 'local');
 
@@ -20,7 +22,7 @@ export function WorkspacePicker({ recent, fileSystem, onOpen, onStartCreate }: W
     <div className="flex flex-col gap-4">
       {localRecent.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <span className="text-label text-muted">Recent</span>
+          <span className="text-label text-muted">{t('bootstrap:picker.recent')}</span>
           {localRecent.map((entry) => (
             <button
               key={entry.id}
@@ -36,17 +38,17 @@ export function WorkspacePicker({ recent, fileSystem, onOpen, onStartCreate }: W
       ) : (
         <EmptyState
           icon={FolderOpen}
-          title="No recent workspace"
-          subtitle="Open an existing file or create a new one."
+          title={t('bootstrap:picker.noRecentTitle')}
+          subtitle={t('bootstrap:picker.noRecentSubtitle')}
         />
       )}
       {error && <span className="text-body-sm text-neg">{error}</span>}
       <div className="flex gap-2">
         <Button tone="secondary" fullWidth onClick={onBrowse}>
-          Open a file…
+          {t('bootstrap:picker.openFile')}
         </Button>
         <Button tone="primary" fullWidth onClick={onStartCreate}>
-          Create new…
+          {t('bootstrap:picker.createNew')}
         </Button>
       </div>
     </div>

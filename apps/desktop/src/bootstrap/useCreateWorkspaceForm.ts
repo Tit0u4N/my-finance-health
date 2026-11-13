@@ -1,4 +1,5 @@
-import { validateNewPassphrase } from '@repo/app-core/bootstrap/newPassphrase';
+import { describePassphraseFeedback } from '@repo/app-core/bootstrap/newPassphrase';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
@@ -23,6 +24,10 @@ export type UseCreateWorkspaceFormResult = {
   readonly confirmSecret: string;
   readonly onConfirmSecretChange: (secret: string) => void;
   readonly error: string | undefined;
+  /** Live passphrase feedback — computed from the fields, so it shows while the button is disabled. */
+  readonly secretError: string | undefined;
+  readonly confirmError: string | undefined;
+  readonly confirmSuccess: string | undefined;
   readonly canSubmit: boolean;
   readonly onSubmit: () => Promise<void>;
   readonly remember: boolean;
@@ -35,6 +40,7 @@ export function useCreateWorkspaceForm({
   biometricUnlock,
   onCreate,
 }: UseCreateWorkspaceFormDeps): UseCreateWorkspaceFormResult {
+  const { t } = useTranslation();
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>('EUR');
   const [secret, setSecret] = useState('');
   const [confirmSecret, setConfirmSecret] = useState('');
@@ -42,13 +48,12 @@ export function useCreateWorkspaceForm({
   const [remember, setRemember] = useState(false);
   const biometric = useBiometricAvailability(biometricUnlock);
 
-  const canSubmit = validateNewPassphrase(secret, confirmSecret) === undefined;
+  const passphrase = describePassphraseFeedback(secret, confirmSecret, t);
+  const canSubmit = passphrase.canSubmit;
 
   const onSubmit = async (): Promise<void> => {
     setError(undefined);
-    const passphraseError = validateNewPassphrase(secret, confirmSecret);
-    if (passphraseError) {
-      setError(passphraseError);
+    if (!passphrase.canSubmit) {
       return;
     }
     let path: string | null;
@@ -58,7 +63,7 @@ export function useCreateWorkspaceForm({
         suggestedName: 'My Finance Health.mfhdb',
       });
     } catch {
-      setError('Could not open the save dialog.');
+      setError(t('bootstrap:error.saveDialog'));
       return;
     }
     if (!path) {
@@ -80,6 +85,9 @@ export function useCreateWorkspaceForm({
     confirmSecret,
     onConfirmSecretChange: setConfirmSecret,
     error,
+    secretError: passphrase.secretError,
+    confirmError: passphrase.confirmError,
+    confirmSuccess: passphrase.confirmSuccess,
     canSubmit,
     onSubmit,
     remember,

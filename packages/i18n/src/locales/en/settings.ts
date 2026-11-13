@@ -115,8 +115,16 @@ const settings = {
     actions: {
       switchFile: 'Switch file',
       createBackup: 'Create backup',
-      // apps/mobile's Data screen — the one real affordance carried over from the old
-      // SettingsPlaceholder route, now a real row rather than a placeholder link.
+    },
+    // apps/mobile's Data screen: file actions on the open workspace.
+    transfer: {
+      title: 'Backup and transfer',
+      exportTitle: 'Export workspace',
+      exportSubtitle: 'Save an encrypted copy to iCloud Drive, Files or any folder',
+      exportSaved: 'Saved “{{name}}” ({{count}} files).',
+      lock: 'Lock workspace',
+      switchTitle: 'Switch workspace',
+      switchSubtitle: 'Import or open another workspace',
     },
     // apps/mobile's Data screen: real read-only workspace facts shown regardless of file
     // capability, above the (desktop-only) file metadata block.

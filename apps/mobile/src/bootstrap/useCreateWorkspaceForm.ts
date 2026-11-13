@@ -9,7 +9,8 @@
 // "Mobile case"), so for a device workspace the user may instead ask for a copy to be saved there
 // right after creation — optional, and always possible later from Settings → Data.
 
-import { MIN_PASSPHRASE_LENGTH, validateNewPassphrase } from '@repo/app-core/bootstrap/newPassphrase';
+import { describePassphraseFeedback, MIN_PASSPHRASE_LENGTH } from '@repo/app-core/bootstrap/newPassphrase';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
@@ -38,7 +39,12 @@ export type UseCreateWorkspaceFormResult = {
   readonly onSecretChange: (secret: string) => void;
   readonly confirmSecret: string;
   readonly onConfirmSecretChange: (secret: string) => void;
+  /** Why the form cannot be submitted, beyond the live passphrase messages below. */
   readonly error: string | undefined;
+  /** Live passphrase feedback — computed from the fields, so it shows while the button is disabled. */
+  readonly secretError: string | undefined;
+  readonly confirmError: string | undefined;
+  readonly confirmSuccess: string | undefined;
   /** False until the synced folder is known to be available — the location choice is hidden then. */
   readonly isCloudAvailable: boolean;
   readonly location: WorkspaceLocation;
@@ -57,6 +63,7 @@ export function useCreateWorkspaceForm({
   platform,
   onCreate,
 }: UseCreateWorkspaceFormDeps): UseCreateWorkspaceFormResult {
+  const { t } = useTranslation();
   const fileSystem = platform.fileSystem as FileSystemService;
   const [name, setName] = useState(DEFAULT_NAME);
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>('EUR');
@@ -86,7 +93,8 @@ export function useCreateWorkspaceForm({
   }, [fileSystem]);
 
   const isCloud = location === 'cloud' && syncedRoot !== null;
-  const canSubmit = validateNewPassphrase(secret, confirmSecret) === undefined && !isSubmitting;
+  const passphrase = describePassphraseFeedback(secret, confirmSecret, t);
+  const canSubmit = passphrase.canSubmit && !isSubmitting;
 
   const onChooseBackupFolder = async (): Promise<void> => {
     try {
@@ -95,14 +103,12 @@ export function useCreateWorkspaceForm({
         setBackupFolder(folder);
       }
     } catch {
-      setError('Could not open the folder picker.');
+      setError(t('bootstrap:error.folderPicker'));
     }
   };
 
   const onSubmit = async (): Promise<void> => {
-    const passphraseError = validateNewPassphrase(secret, confirmSecret);
-    if (passphraseError) {
-      setError(passphraseError);
+    if (!passphrase.canSubmit) {
       return;
     }
     setError(undefined);
@@ -117,11 +123,7 @@ export function useCreateWorkspaceForm({
         isCloud ? null : backupFolder,
       );
     } catch {
-      setError(
-        isCloud
-          ? 'Could not prepare a folder in iCloud Drive. Check that iCloud Drive is on, or keep it on this device.'
-          : 'Could not prepare a place for the workspace on this device.',
-      );
+      setError(t(isCloud ? 'bootstrap:error.prepareCloud' : 'bootstrap:error.prepareDevice'));
     } finally {
       setIsSubmitting(false);
     }
@@ -137,6 +139,9 @@ export function useCreateWorkspaceForm({
     confirmSecret,
     onConfirmSecretChange: setConfirmSecret,
     error,
+    secretError: passphrase.secretError,
+    confirmError: passphrase.confirmError,
+    confirmSuccess: passphrase.confirmSuccess,
     isCloudAvailable: syncedRoot !== null,
     location: isCloud ? 'cloud' : 'device',
     onLocationChange: setLocation,
