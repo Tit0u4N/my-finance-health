@@ -74,8 +74,8 @@ coverage
 # --- React Native / Expo ---
 .expo/
 .expo-shared/
-android/
-ios/
+/apps/mobile/android/
+/apps/mobile/ios/
 expo-env.d.ts
 
 # --- turbo ---
