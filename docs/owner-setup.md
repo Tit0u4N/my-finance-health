@@ -191,7 +191,7 @@ Never commit these values. Keep them in your shell profile or CI secrets (§7).
 | Feature | Owner action | Status |
 |---|---|---|
 | Desktop auto-update (`canUpdate`, currently `false`) | Generate the updater key pair: `bunx tauri signer generate -w ~/.tauri/mfh.key`. Keep the private key and its password secret (CI secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, §7). Choose where update manifests are hosted. | not wired |
-| Face ID / fingerprint unlock on mobile (`hasBiometricUnlock`, currently `false`) | No account needed. The Face ID usage text goes in `app.json` with the `expo-local-authentication` plugin, then a prebuild. Test it on a real device. | deferred |
+| Face ID / fingerprint unlock on mobile (`hasBiometricUnlock`) | No account needed. The Face ID usage text is in `app.json` (`expo-local-authentication` and `expo-secure-store` plugins); run `bun run prebuild` and rebuild the dev client. Simulator: *Features → Face ID → Enrolled*, then *Matching Face*. Confirm once on a real device (Secure Enclave). | built — needs a prebuild |
 | Online mode (remote API workspaces) | Host the API, own its domain and TLS, and decide where API keys are issued | not wired |
 | App Store / Play Store listings | Privacy policy URL, screenshots, app privacy questionnaire. Data stays on device or in the user's own iCloud: declare no collection unless online mode lands. | before store release |
 

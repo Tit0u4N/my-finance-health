@@ -6,6 +6,7 @@
 
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
+import { useWorkspaceBiometric } from '@repo/app-core/providers/useWorkspaceBiometric';
 import { useWorkspaceLock } from '@repo/app-core/providers/useWorkspaceLock';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
 import { useCategories } from '@repo/app-core/queries/useCategories';
@@ -19,6 +20,18 @@ import { Download, FolderOpen, Save } from 'lucide-react';
 export type DatabaseMetadata = { readonly label: string; readonly value: string };
 export type DatabaseAction = { readonly id: string; readonly label: string; readonly icon: LucideIcon };
 
+/** This device's biometric copy of the passphrase (open-questions.md #26) — absent when the
+ * platform or device has none, or no local workspace is open. */
+export type DatabaseBiometric = {
+  readonly title: string;
+  readonly description: string;
+  readonly isEnrolled: boolean;
+  readonly turnOffLabel: string;
+  readonly isUpdating: boolean;
+  readonly error: string | undefined;
+  readonly onTurnOff: () => void;
+};
+
 export type UseDatabaseScreenResult =
   | { readonly ready: false }
   | { readonly ready: true; readonly isAvailable: false }
@@ -30,6 +43,7 @@ export type UseDatabaseScreenResult =
       readonly actions: readonly DatabaseAction[];
       readonly canLock: boolean;
       readonly onLock: () => void;
+      readonly biometric: DatabaseBiometric | undefined;
     };
 
 export function useDatabaseScreen(): UseDatabaseScreenResult {
@@ -37,6 +51,7 @@ export function useDatabaseScreen(): UseDatabaseScreenResult {
   const platform = usePlatform();
   const isAvailable = platform.capabilities.canWriteFile;
   const workspaceLock = useWorkspaceLock();
+  const workspaceBiometric = useWorkspaceBiometric();
 
   const accountsQuery = useAccounts();
   const categoriesQuery = useCategories();
@@ -88,6 +103,19 @@ export function useDatabaseScreen(): UseDatabaseScreenResult {
       { id: 'backup', label: t('settings:database.actions.createBackup'), icon: Save },
       { id: 'export', label: t('common:action.exportCsv'), icon: Download },
     ],
+    biometric: workspaceBiometric.isAvailable
+      ? {
+          title: t('settings:database.biometric.title', { label: workspaceBiometric.label }),
+          description: workspaceBiometric.isEnrolled
+            ? t('settings:database.biometric.enabledDescription', { label: workspaceBiometric.label })
+            : t('settings:database.biometric.disabledDescription'),
+          isEnrolled: workspaceBiometric.isEnrolled,
+          turnOffLabel: t('settings:database.biometric.turnOff'),
+          isUpdating: workspaceBiometric.isUpdating,
+          error: workspaceBiometric.forgetFailed ? t('settings:database.biometric.turnOffFailed') : undefined,
+          onTurnOff: workspaceBiometric.onForget,
+        }
+      : undefined,
     canLock: workspaceLock.canLock,
     onLock: () => {
       if (workspaceLock.canLock) {

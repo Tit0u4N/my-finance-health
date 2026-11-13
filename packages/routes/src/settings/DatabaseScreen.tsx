@@ -7,7 +7,7 @@ import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { Button } from '@repo/ui/components/Button';
 import { EmptyState } from '@repo/ui/components/EmptyState';
 import { Panel } from '@repo/ui/components/Panel';
-import { Database, Lock, Trash2 } from 'lucide-react';
+import { Database, Fingerprint, Lock, Trash2 } from 'lucide-react';
 import { useDatabaseScreen } from './useDatabaseScreen';
 
 export function DatabaseScreen() {
@@ -30,21 +30,43 @@ export function DatabaseScreen() {
     );
   }
 
-  const { path, metadata, actions, canLock, onLock } = screen;
+  const { path, metadata, actions, canLock, onLock, biometric } = screen;
 
   return (
     <>
-      {canLock && (
+      {(canLock || biometric) && (
         <Panel
           title={t('settings:database.sessionPanel.title')}
           subtitle={t('settings:database.sessionPanel.subtitle')}
         >
-          <div className="flex items-center gap-4">
-            <div className="flex-1 text-body-sm text-muted">{t('settings:database.lockWorkspace.description')}</div>
-            <Button tone="secondary" size="sm" icon={Lock} onClick={onLock}>
-              {t('settings:database.lockWorkspace.label')}
-            </Button>
-          </div>
+          {canLock && (
+            <div className="flex items-center gap-4">
+              <div className="flex-1 text-body-sm text-muted">{t('settings:database.lockWorkspace.description')}</div>
+              <Button tone="secondary" size="sm" icon={Lock} onClick={onLock}>
+                {t('settings:database.lockWorkspace.label')}
+              </Button>
+            </div>
+          )}
+          {biometric && (
+            <div className="mt-4 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="text-foreground text-label-strong">{biometric.title}</div>
+                <div className="text-body-sm text-muted">{biometric.description}</div>
+                {biometric.error && <div className="text-body-sm text-neg">{biometric.error}</div>}
+              </div>
+              {biometric.isEnrolled && (
+                <Button
+                  tone="secondary"
+                  size="sm"
+                  icon={Fingerprint}
+                  disabled={biometric.isUpdating}
+                  onClick={biometric.onTurnOff}
+                >
+                  {biometric.turnOffLabel}
+                </Button>
+              )}
+            </div>
+          )}
         </Panel>
       )}
 

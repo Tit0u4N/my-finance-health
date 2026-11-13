@@ -12,6 +12,7 @@ import { Button } from '@/ui/Button';
 import { Field } from '@/ui/Field';
 import { OptionGrid, type OptionGridItem } from '@/ui/OptionGrid';
 import { Sheet } from '@/ui/Sheet';
+import { Switch } from '@/ui/Switch';
 import { useCreateWorkspaceForm, type WorkspaceLocation } from './useCreateWorkspaceForm';
 
 const CURRENCY_OPTIONS: readonly OptionGridItem<CurrencyCode>[] = [
@@ -24,7 +25,12 @@ type CreateWorkspaceSheetProps = {
   readonly isOpen: boolean;
   readonly platform: Platform;
   readonly onClose: () => void;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, backupFolder: string | null) => void;
+  readonly onCreate: (
+    ref: WorkspaceRef,
+    input: CreateWorkspaceInput,
+    backupFolder: string | null,
+    remember: boolean,
+  ) => void;
 };
 
 /** New encrypted workspace, on this device or in iCloud Drive when available. The passphrase is the only key: nothing can
@@ -33,6 +39,7 @@ export function CreateWorkspaceSheet({ isOpen, platform, onClose, onCreate }: Cr
   const { colors } = useColor();
   const { t } = useTranslation();
   const form = useCreateWorkspaceForm({ platform, onCreate });
+  const rememberLabel = t('bootstrap:unlock.rememberHere', { label: form.biometric.label });
   const locationOptions: readonly OptionGridItem<WorkspaceLocation>[] = [
     { icon: Cloud, label: t('bootstrap:create.locationCloud'), value: 'cloud' },
     { icon: Smartphone, label: t('bootstrap:create.locationDevice'), value: 'device' },
@@ -87,6 +94,12 @@ export function CreateWorkspaceSheet({ isOpen, platform, onClose, onCreate }: Cr
         {...(form.confirmError === undefined ? {} : { error: form.confirmError })}
         {...(form.confirmSuccess === undefined ? {} : { success: form.confirmSuccess })}
       />
+      {form.biometric.isSupported && (
+        <View style={styles.remember}>
+          <Text style={[styles.rememberLabel, { color: colors.foreground }]}>{rememberLabel}</Text>
+          <Switch accessibilityLabel={rememberLabel} onValueChange={form.onRememberChange} value={form.remember} />
+        </View>
+      )}
       {form.error !== undefined && (
         <Text accessibilityLiveRegion="polite" style={[styles.hint, { color: colors.neg }]}>
           {form.error}
@@ -123,4 +136,6 @@ const styles = StyleSheet.create({
   hint: { fontSize: 13, lineHeight: 18, marginBottom: SPACING.xs },
   location: { gap: SPACING.xs, marginTop: SPACING.sm },
   locationTitle: { fontSize: 15, fontWeight: '600' },
+  remember: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: SPACING.sm },
+  rememberLabel: { flex: 1, fontSize: 15 },
 });

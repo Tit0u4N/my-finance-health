@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 export type UseBiometricUnlockDeps = {
   readonly service: BiometricUnlockService | undefined;
   readonly ref: WorkspaceRef;
+  /** Shown by the OS prompt. */
+  readonly reason?: string;
 };
 
 export type UseBiometricUnlockResult = {
@@ -16,20 +18,24 @@ export type UseBiometricUnlockResult = {
   readonly prompt: () => Promise<string | null>;
 };
 
-const UNLOCK_REASON = 'Unlock your workspace';
+const DEFAULT_UNLOCK_REASON = 'Unlock your workspace';
 
 /** Resolves whether biometric unlock is available and already enrolled for one workspace ref,
- * keyed by its stable id (open-questions.md #23) — a bootstrap-local helper, not pushed into
- * @repo/app-core, since it's UI orchestration around the existing WorkspaceOpener port. Storing
- * or forgetting the entry is owned by useBootstrapScreen, which alone knows whether the unlock
- * attempt that follows actually succeeds.
+ * keyed by its stable id (open-questions.md #23). Shared by every host that declares
+ * `hasBiometricUnlock` (desktop's Touch ID, mobile's Face ID) — only the BiometricUnlockService
+ * adapter differs. Storing or forgetting the entry is owned by useBiometricEnrollment, which alone
+ * knows whether the unlock attempt that follows actually succeeds.
  *
  * Status and enrollment are resolved in one sequential chain, not two independent effects: a
- * status-only effect (as apps/desktop/src/bootstrap/useBiometricAvailability.ts has, for the
+ * status-only effect (as useBiometricAvailability.ts has, for the
  * create-workspace form which has no ref yet) would let an enrollment effect keyed on the
  * not-yet-resolved `isSupported` flag see it as `false` on the very first render and report
  * "done checking" a tick before availability itself is even known. */
-export function useBiometricUnlock({ service, ref }: UseBiometricUnlockDeps): UseBiometricUnlockResult {
+export function useBiometricUnlock({
+  service,
+  ref,
+  reason = DEFAULT_UNLOCK_REASON,
+}: UseBiometricUnlockDeps): UseBiometricUnlockResult {
   const [isSupported, setIsSupported] = useState(false);
   const [label, setLabel] = useState('Biometric unlock');
   const [isEnrolled, setIsEnrolled] = useState(false);
@@ -74,6 +80,6 @@ export function useBiometricUnlock({ service, ref }: UseBiometricUnlockDeps): Us
     label,
     isEnrolled,
     isChecking,
-    prompt: () => (service ? service.get(ref.id, UNLOCK_REASON) : Promise.resolve(null)),
+    prompt: () => (service ? service.get(ref.id, reason) : Promise.resolve(null)),
   };
 }
