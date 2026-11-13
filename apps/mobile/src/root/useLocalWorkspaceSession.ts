@@ -1,35 +1,41 @@
+import { startOccupancyHeartbeat } from '@repo/app-core/bootstrap/occupancyHeartbeat';
 import type { LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-
-const HEARTBEAT_INTERVAL_MS = 15_000;
 
 /**
  * Keeps the occupancy lock fresh while a workspace is open and the app is in the foreground.
  * Counterpart of apps/desktop's hook of the same name, minus window-close handling: a phone app is
  * never "closed" in an observable way, so the session is released only by the user locking or
- * switching. A suspended app stops heartbeating — the lock goes stale after the staleness window
- * and this same device reclaims it on return (the lock is keyed by device id), while another
- * device correctly sees the workspace as free once it is stale (start-roadmap.md §9's
- * expiration rule).
+ * switching.
+ *
+ * A suspended app stops heartbeating, so its lock goes stale and another device may take it over.
+ * Coming back to the foreground beats immediately — before the user can act — and if the lock was
+ * taken in the meantime `onLost` fires and the app locks itself instead of writing over the other
+ * device (audit P6). A lock that is merely stale, with nobody having taken it, is simply refreshed.
  */
-export function useLocalWorkspaceSession(session: LocalWorkspaceSession | null): void {
+export function useLocalWorkspaceSession(session: LocalWorkspaceSession | null, onLost: () => void): void {
+  // The latest callback without restarting the heartbeat whenever the caller re-renders.
+  const onLostRef = useRef(onLost);
+  useEffect(() => {
+    onLostRef.current = onLost;
+  });
+
   useEffect(() => {
     if (!session) {
       return;
     }
 
-    const beat = (): void => {
-      void session.heartbeat();
-    };
-    let interval: ReturnType<typeof setInterval> | undefined;
+    let stopBeating: (() => void) | undefined;
     const start = (): void => {
-      beat();
-      interval = setInterval(beat, HEARTBEAT_INTERVAL_MS);
+      stopBeating = startOccupancyHeartbeat(session, () => {
+        stopBeating = undefined;
+        onLostRef.current();
+      });
     };
     const stop = (): void => {
-      clearInterval(interval);
-      interval = undefined;
+      stopBeating?.();
+      stopBeating = undefined;
     };
 
     if (AppState.currentState === 'active') {
