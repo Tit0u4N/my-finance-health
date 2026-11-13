@@ -1,6 +1,5 @@
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
-import { Link } from 'expo-router';
-import { ArrowLeft, Database, FilePlus, Lock, Repeat, Upload } from 'lucide-react-native';
+import { ArrowLeft, Database, Lock, Repeat, Upload } from 'lucide-react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
@@ -89,10 +88,6 @@ export function DataScreen({ onBack }: DataScreenProps) {
               {screen.fileActions.exportStatus.text}
             </Text>
           )}
-
-          <Link asChild href="/onboarding">
-            <SettingsRow icon={FilePlus} iconColor={colors.pos} title={screen.newWorkspaceLabel} />
-          </Link>
 
           {!screen.isAvailable && (
             <EmptyState icon={Database} subtitle={screen.emptySubtitle} title={screen.emptyTitle} />

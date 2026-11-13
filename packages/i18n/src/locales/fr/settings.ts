@@ -106,7 +106,6 @@ const settings = {
     actions: {
       switchFile: 'Changer de fichier',
       createBackup: 'Créer une sauvegarde',
-      newWorkspace: 'Configurer un nouvel espace de travail',
     },
     workspacePanel: {
       title: 'Espace de travail',

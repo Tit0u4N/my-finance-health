@@ -87,8 +87,8 @@ Accounts + Settings pass: `ArrowLeft` (every pushed sub-screen's back `RoundButt
 (`SettingsRow`'s default trailing glyph), `Sun` / `Moon` / `Globe` (Preferences' Theme grid),
 `Languages` (Preferences' Language grid), `Coins` (the exchange-rates empty state), `SlidersHorizontal`
 / `Tag` / `Database` / `Info` (the Settings root menu's row icons), `Lock` (the "Encrypted" badge,
-capability-gated), `FilePlus` (the Data screen's "Set up a new workspace" row — the one real
-affordance carried over from the now-deleted `SettingsPlaceholder`). Plus the account-type/category
+capability-gated), `FilePlus` (onboarding only — the Data screen's "Set up a new workspace" row was removed 2026-11-13;
+that flow is no longer reachable from Settings). Plus the account-type/category
 icon sets (`ACCOUNT_TYPE_ICON`, `ACCOUNT_TYPE_ICON_SLUG`, `categoryIcon`) `visuals.ts` covers.
 
 **Where these live, and why not in `visuals.ts`**: `visuals.ts` maps *data values* — an
