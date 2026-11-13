@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_STORAGE_MODE: 'inMemory' | 'classic';
+  readonly VITE_STORAGE_MODE?: 'inMemory' | 'classic';
 }
 
 interface ImportMeta {
