@@ -89,7 +89,6 @@ _bmad/
 .github/prompts/
 .github/copilot-instructions.md
 graphify-out/
-CLAUDE.md
 .mcp.json
 .claude/skills/shadcn/
 
