@@ -136,7 +136,13 @@ export function useBootstrapScreen(
   function run(ref: WorkspaceRef, action: () => Promise<void>): void {
     setLastRef(ref);
     setIsPending(true);
-    void action().finally(() => setIsPending(false));
+    // Expected failures come back as Results and land in `bootstrap.state`; a rejection here is an
+    // unexpected one (a native file error, say) and must reach the user instead of dying unhandled.
+    void action()
+      .catch((error: unknown) => {
+        Alert.alert('Something went wrong', error instanceof Error ? error.message : String(error));
+      })
+      .finally(() => setIsPending(false));
   }
 
   const onCloseSheets = (): void => {
