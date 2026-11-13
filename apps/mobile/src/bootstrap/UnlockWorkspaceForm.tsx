@@ -1,3 +1,4 @@
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import { Lock } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
@@ -16,18 +17,19 @@ type UnlockWorkspaceFormProps = {
 
 export function UnlockWorkspaceForm({ workspaceRef, onUnlock, onChooseAnother }: UnlockWorkspaceFormProps) {
   const { colors } = useColor();
+  const { t } = useTranslation();
   const form = useUnlockWorkspaceForm({ workspaceRef, onUnlock });
 
   return (
     <View style={styles.container}>
       <Avatar color={colors.muted} icon={Lock} size={44} soft />
       <Text style={[styles.title, { color: colors.foreground }]}>{workspaceRef.label}</Text>
-      <Text style={[styles.hint, { color: colors.muted }]}>Enter the passphrase to unlock this workspace.</Text>
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('bootstrap:unlock.hint')}</Text>
       <View style={styles.field}>
         <Field
           autoFocus
           isSecret
-          label="Passphrase"
+          label={t('bootstrap:passphrase.label')}
           onChangeText={form.onSecretChange}
           onSubmitEditing={form.onSubmit}
           returnKeyType="go"
@@ -35,8 +37,8 @@ export function UnlockWorkspaceForm({ workspaceRef, onUnlock, onChooseAnother }:
         />
       </View>
       <View style={styles.actions}>
-        <Button disabled={!form.canSubmit} label="Unlock" onPress={form.onSubmit} />
-        <Button label="Choose another workspace" onPress={onChooseAnother} tone="outline" />
+        <Button disabled={!form.canSubmit} label={t('bootstrap:unlock.submit')} onPress={form.onSubmit} />
+        <Button label={t('bootstrap:error.chooseAnother')} onPress={onChooseAnother} tone="outline" />
       </View>
     </View>
   );

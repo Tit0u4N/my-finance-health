@@ -1,3 +1,4 @@
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
@@ -14,6 +15,7 @@ export type UseWorkspacePickerResult = {
 };
 
 export function useWorkspacePicker({ fileSystem, onOpen }: UseWorkspacePickerDeps): UseWorkspacePickerResult {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | undefined>(undefined);
 
   const onBrowse = async (): Promise<void> => {
@@ -22,7 +24,7 @@ export function useWorkspacePicker({ fileSystem, onOpen }: UseWorkspacePickerDep
     try {
       path = await fileSystem.pickFile({ extensions: ['mfhdb'] });
     } catch {
-      setError('Could not open the file picker.');
+      setError(t('bootstrap:error.filePicker'));
       return;
     }
     if (!path) {

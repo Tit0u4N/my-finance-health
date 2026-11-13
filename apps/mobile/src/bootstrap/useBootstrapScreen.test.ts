@@ -4,11 +4,15 @@ import type { RepositorySet } from '@repo/domain/repositories/repositorySet';
 import { describe, expect, it } from 'vitest';
 import { progressLabel, viewForState, withSyncedWorkspaces } from './useBootstrapScreen';
 
+// Echoes the key: the copy itself is the i18n package's concern, this file tests which key is chosen.
+// biome-ignore lint/suspicious/noExplicitAny: a key-echoing stub is looser than the hook's bound `t`.
+const t = ((key: string) => key) as any;
+
 const ref: WorkspaceRef = { mode: 'local', id: 'w1', path: 'MyFinanceHealth/workspaces/a/Home.mfhdb', label: 'Home' };
 
 describe('viewForState', () => {
   it('shows the workspace list, with the recent workspaces, once nothing is designated', () => {
-    expect(viewForState({ kind: 'needs-designation', recent: [ref] }, null)).toEqual({
+    expect(viewForState({ kind: 'needs-designation', recent: [ref] }, null, t)).toEqual({
       kind: 'picker',
       recent: [ref],
       synced: [],
@@ -16,29 +20,29 @@ describe('viewForState', () => {
   });
 
   it('asks for the passphrase of the workspace awaiting unlock', () => {
-    expect(viewForState({ kind: 'needs-unlock', ref }, null)).toEqual({ kind: 'unlock', workspaceRef: ref });
+    expect(viewForState({ kind: 'needs-unlock', ref }, null, t)).toEqual({ kind: 'unlock', workspaceRef: ref });
   });
 
   it('turns a domain error into readable copy', () => {
-    const view = viewForState({ kind: 'failed', error: notFoundError('LocalWorkspace', 'x') }, null);
+    const view = viewForState({ kind: 'failed', error: notFoundError('LocalWorkspace', 'x') }, null, t);
 
-    expect(view).toEqual({ kind: 'error', message: "That file doesn't look like a my finance health workspace." });
+    expect(view).toEqual({ kind: 'error', message: 'bootstrap:error.notFound' });
   });
 
   it('labels the spinner with the cosmetic progress step while a workspace opens', () => {
-    expect(viewForState({ kind: 'ready', ref, repositories: {} as RepositorySet }, 'replaying')).toEqual({
+    expect(viewForState({ kind: 'ready', ref, repositories: {} as RepositorySet }, 'replaying', t)).toEqual({
       kind: 'loading',
-      label: 'Restoring recent changes…',
+      label: 'bootstrap:progress.replaying',
     });
-    expect(viewForState({ kind: 'idle' }, null)).toEqual({ kind: 'loading', label: 'Loading…' });
+    expect(viewForState({ kind: 'idle' }, null, t)).toEqual({ kind: 'loading', label: 'bootstrap:progress.loading' });
   });
 });
 
 describe('progressLabel', () => {
   it('has a label for every step, and a neutral one when there is none', () => {
-    expect(progressLabel('migrating')).toBe('Applying updates…');
-    expect(progressLabel('replaying')).toBe('Restoring recent changes…');
-    expect(progressLabel(null)).toBe('Opening…');
+    expect(progressLabel('migrating', t)).toBe('bootstrap:progress.migrating');
+    expect(progressLabel('replaying', t)).toBe('bootstrap:progress.replaying');
+    expect(progressLabel(null, t)).toBe('bootstrap:progress.opening');
   });
 });
 

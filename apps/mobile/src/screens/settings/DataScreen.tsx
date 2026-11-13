@@ -52,28 +52,28 @@ export function DataScreen({ onBack }: DataScreenProps) {
           </SectionGroup>
 
           {screen.fileActions && (
-            <SectionGroup title="Backup and transfer">
+            <SectionGroup title={t('settings:database.transfer.title')}>
               <SettingsRow
                 icon={Upload}
                 iconColor={colors.pos}
                 onPress={screen.fileActions.onExport}
                 showSeparator
-                subtitle="Save an encrypted copy to iCloud Drive, Files or any folder"
-                title="Export workspace"
+                subtitle={t('settings:database.transfer.exportSubtitle')}
+                title={t('settings:database.transfer.exportTitle')}
               />
               <SettingsRow
                 icon={Lock}
                 iconColor={colors.muted}
                 onPress={screen.fileActions.onLock}
                 showSeparator
-                title="Lock workspace"
+                title={t('settings:database.transfer.lock')}
               />
               <SettingsRow
                 icon={Repeat}
                 iconColor={colors.muted}
                 onPress={screen.fileActions.onSwitchWorkspace}
-                subtitle="Import or open another workspace"
-                title="Switch workspace"
+                subtitle={t('settings:database.transfer.switchSubtitle')}
+                title={t('settings:database.transfer.switchTitle')}
               />
             </SectionGroup>
           )}
