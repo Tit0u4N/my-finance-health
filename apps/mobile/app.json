@@ -11,8 +11,20 @@
       "supportsTablet": true,
       "bundleIdentifier": "app.myfinancehealth.mobile",
       "appleTeamId": "35V4HB4GBP",
+      "entitlements": {
+        "com.apple.developer.icloud-container-identifiers": ["iCloud.app.myfinancehealth.mobile"],
+        "com.apple.developer.icloud-services": ["CloudDocuments"],
+        "com.apple.developer.ubiquity-container-identifiers": ["iCloud.app.myfinancehealth.mobile"]
+      },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUbiquitousContainers": {
+          "iCloud.app.myfinancehealth.mobile": {
+            "NSUbiquitousContainerIsDocumentScopePublic": true,
+            "NSUbiquitousContainerName": "my finance health",
+            "NSUbiquitousContainerSupportedFolderLevels": "Any"
+          }
+        }
       }
     },
     "android": {

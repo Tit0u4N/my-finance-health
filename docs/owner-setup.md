@@ -66,7 +66,11 @@ a few hours to a few days.
      "supportsTablet": true,
      "bundleIdentifier": "app.myfinancehealth.mobile",
      "appleTeamId": "XXXXXXXXXX",
-     "usesIcloudStorage": true,
+     "entitlements": {
+       "com.apple.developer.icloud-container-identifiers": ["iCloud.app.myfinancehealth.mobile"],
+       "com.apple.developer.icloud-services": ["CloudDocuments"],
+       "com.apple.developer.ubiquity-container-identifiers": ["iCloud.app.myfinancehealth.mobile"]
+     },
      "infoPlist": {
        "NSUbiquitousContainers": {
          "iCloud.app.myfinancehealth.mobile": {
@@ -79,8 +83,9 @@ a few hours to a few days.
    }
    ```
 
-   - `usesIcloudStorage` adds the iCloud Documents entitlements and the container
-     `iCloud.app.myfinancehealth.mobile`.
+   - `entitlements` adds iCloud Documents and the container `iCloud.app.myfinancehealth.mobile`.
+     Don't use `ios.usesIcloudStorage` instead: it only takes effect when `expo-document-picker`
+     is installed (its config plugin writes the entitlements), which this app doesn't use.
    - `NSUbiquitousContainers` makes the folder appear as **iCloud Drive › my finance health**, on
      the iPhone in Files and on the Mac in Finder.
 3. **Rebuild:**
@@ -89,8 +94,17 @@ a few hours to a few days.
    cd apps/mobile && bun run prebuild --clean && bun run ios
    ```
 
-   With automatic signing, Xcode registers the App ID and the iCloud container on first build.
-   If it doesn't:
+   `expo run:ios` does not let Xcode update provisioning, so the first build after adding iCloud
+   fails with "Provisioning Profile … does not support the iCloud capability". Build once with
+   provisioning updates allowed — Xcode then enables iCloud on the App ID, registers the container
+   and regenerates the profile — and `bun run ios` works from then on:
+
+   ```bash
+   cd apps/mobile/ios && xcodebuild -workspace myfinancehealth.xcworkspace -scheme myfinancehealth \
+     -configuration Debug -destination 'generic/platform=iOS' -allowProvisioningUpdates build
+   ```
+
+   If that still fails:
    - At developer.apple.com → Identifiers, create the iCloud container
      `iCloud.app.myfinancehealth.mobile`.
    - Enable iCloud (CloudKit/Documents) on the App ID `app.myfinancehealth.mobile` and assign the
@@ -226,7 +240,7 @@ exported as `.pfx`. In that case, leave `WINDOWS_CERTIFICATE` empty and sign thr
 - [ ] Device walkthrough + unlock timing (§1)
 - [ ] Desktop ↔ mobile file portability check (§1)
 - [ ] Apple Developer Program enrolment (§2)
-- [ ] Add `appleTeamId`, `usesIcloudStorage`, `NSUbiquitousContainers` to `app.json`, then prebuild (§2)
+- [ ] Add `appleTeamId`, the iCloud `entitlements`, `NSUbiquitousContainers` to `app.json`, then prebuild (§2)
 - [ ] Verify the folder in Files › iCloud Drive and in Finder (§2)
 - [ ] Expo account + `eas.json` (§3)
 - [ ] Google Play Console account (§4)
