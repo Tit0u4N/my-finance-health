@@ -224,6 +224,9 @@ export function TransactionsScreen() {
           <div>
             <span className="text-label text-muted">{t('transactions:dialog.categoryLabel')}</span>
             <div className="mt-2">
+              {form.categoryChips.length === 0 && (
+                <p className="text-body-sm text-muted">{t('transactions:dialog.noCategories')}</p>
+              )}
               <CategoryChips
                 items={form.categoryChips}
                 value={form.categoryId}

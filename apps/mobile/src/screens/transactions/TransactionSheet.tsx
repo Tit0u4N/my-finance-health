@@ -104,6 +104,9 @@ export function TransactionSheet({ form }: TransactionSheetProps) {
 
       <View style={styles.block}>
         <Text style={[styles.label, { color: colors.muted }]}>{t('transactions:dialog.categoryLabel')}</Text>
+        {form.categories.length === 0 && (
+          <Text style={[styles.error, { color: colors.muted }]}>{t('transactions:dialog.noCategories')}</Text>
+        )}
         <View style={styles.chipWrap}>
           {form.categories.map((category) => (
             <Chip

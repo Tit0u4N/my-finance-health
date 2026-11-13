@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useThemeSync } from '../app/useThemeSync';
 import { createDesktopPlatform } from '../platform/createDesktopPlatform';
 import { BootstrapScreen } from './BootstrapScreen';
+import { StarterCategories } from './StarterCategories';
 import { useLocalApp } from './useLocalApp';
 
 export function LocalApp(): ReactElement {
@@ -25,7 +26,8 @@ export function LocalApp(): ReactElement {
 }
 
 function LocalAppBootstrap({ platform }: { readonly platform: Platform }): ReactElement {
-  const { bootstrap, progress, queryClient, router, lock, onBiometricIntent } = useLocalApp(platform);
+  const { bootstrap, progress, queryClient, router, lock, onBiometricIntent, isStarterPending, dismissStarter } =
+    useLocalApp(platform);
 
   if (bootstrap.state.kind === 'ready' && router) {
     return (
@@ -35,7 +37,7 @@ function LocalAppBootstrap({ platform }: { readonly platform: Platform }): React
         queryClient={queryClient}
         onLockWorkspace={lock}
       >
-        <ThemedRouter router={router} />
+        {isStarterPending ? <StarterCategories onDone={dismissStarter} /> : <ThemedRouter router={router} />}
       </AppStageProviders>
     );
   }

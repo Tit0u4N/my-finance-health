@@ -88,6 +88,33 @@ const bootstrap = {
     nothingFound: 'No workspace in that folder. Pick the folder that directly contains the .mfhdb file.',
     readError: 'Could not read that folder.',
   },
+  starter: {
+    title: 'Pick your categories',
+    hint: 'Tick the ones you want to start with. You can rename, add or remove categories anytime in Settings.',
+    income: 'Income',
+    expense: 'Expenses',
+    confirm_one: 'Add {{count}} category',
+    confirm_other: 'Add {{count}} categories',
+    confirmNone: 'Continue without categories',
+    skip: 'Skip for now',
+    error: 'Could not add the categories. Try again.',
+    categories: {
+      salary: 'Salary',
+      freelance: 'Freelance',
+      interest: 'Interest',
+      refunds: 'Refunds',
+      rent: 'Rent',
+      groceries: 'Groceries',
+      utilities: 'Utilities',
+      transport: 'Transport',
+      eatingOut: 'Eating out',
+      subscriptions: 'Subscriptions',
+      health: 'Health',
+      leisure: 'Leisure',
+      shopping: 'Shopping',
+      otherExpense: 'Other',
+    },
+  },
 } as const;
 
 export default bootstrap;
