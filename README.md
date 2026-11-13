@@ -150,7 +150,7 @@ Still open for 1.0.0:
 - A signed and notarized macOS bundle from a release pull request is still to be confirmed; Windows builds are unsigned.
 - Desktop local mode has only been walked through on macOS (no WebDriver there, so no desktop E2E).
 - No end-to-end suites are wired yet (Playwright, WebdriverIO, Maestro).
-- Desktop auto-update (`canUpdate`) is not wired, and there is no general secrets vault: the migrating / replaying bootstrap states are not yet reachable.
+- Desktop auto-update is wired to the repository's GitHub releases but stays dormant until the `TAURI_SIGNING_*` CI secrets are set. There is no general secrets vault, and the migrating / replaying bootstrap states are not yet reachable.
 - Store listings (privacy policy, screenshots, privacy questionnaire) are not started.
 
 Out of scope for release 1 (see [docs/start-roadmap.md](docs/start-roadmap.md) §17): online mode and API hosting, per-user authentication, journal merge across devices, local ↔ online sync, several workspaces open at once.

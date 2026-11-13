@@ -24,6 +24,8 @@ serde_json = "1"
 thiserror = "2"
 argon2 = "0.6"
 base64 = "0.22"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 # rusqlite's bundled-sqlcipher feature falls back to the OS's own crypto library (CommonCrypto on
 # macOS) when no system OpenSSL is configured, so macOS builds fast with nothing installed. Other

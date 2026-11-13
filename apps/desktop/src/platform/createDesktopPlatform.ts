@@ -15,6 +15,7 @@ import { createLocalStorageKeyValueStore } from '@repo/platform-tauri/services/k
 import { createNavigatorLocalization } from '@repo/platform-tauri/services/localization';
 import { createWebCryptoRandom } from '@repo/platform-tauri/services/random';
 import { createTauriSqlDriver } from '@repo/platform-tauri/services/sqlDriver';
+import { createTauriUpdater } from '@repo/platform-tauri/services/updater';
 import ky from 'ky';
 
 export function createDesktopPlatform(): Platform {
@@ -28,7 +29,7 @@ export function createDesktopPlatform(): Platform {
       hasEncryptedSqlDriver: true,
       worksOffline: true,
       canControlWindow: true,
-      canUpdate: false,
+      canUpdate: true,
     },
     keyValueStore: createLocalStorageKeyValueStore(window.localStorage),
     clock: createSystemClock({ systemTimezone: () => Intl.DateTimeFormat().resolvedOptions().timeZone }),
@@ -38,5 +39,6 @@ export function createDesktopPlatform(): Platform {
     fileSystem: createTauriFileSystem(),
     sqlDriver: createTauriSqlDriver(),
     biometricUnlock: createTauriBiometricUnlock(),
+    updater: createTauriUpdater(),
   };
 }
