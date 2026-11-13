@@ -51,6 +51,8 @@ const common = {
   },
   category: {
     other: 'Autre',
+    emptyExpense: 'Aucune catégorie de dépense. Ajoutez-en une dans Paramètres → Catégories.',
+    emptyIncome: 'Aucune catégorie de revenu. Ajoutez-en une dans Paramètres → Catégories.',
   },
   brand: {
     name: 'My Finance Health',
