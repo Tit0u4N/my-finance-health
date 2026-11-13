@@ -23,6 +23,9 @@ export type PersistedPreferences = {
   readonly sidebarMode: SidebarMode;
   readonly amountsHidden: boolean;
   readonly language: LanguagePreference;
+  /** Lock the open workspace as soon as the app leaves the foreground. Device-local, off by
+   *  default (audit I8); only hosts with a background state to observe offer it (apps/mobile). */
+  readonly autoLock: boolean;
 };
 
 export type PreferencesState = PersistedPreferences & {
@@ -30,6 +33,7 @@ export type PreferencesState = PersistedPreferences & {
   readonly setSidebarMode: (sidebarMode: SidebarMode) => void;
   readonly toggleAmountsHidden: () => void;
   readonly setLanguage: (language: LanguagePreference) => void;
+  readonly setAutoLock: (autoLock: boolean) => void;
 };
 
 const PREFERENCES_KEY = 'preferences';
@@ -39,6 +43,7 @@ const DEFAULT_PREFERENCES: PersistedPreferences = {
   sidebarMode: 'expanded',
   amountsHidden: false,
   language: 'system',
+  autoLock: false,
 };
 
 function isLanguagePreference(value: unknown): value is LanguagePreference {
@@ -51,6 +56,7 @@ function toPersisted(state: PreferencesState): PersistedPreferences {
     sidebarMode: state.sidebarMode,
     amountsHidden: state.amountsHidden,
     language: state.language,
+    autoLock: state.autoLock,
   };
 }
 
@@ -71,6 +77,10 @@ export function createPreferencesStore(keyValueStore: KeyValueStore): StoreApi<P
     },
     toggleAmountsHidden: () => {
       set((state) => ({ amountsHidden: !state.amountsHidden }));
+      persist(get());
+    },
+    setAutoLock: (autoLock) => {
+      set({ autoLock });
       persist(get());
     },
     setLanguage: (language) => {
@@ -102,11 +112,13 @@ export async function hydratePreferencesStore(
       parsed.sidebarMode === 'expanded' || parsed.sidebarMode === 'collapsed' ? parsed.sidebarMode : undefined;
     const amountsHidden = typeof parsed.amountsHidden === 'boolean' ? parsed.amountsHidden : undefined;
     const language = isLanguagePreference(parsed.language) ? parsed.language : undefined;
+    const autoLock = typeof parsed.autoLock === 'boolean' ? parsed.autoLock : undefined;
     store.setState({
       ...(themeMode !== undefined && { themeMode }),
       ...(sidebarMode !== undefined && { sidebarMode }),
       ...(amountsHidden !== undefined && { amountsHidden }),
       ...(language !== undefined && { language }),
+      ...(autoLock !== undefined && { autoLock }),
     });
   } catch {
     // Corrupt value — keep the defaults already in the store rather than failing bootstrap over a display setting.

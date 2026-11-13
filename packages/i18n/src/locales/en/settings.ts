@@ -115,9 +115,16 @@ const settings = {
     actions: {
       switchFile: 'Switch file',
       createBackup: 'Create backup',
-      // apps/mobile's Data screen — the one real affordance carried over from the old
-      // SettingsPlaceholder route, now a real row rather than a placeholder link.
-      newWorkspace: 'Set up a new workspace',
+    },
+    // apps/mobile's Data screen: file actions on the open workspace.
+    transfer: {
+      title: 'Backup and transfer',
+      exportTitle: 'Export workspace',
+      exportSubtitle: 'Save an encrypted copy to iCloud Drive, Files or any folder',
+      exportSaved: 'Saved “{{name}}” ({{count}} files).',
+      lock: 'Lock workspace',
+      switchTitle: 'Switch workspace',
+      switchSubtitle: 'Import or open another workspace',
     },
     // apps/mobile's Data screen: real read-only workspace facts shown regardless of file
     // capability, above the (desktop-only) file metadata block.
@@ -132,6 +139,19 @@ const settings = {
     lockWorkspace: {
       label: 'Lock workspace',
       description: 'Returns to the unlock screen. The passphrase (or biometrics, if enrolled) is needed again.',
+    },
+    // open-questions.md #26: this device's biometric copy of the passphrase. Turning it on stays
+    // on the unlock/create forms, the only places that hold the passphrase.
+    biometric: {
+      title: 'Unlock with {{label}}',
+      enabledDescription: 'This device keeps a copy of the passphrase that only {{label}} can release.',
+      disabledDescription: 'Off. Turn it on from the unlock screen the next time you unlock.',
+      turnOff: 'Turn off',
+      turnOffFailed: 'Could not turn it off. Try again.',
+    },
+    autoLock: {
+      title: 'Lock when leaving the app',
+      description: 'Locks the workspace as soon as the app goes to the background.',
     },
     dangerZonePanel: {
       title: 'Danger zone',

@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 27.7.2",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6833923317",
+        "appleTeamId": "35V4HB4GBP"
+      }
+    }
+  }
+}

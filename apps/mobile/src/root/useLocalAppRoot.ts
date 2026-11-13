@@ -6,6 +6,8 @@
 // state (`onSessionOpen: setSession`) rather than a ref — same reasoning as desktop's hook: a ref
 // written from a callback built during render is what React Compiler flags as unsafe.
 
+import { useBiometricEnrollment } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
+import { useFirstRunGate } from '@repo/app-core/bootstrap/useFirstRunGate';
 import { useWorkspaceBootstrap } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { JOURNAL_KEY_LENGTH } from '@repo/data/local/crypto/keys';
 import { createLocalWorkspaceOpener, type LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
@@ -34,8 +36,19 @@ export function useLocalAppRoot(platform: Platform) {
     onSessionOpen: setSession,
   });
 
-  const bootstrap = useWorkspaceBootstrap({ opener });
-  useLocalWorkspaceSession(session);
+  const gate = useFirstRunGate(useWorkspaceBootstrap({ opener }));
+  const { bootstrap } = gate;
+  const [lockLost, setLockLost] = useState(false);
+  // Lives here, not in the bootstrap screen: that screen unmounts the instant state turns `ready`,
+  // before the entry could be written (useBiometricEnrollment.ts).
+  const { track: onBiometricIntent } = useBiometricEnrollment(
+    bootstrap.state,
+    platform.capabilities.hasBiometricUnlock ? platform.biometricUnlock : undefined,
+    (error) => {
+      // biome-ignore lint/suspicious/noConsole: enrollment failing must not break the unlock that just succeeded, but it must not be silent either
+      console.error('[biometricUnlock] enrollment failed', error);
+    },
+  );
 
   // One QueryClient for the app's lifetime, emptied whenever a session ends: the next workspace
   // (or the same one, re-unlocked) must never paint the previous one's cached rows.
@@ -54,12 +67,37 @@ export function useLocalAppRoot(platform: Platform) {
       return;
     }
     const { ref } = bootstrap.state;
+    setLockLost(false);
     void closeSession().then(() => bootstrap.lock(ref));
   };
 
+  // Another device took the occupancy lock over: stop writing, release, and ask for the passphrase
+  // again with an explanation (audit P6). `session.ref` rather than `bootstrap.state`, which the
+  // heartbeat's closure may have captured before the workspace was `ready`.
+  useLocalWorkspaceSession(session, () => {
+    if (session) {
+      void closeSession().then(() => {
+        setLockLost(true);
+        bootstrap.lock(session.ref);
+      });
+    }
+  });
+
   const switchWorkspace = (): void => {
+    setLockLost(false);
     void closeSession().then(() => bootstrap.chooseAnother());
   };
 
-  return { bootstrap, progress, queryClient, session, lock, switchWorkspace };
+  return {
+    bootstrap,
+    progress,
+    queryClient,
+    session,
+    lock,
+    switchWorkspace,
+    lockLost,
+    isStarterPending: gate.isStarterPending,
+    dismissStarter: gate.dismissStarter,
+    onBiometricIntent,
+  };
 }

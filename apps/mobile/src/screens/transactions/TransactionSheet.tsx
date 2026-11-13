@@ -104,6 +104,9 @@ export function TransactionSheet({ form }: TransactionSheetProps) {
 
       <View style={styles.block}>
         <Text style={[styles.label, { color: colors.muted }]}>{t('transactions:dialog.categoryLabel')}</Text>
+        {form.categories.length === 0 && (
+          <Text style={[styles.error, { color: colors.muted }]}>{t('transactions:dialog.noCategories')}</Text>
+        )}
         <View style={styles.chipWrap}>
           {form.categories.map((category) => (
             <Chip
@@ -116,6 +119,11 @@ export function TransactionSheet({ form }: TransactionSheetProps) {
             />
           ))}
         </View>
+        {form.categories.length === 0 && (
+          <Text style={[styles.emptyHint, { color: colors.muted }]}>
+            {t(form.kind === 'income' ? 'common:category.emptyIncome' : 'common:category.emptyExpense')}
+          </Text>
+        )}
       </View>
 
       <Field
@@ -132,6 +140,7 @@ export function TransactionSheet({ form }: TransactionSheetProps) {
 const styles = StyleSheet.create({
   block: { gap: SPACING.sm },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  emptyHint: { fontSize: FONT_SIZE.label },
   error: { fontSize: FONT_SIZE.bodySm },
   label: { fontSize: FONT_SIZE.label, fontWeight: '500' },
 });

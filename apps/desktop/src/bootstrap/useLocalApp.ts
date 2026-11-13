@@ -15,6 +15,8 @@
 // Compiler flags as unsafe, even though the callback here only ever runs later, from a user
 // action.
 
+import { useBiometricEnrollment } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
+import { useFirstRunGate } from '@repo/app-core/bootstrap/useFirstRunGate';
 import { useWorkspaceBootstrap } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { createLocalWorkspaceOpener, type LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
 import type { Platform } from '@repo/platform/platform';
@@ -24,8 +26,8 @@ import { createAppRouter } from '@repo/router/createAppRouter';
 import { routeTree } from '@repo/routes/routeTree';
 import { QueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { useBiometricEnrollment } from './useBiometricEnrollment';
 import { useLocalWorkspaceSession } from './useLocalWorkspaceSession';
+import { useUpdatePrompt } from './useUpdatePrompt';
 
 // `platform` is created by the caller (LocalApp) and passed in, not built here: it must exist
 // one component higher than this hook, wrapped in `PlatformProvider`, since `useWorkspaceBootstrap`
@@ -46,9 +48,12 @@ export function useLocalApp(platform: Platform) {
     onSessionOpen: setSession,
   });
 
-  const bootstrap = useWorkspaceBootstrap({ opener });
-  useLocalWorkspaceSession(session);
-  const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock);
+  const { bootstrap, isStarterPending, dismissStarter } = useFirstRunGate(useWorkspaceBootstrap({ opener }));
+  const [lockLost, setLockLost] = useState(false);
+  const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock, (error) => {
+    // biome-ignore lint/suspicious/noConsole: enrollment failing must not break the unlock that just succeeded, but it must not be silent either
+    console.error('[biometricUnlock] enrollment failed', error);
+  });
 
   // Closes the real session (releases the occupancy lock, closes the SQL connection) before
   // flipping the bootstrap state machine back to `needs-unlock` for the same ref — mirrors
@@ -60,11 +65,26 @@ export function useLocalApp(platform: Platform) {
       return;
     }
     const { ref } = bootstrap.state;
+    setLockLost(false);
     void session?.close().then(() => {
       setSession(null);
       bootstrap.lock(ref);
     });
   };
+
+  // Another device took the occupancy lock over: stop writing, release, and ask for the passphrase
+  // again with an explanation (audit P6).
+  useLocalWorkspaceSession(session, () => {
+    if (session) {
+      void session.close().then(() => {
+        setSession(null);
+        setLockLost(true);
+        bootstrap.lock(session.ref);
+      });
+    }
+  });
+
+  useUpdatePrompt(platform.capabilities.canUpdate ? platform.updater : undefined, session);
 
   const [queryClient] = useState(() => new QueryClient());
   // Memoized (unlike `opener` above): the router must stay the same instance across renders once
@@ -78,5 +98,16 @@ export function useLocalApp(platform: Platform) {
     return createAppRouter({ routeTree, context: { queryClient, repositories: bootstrap.state.repositories } });
   }, [bootstrap.state, queryClient]);
 
-  return { platform, bootstrap, progress, queryClient, router, lock, onBiometricIntent };
+  return {
+    platform,
+    bootstrap,
+    progress,
+    queryClient,
+    router,
+    lock,
+    onBiometricIntent,
+    isStarterPending,
+    lockLost,
+    dismissStarter,
+  };
 }

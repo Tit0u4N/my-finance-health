@@ -1,6 +1,6 @@
-import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { BiometricUnlockService } from '@repo/platform/services/biometricUnlock';
 import { useEffect, useState } from 'react';
+import type { UseWorkspaceBootstrapResult } from '../useWorkspaceBootstrap';
 
 export type BiometricIntent = {
   readonly key: string;
@@ -26,6 +26,9 @@ export type UseBiometricEnrollmentResult = {
 export function useBiometricEnrollment(
   state: UseWorkspaceBootstrapResult['state'],
   biometricUnlock: BiometricUnlockService | undefined,
+  /** Receives a failed write: enrollment failing must not break the unlock that just succeeded,
+   *  but it must not be silent either — the host decides how to report it. */
+  onEnrollmentError?: (error: unknown) => void,
 ): UseBiometricEnrollmentResult {
   const [intent, setIntent] = useState<BiometricIntent | null>(null);
 
@@ -43,10 +46,7 @@ export function useBiometricEnrollment(
           ? biometricUnlock
               .remove(key)
               .then(() => biometricUnlock.set(key, secret))
-              .catch((error) => {
-                // biome-ignore lint/suspicious/noConsole: enrollment failing must not break the unlock that just succeeded, but it must not be silent either
-                console.error('[biometricUnlock] enrollment failed', error);
-              })
+              .catch((error: unknown) => onEnrollmentError?.(error))
           : biometricUnlock.remove(key));
       }
       // A biometric-sourced unlock already holds this exact secret in the entry — nothing to write.
@@ -55,7 +55,7 @@ export function useBiometricEnrollment(
       void biometricUnlock.remove(key);
       setIntent(null);
     }
-  }, [state, intent, biometricUnlock]);
+  }, [state, intent, biometricUnlock, onEnrollmentError]);
 
   return { track: setIntent };
 }

@@ -13,6 +13,7 @@ import type { LocalizationService } from './services/localization';
 import type { RandomService } from './services/random';
 import type { SecretsService } from './services/secrets';
 import type { SqlDriver } from './services/sqlDriver';
+import type { UpdaterService } from './services/updater';
 
 export type Platform = {
   readonly capabilities: PlatformCapabilities;
@@ -25,4 +26,5 @@ export type Platform = {
   readonly biometricUnlock?: BiometricUnlockService;
   readonly fileSystem?: FileSystemService;
   readonly sqlDriver?: SqlDriver;
+  readonly updater?: UpdaterService;
 };

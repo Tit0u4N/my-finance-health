@@ -4,6 +4,7 @@
 // app sandbox (workspaceTransfer.ts), so the workspace never depends on the picked location again.
 
 import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstrapError';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import { findImportableWorkspaces, importLocalWorkspace } from '@repo/data/workspace/workspaceTransfer';
 import { isErr } from '@repo/domain/primitives/result';
@@ -32,6 +33,7 @@ function labelOf(path: string): string {
 }
 
 export function useImportWorkspace({ platform, onImported }: UseImportWorkspaceDeps): UseImportWorkspaceResult {
+  const { t } = useTranslation();
   const fileSystem = platform.fileSystem as FileSystemService;
   const [candidates, setCandidates] = useState<readonly ImportCandidate[]>([]);
   const [message, setMessage] = useState<string | undefined>(undefined);
@@ -49,10 +51,10 @@ export function useImportWorkspace({ platform, onImported }: UseImportWorkspaceD
       const found = await findImportableWorkspaces(fileSystem, folder);
       setCandidates(found.map((path) => ({ path, label: labelOf(path) })));
       if (found.length === 0) {
-        setMessage('No workspace in that folder. Pick the folder that directly contains the .mfhdb file.');
+        setMessage(t('bootstrap:import.nothingFound'));
       }
     } catch {
-      setMessage('Could not read that folder.');
+      setMessage(t('bootstrap:import.readError'));
     } finally {
       setIsBusy(false);
     }
@@ -64,7 +66,7 @@ export function useImportWorkspace({ platform, onImported }: UseImportWorkspaceD
     try {
       const result = await importLocalWorkspace({ fileSystem, sourceDatabasePath: candidate.path });
       if (isErr(result)) {
-        setMessage(describeBootstrapError(result.error));
+        setMessage(describeBootstrapError(result.error, t));
         return;
       }
       onImported(result.value);

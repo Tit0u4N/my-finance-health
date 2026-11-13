@@ -74,8 +74,8 @@ coverage
 # --- React Native / Expo ---
 .expo/
 .expo-shared/
-android/
-ios/
+/apps/mobile/android/
+/apps/mobile/ios/
 expo-env.d.ts
 
 # --- turbo ---
@@ -89,7 +89,6 @@ _bmad/
 .github/prompts/
 .github/copilot-instructions.md
 graphify-out/
-CLAUDE.md
 .mcp.json
 .claude/skills/shadcn/
 

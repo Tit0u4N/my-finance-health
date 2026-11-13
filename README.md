@@ -4,7 +4,7 @@ A personal finance tracker shipped as **one application on three targets** — w
 
 Your data lives in **workspaces**. Each workspace is stored either as an **encrypted local file** (SQLite + SQLCipher) or on a **remote API**. The storage mode is chosen when the workspace is created and cannot be changed afterwards.
 
-> **Status:** early stage. The architecture, domain model, data layer, shared UI/routes and the screens of the three apps are in place, but the project is not released yet and several manual device walkthroughs are still pending (see [Status and limitations](#status-and-limitations)).
+> **Status:** release 1 (`1.0.0`, branch `release/1`) is in its final stretch. The architecture, data layer, shared UI/routes and the screens of the three apps are in place, with iOS and macOS verified by hand. **Android has not been tested yet** and is the main item left (see [Status and limitations](#status-and-limitations)).
 
 ## Features
 
@@ -15,7 +15,7 @@ Your data lives in **workspaces**. Each workspace is stored either as an **encry
 - **Overview dashboard** — total balance, month-to-date income/expense/net, category breakdown, cashflow Sankey, per-account sparklines.
 - **Multi-currency** — a workspace base currency plus manually entered exchange rates for aggregate totals.
 - **Settings** — theme, language, categories, base currency, backup / export.
-- **Privacy** — encrypted local databases, amounts-hidden toggle, optional biometric unlock on desktop (Touch ID / Windows Hello).
+- **Privacy** — encrypted local databases, amounts-hidden toggle, optional biometric unlock on desktop (Touch ID / Windows Hello) and mobile (Face ID / Touch ID / fingerprint), and optional auto-lock.
 
 ## Targets
 
@@ -135,9 +135,25 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow, and [CLAUDE.md](CLAUDE.
 
 ## Status and limitations
 
-- Local mode bootstrap UI exists on desktop and mobile; the secrets vault is deferred and the migrating / replaying bootstrap states are not yet reachable.
-- iCloud container storage on iOS is implemented but waits on a paid Apple Developer account.
-- Manual walkthroughs still owed: mobile local mode on a real device, Argon2id unlock timing on hardware, desktop ↔ mobile file portability, and Tauri local mode.
+Releases follow the major version: `release/1` carries every `1.x` version, `release/2` will start at `2.0.0` (see [CONTRIBUTING.md](CONTRIBUTING.md#releases)).
+
+Done and verified by hand (release 1):
+
+- Local mode on desktop and mobile, with Argon2id unlock timing measured on a device.
+- iCloud Drive storage on iOS, visible in Files and Finder, and desktop ↔ mobile file portability through it.
+- Face ID / Touch ID unlock on mobile.
+- Apple Developer account, EAS project and macOS signing secrets in CI (see [docs/owner-setup.md](docs/owner-setup.md)).
+
+Still open for 1.0.0:
+
+- **Android is untested**: no local-mode walkthrough, no fingerprint unlock check, no Play Console account or keystore yet.
+- A signed and notarized macOS bundle from a release pull request is still to be confirmed; Windows builds are unsigned.
+- Desktop local mode has only been walked through on macOS (no WebDriver there, so no desktop E2E).
+- No end-to-end suites are wired yet (Playwright, WebdriverIO, Maestro).
+- Desktop auto-update is wired to the repository's GitHub releases but stays dormant until the `TAURI_SIGNING_*` CI secrets are set. There is no general secrets vault, and the migrating / replaying bootstrap states are not yet reachable.
+- Store listings (privacy policy, screenshots, privacy questionnaire) are not started.
+
+Out of scope for release 1 (see [docs/start-roadmap.md](docs/start-roadmap.md) §17): online mode and API hosting, per-user authentication, journal merge across devices, local ↔ online sync, several workspaces open at once.
 
 ## License
 

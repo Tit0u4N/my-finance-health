@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppRoot } from '@/root/AppRoot';
+import { UpdateToast } from '@/root/UpdateToast';
 import { ThemedStatusBar } from '@/theme/ThemedStatusBar';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
@@ -12,6 +13,7 @@ export default function RootLayout() {
         <ThemedStatusBar />
         <AppRoot>
           <Stack screenOptions={{ headerShown: false }} />
+          <UpdateToast />
         </AppRoot>
       </ThemeProvider>
     </SafeAreaProvider>

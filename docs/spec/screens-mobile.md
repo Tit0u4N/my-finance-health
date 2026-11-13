@@ -55,6 +55,8 @@ the same rendering-boundary reason).
 
 ## Bootstrap-adjacent
 
+> **2026-11-13:** the `/onboarding` route and the Settings → Data "Set up a new workspace" link were removed — they only ever added accounts/categories to the already-open workspace. The old `screens/onboarding` component was then replaced by `screens/starter/StarterCategoriesScreen`: shown once, right after a workspace is created under `classic` (gate: `useFirstRunGate`), it offers the shared starter category list (`@repo/app-core/starter`, FR/EN names) to tick. Starter accounts are not part of it, and custom categories are added afterwards in Settings → Categories (audit P1). "Switch workspace" remains the way to create/import another workspace.
+
 | Screen | Source | Purpose | Reads | Writes | Local-only UI state |
 |---|---|---|---|---|---|
 | Onboarding — choose workspace | `onboarding.jsx` step 0 | Still presentational inside the app stage — a workspace is already open by the time it shows. The real create/import/unlock lives in the **Bootstrap stage** below, which runs before the app stage under `EXPO_PUBLIC_STORAGE_MODE=classic`. | — | — | selected option (`create` \| `open`) |
@@ -68,7 +70,10 @@ that seed rather than starting from empty — there's no real empty-workspace st
 against in `inMemory` mode. Under `classic` it resolves as predicted: a freshly created local
 workspace is genuinely empty, so steps 1–2 now seed a real, empty workspace.
 
-### Bootstrap stage (`EXPO_PUBLIC_STORAGE_MODE=classic`, 2026-10-07)
+### Bootstrap stage (`EXPO_PUBLIC_STORAGE_MODE=classic`, default since 2026-11-13)
+
+`classic` is the default mode; `EXPO_PUBLIC_STORAGE_MODE=inMemory` is the explicit opt-in demo
+(fixtures, nothing persisted). `classic` needs a development build (SQLCipher), not Expo Go.
 
 `@repo/platform-expo` is real, so mobile has a local mode (`open-questions.md` #25).
 `apps/mobile/src/root/LocalAppRoot.tsx` mirrors desktop's `LocalApp.tsx`: bootstrap stage (platform +
@@ -81,7 +86,7 @@ sharing with desktop's DOM ones; English copy, like desktop's bootstrap — no i
 | Workspace list | Recent workspaces, then an *In iCloud Drive* section listing the workspaces found by scanning the synced folder (`useSyncedWorkspaces` → `findWorkspaceFolders`) that are not already recent — including those created on another device. *Create a workspace*, *Import a workspace* | `needs-designation`; the iCloud section is absent while the folder is unavailable |
 | Create sheet | Name, *Location* (*iCloud Drive* / *This device*, shown only when `syncedDirectory()` is non-null; iCloud preselected), base currency, passphrase ×2 (min 8, `@repo/app-core/bootstrap/newPassphrase`) | Each workspace gets its own folder named after it (`newWorkspacePath`): `iCloud Drive › my finance health › <name>/` or `On My iPhone › my finance health › MyFinanceHealth/workspaces/<name>/`. For a device workspace only, optional *Save a copy to…* folder picker: the copy is written right after creation and an alert names the folder |
 | Import sheet | Pick a folder → list the `.mfhdb` files that have a `.mfhmeta` beside them → copy into the sandbox → straight to unlock | Folder must directly contain the file |
-| Unlock | Passphrase, *Choose another workspace* | `needs-unlock`; no biometric option yet |
+| Unlock | Passphrase, *Choose another workspace* | `needs-unlock`; *Unlock with Face ID* switch and button when the device supports it, Face ID prompts on its own for an enrolled workspace (open-questions.md #26) |
 | Progress / error | Spinner labelled by the cosmetic `migrating`/`replaying` side-channel; error copy from the shared `describeBootstrapError`, retry, choose another | |
 
 `useWorkspaceBootstrap` gained `chooseAnother()` (reload the recent list, return to the list) for the

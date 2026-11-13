@@ -102,6 +102,11 @@ export function RecurringSheet({ form }: RecurringSheetProps) {
             />
           ))}
         </View>
+        {form.categories.length === 0 && (
+          <Text style={[styles.emptyHint, { color: colors.muted }]}>
+            {t(form.kind === 'income' ? 'common:category.emptyIncome' : 'common:category.emptyExpense')}
+          </Text>
+        )}
       </View>
 
       <Field
@@ -118,6 +123,7 @@ export function RecurringSheet({ form }: RecurringSheetProps) {
 const styles = StyleSheet.create({
   block: { gap: SPACING.sm },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  emptyHint: { fontSize: FONT_SIZE.label },
   error: { fontSize: FONT_SIZE.bodySm },
   label: { fontSize: FONT_SIZE.label, fontWeight: '500' },
 });

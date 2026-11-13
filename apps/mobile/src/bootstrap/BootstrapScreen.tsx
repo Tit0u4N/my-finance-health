@@ -3,7 +3,9 @@
 // of apps/desktop's BootstrapScreen.tsx, native rather than DOM, so none of its components are
 // shared (start-roadmap.md §2, principle 2).
 
+import type { BiometricIntent } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { Platform } from '@repo/platform/platform';
 import { AlertTriangle, Cloud, Database, FolderInput, Plus } from 'lucide-react-native';
 import {
@@ -34,12 +36,13 @@ type BootstrapScreenProps = {
   readonly platform: Platform;
   /** Cosmetic only — labels the spinner while `unlock`/`create` is in flight. */
   readonly progress: LocalBootstrapProgress;
+  readonly onBiometricIntent: (intent: BiometricIntent) => void;
 };
 
-export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScreenProps) {
+export function BootstrapScreen({ bootstrap, platform, progress, onBiometricIntent }: BootstrapScreenProps) {
   const { colors } = useColor();
   const insets = useSafeAreaInsets();
-  const screen = useBootstrapScreen(bootstrap, progress, platform);
+  const screen = useBootstrapScreen(bootstrap, progress, platform, onBiometricIntent);
 
   return (
     <KeyboardAvoidingView
@@ -50,7 +53,7 @@ export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScre
       ]}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {renderBody(screen.view, screen)}
+        {renderBody(screen.view, screen, platform)}
       </ScrollView>
       <CreateWorkspaceSheet
         isOpen={screen.isCreateOpen}
@@ -68,7 +71,7 @@ export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScre
   );
 }
 
-function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapScreen>) {
+function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapScreen>, platform: Platform) {
   switch (view.kind) {
     case 'loading':
       return <Progress label={view.label} />;
@@ -85,6 +88,7 @@ function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapS
     case 'unlock':
       return (
         <UnlockWorkspaceForm
+          biometricUnlock={platform.capabilities.hasBiometricUnlock ? platform.biometricUnlock : undefined}
           onChooseAnother={screen.onChooseAnother}
           onUnlock={screen.onUnlock}
           workspaceRef={view.workspaceRef}
@@ -92,15 +96,30 @@ function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapS
       );
     case 'error':
       return (
-        <View style={styles.error}>
-          <EmptyState icon={AlertTriangle} title={view.message} />
-          {screen.onRetry && <Button label="Try again" onPress={screen.onRetry} tone="outline" />}
-          <Button label="Choose another workspace" onPress={screen.onChooseAnother} tone="outline" />
-        </View>
+        <BootstrapFailure message={view.message} onChooseAnother={screen.onChooseAnother} onRetry={screen.onRetry} />
       );
     default:
       return view satisfies never;
   }
+}
+
+function BootstrapFailure({
+  message,
+  onRetry,
+  onChooseAnother,
+}: {
+  readonly message: string;
+  readonly onRetry: (() => void) | undefined;
+  readonly onChooseAnother: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.error}>
+      <EmptyState icon={AlertTriangle} title={message} />
+      {onRetry && <Button label={t('bootstrap:error.tryAgain')} onPress={onRetry} tone="outline" />}
+      <Button label={t('bootstrap:error.chooseAnother')} onPress={onChooseAnother} tone="outline" />
+    </View>
+  );
 }
 
 function Progress({ label }: { readonly label: string }) {
@@ -124,12 +143,13 @@ type BootstrapViewPicker = Extract<BootstrapView, { kind: 'picker' }>;
 
 function WorkspaceList({ recent, synced, onOpen, onCreate, onImport }: WorkspaceListProps) {
   const { colors } = useColor();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.list}>
-      <ScreenHeader subtitle="Your data stays encrypted, on this device or in your iCloud." title="my finance health" />
+      <ScreenHeader subtitle={t('bootstrap:picker.subtitle')} title={t('bootstrap:picker.title')} />
       {recent.length > 0 && (
-        <SectionGroup title="Workspaces">
+        <SectionGroup title={t('bootstrap:picker.workspaces')}>
           {recent.map((workspace, index) => (
             <SettingsRow
               icon={Database}
@@ -143,7 +163,7 @@ function WorkspaceList({ recent, synced, onOpen, onCreate, onImport }: Workspace
         </SectionGroup>
       )}
       {synced.length > 0 && (
-        <SectionGroup title="In iCloud Drive">
+        <SectionGroup title={t('bootstrap:picker.inICloud')}>
           {synced.map((workspace, index) => (
             <SettingsRow
               icon={Cloud}
@@ -157,8 +177,8 @@ function WorkspaceList({ recent, synced, onOpen, onCreate, onImport }: Workspace
         </SectionGroup>
       )}
       <View style={styles.actions}>
-        <Button icon={Plus} label="Create a workspace" onPress={onCreate} />
-        <Button icon={FolderInput} label="Import a workspace" onPress={onImport} tone="outline" />
+        <Button icon={Plus} label={t('bootstrap:picker.create')} onPress={onCreate} />
+        <Button icon={FolderInput} label={t('bootstrap:picker.import')} onPress={onImport} tone="outline" />
       </View>
     </View>
   );

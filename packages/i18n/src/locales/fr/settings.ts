@@ -103,10 +103,18 @@ const settings = {
       baseCurrency: 'Devise de référence',
     },
     notAvailableYet: 'Pas encore disponible',
+    transfer: {
+      title: 'Sauvegarde et transfert',
+      exportTitle: "Exporter l'espace de travail",
+      exportSubtitle: 'Enregistrer une copie chiffrée dans iCloud Drive, Fichiers ou n’importe quel dossier',
+      exportSaved: '« {{name}} » enregistré ({{count}} fichiers).',
+      lock: "Verrouiller l'espace de travail",
+      switchTitle: "Changer d'espace de travail",
+      switchSubtitle: 'Importer ou ouvrir un autre espace de travail',
+    },
     actions: {
       switchFile: 'Changer de fichier',
       createBackup: 'Créer une sauvegarde',
-      newWorkspace: 'Configurer un nouvel espace de travail',
     },
     workspacePanel: {
       title: 'Espace de travail',
@@ -120,6 +128,17 @@ const settings = {
       label: 'Verrouiller',
       description:
         'Retour à l’écran de déverrouillage. Le mot de passe (ou la biométrie, si activée) sera de nouveau requis.',
+    },
+    biometric: {
+      title: 'Déverrouiller avec {{label}}',
+      enabledDescription: 'Cet appareil garde une copie du mot de passe que seul {{label}} peut libérer.',
+      disabledDescription: 'Désactivé. Activez-le depuis l’écran de déverrouillage au prochain déverrouillage.',
+      turnOff: 'Désactiver',
+      turnOffFailed: 'Impossible de le désactiver. Réessayez.',
+    },
+    autoLock: {
+      title: 'Verrouiller en quittant l’app',
+      description: 'Verrouille l’espace de travail dès que l’app passe en arrière-plan.',
     },
     dangerZonePanel: {
       title: 'Zone à risque',

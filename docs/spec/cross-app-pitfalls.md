@@ -163,6 +163,13 @@ the opposite direction (desktop's react-dom, still dom-catalog, would then misma
 react). Neither side can be pinned to satisfy both without an actual fix upstream (in `vitest-native`,
 or a genuinely hoisted single React per catalog rather than per-package).
 
+**Update 2026-11-13 (Expo SDK 58).** Both catalogs now pin the same exact React, `19.3.0` (the
+"dom" catalog was pinned too: with `^19.3.0`, `react-dom` resolved to `19.3.1` against `react`
+`19.3.0` and React refused to render). `react` has no peers, so bun links every workspace to the
+same physical `react@19.3.0` and the two-instances condition above no longer holds. The skipped
+tests have not been re-enabled yet; try that before re-debugging, and keep the catalogs on one exact
+version whenever Expo's SDK moves React.
+
 **Rule, until fixed upstream**: this is a real, filed gap, not a workaround to invent locally each
 time it's hit — `apps/mobile/src/screens/dashboard/DashboardScreen.test.tsx` and
 `OnboardingScreen.test.tsx`'s `it.skip` calls point back here rather than re-deriving the
