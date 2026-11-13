@@ -1,8 +1,8 @@
+import type { BiometricIntent } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import { useState } from 'react';
-import type { BiometricIntent } from './useBiometricEnrollment';
 
 export type BootstrapMode = 'picker' | 'create';
 

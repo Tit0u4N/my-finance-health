@@ -140,6 +140,19 @@ const settings = {
       label: 'Lock workspace',
       description: 'Returns to the unlock screen. The passphrase (or biometrics, if enrolled) is needed again.',
     },
+    // open-questions.md #26: this device's biometric copy of the passphrase. Turning it on stays
+    // on the unlock/create forms, the only places that hold the passphrase.
+    biometric: {
+      title: 'Unlock with {{label}}',
+      enabledDescription: 'This device keeps a copy of the passphrase that only {{label}} can release.',
+      disabledDescription: 'Off. Turn it on from the unlock screen the next time you unlock.',
+      turnOff: 'Turn off',
+      turnOffFailed: 'Could not turn it off. Try again.',
+    },
+    autoLock: {
+      title: 'Lock when leaving the app',
+      description: 'Locks the workspace as soon as the app goes to the background.',
+    },
     dangerZonePanel: {
       title: 'Danger zone',
       subtitle: 'These actions cannot be undone',

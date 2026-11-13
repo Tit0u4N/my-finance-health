@@ -16,6 +16,7 @@ import { RepositoriesProvider } from './RepositoriesProvider';
 import { TranslationsProvider } from './TranslationsProvider';
 import { usePlatform } from './usePlatform';
 import { WorkspaceLockProvider } from './WorkspaceLockProvider';
+import { WorkspaceBiometricContext } from './workspaceBiometricContext';
 
 export type AppStageProvidersProps = {
   readonly platform: Platform;
@@ -25,6 +26,9 @@ export type AppStageProvidersProps = {
   /** Present only when the host can return to the unlock screen without a full remount (local
    *  mode's per-workspace session — open-questions.md #24). Absent for online mode. */
   readonly onLockWorkspace?: () => void;
+  /** The open workspace's biometric-entry key (its WorkspaceRef id), so Settings can show and
+   *  forget this device's Face ID / Touch ID copy (open-questions.md #26). Absent for online mode. */
+  readonly biometricKey?: string;
   readonly children: ReactNode;
 };
 
@@ -33,6 +37,7 @@ export function AppStageProviders({
   repositories,
   queryClient,
   onLockWorkspace,
+  biometricKey,
   children,
 }: AppStageProvidersProps): ReactElement {
   return (
@@ -42,7 +47,9 @@ export function AppStageProviders({
           <PreferencesProvider>
             <PreferredLanguage>
               <WorkspaceLockProvider lock={onLockWorkspace ?? null}>
-                <AccountSelectionProvider>{children}</AccountSelectionProvider>
+                <WorkspaceBiometricContext.Provider value={biometricKey ?? null}>
+                  <AccountSelectionProvider>{children}</AccountSelectionProvider>
+                </WorkspaceBiometricContext.Provider>
               </WorkspaceLockProvider>
             </PreferredLanguage>
           </PreferencesProvider>

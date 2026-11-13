@@ -11,12 +11,14 @@
 import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstrapError';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { usePlatform } from '@repo/app-core/providers/usePlatform';
+import { useWorkspaceBiometric } from '@repo/app-core/providers/useWorkspaceBiometric';
 import { useAccounts } from '@repo/app-core/queries/useAccounts';
 import { useCategories } from '@repo/app-core/queries/useCategories';
 import { useExchangeRates } from '@repo/app-core/queries/useExchangeRates';
 import { useRecurringRules } from '@repo/app-core/queries/useRecurringRules';
 import { useTransactions } from '@repo/app-core/queries/useTransactions';
 import { useWorkspaceSettings } from '@repo/app-core/queries/useWorkspaceSettings';
+import { usePreferencesStore } from '@repo/app-core/stores/PreferencesProvider';
 import { exportLocalWorkspace } from '@repo/data/workspace/workspaceTransfer';
 import { isErr } from '@repo/domain/primitives/result';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
@@ -37,6 +39,30 @@ export type DataFileActions = {
   readonly onSwitchWorkspace: () => void;
 };
 
+/** Unlock-related settings of the open local workspace: this device's Face ID copy of the
+ * passphrase (open-questions.md #26) and the optional lock-on-background (audit I8). */
+export type DataSecurity = {
+  readonly title: string;
+  /** Absent when the device has no usable biometric. */
+  readonly biometric:
+    | {
+        readonly title: string;
+        readonly description: string;
+        readonly isEnrolled: boolean;
+        readonly isUpdating: boolean;
+        readonly error: string | undefined;
+        /** Only turning it off happens here — turning it on needs the passphrase (unlock form). */
+        readonly onTurnOff: () => void;
+      }
+    | undefined;
+  readonly autoLock: {
+    readonly title: string;
+    readonly description: string;
+    readonly value: boolean;
+    readonly onChange: (value: boolean) => void;
+  };
+};
+
 export type UseDataScreenResult =
   | { readonly ready: false }
   | {
@@ -45,6 +71,8 @@ export type UseDataScreenResult =
       readonly isAvailable: boolean;
       /** Present only for a real local workspace on a platform that can write files. */
       readonly fileActions: DataFileActions | undefined;
+      /** Present only for a real local workspace session. */
+      readonly security: DataSecurity | undefined;
       readonly emptyTitle: string;
       readonly emptySubtitle: string;
       readonly workspacePanelTitle: string;
@@ -58,6 +86,9 @@ export function useDataScreen(): UseDataScreenResult {
   const session = useWorkspaceSession();
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<ExportStatus | undefined>(undefined);
+  const workspaceBiometric = useWorkspaceBiometric();
+  const autoLock = usePreferencesStore((state) => state.autoLock);
+  const setAutoLock = usePreferencesStore((state) => state.setAutoLock);
 
   const onExport = (): void => {
     if (isExporting || !(session && platform.fileSystem)) {
@@ -134,6 +165,29 @@ export function useDataScreen(): UseDataScreenResult {
         ? { isExporting, exportStatus, onExport, onLock: session.onLock, onSwitchWorkspace: session.onSwitchWorkspace }
         : undefined,
     isAvailable: platform.capabilities.canWriteFile,
+    security: session
+      ? {
+          title: t('settings:database.sessionPanel.title'),
+          biometric: workspaceBiometric.isAvailable
+            ? {
+                title: t('settings:database.biometric.title', { label: workspaceBiometric.label }),
+                description: workspaceBiometric.isEnrolled
+                  ? t('settings:database.biometric.enabledDescription', { label: workspaceBiometric.label })
+                  : t('settings:database.biometric.disabledDescription'),
+                isEnrolled: workspaceBiometric.isEnrolled,
+                isUpdating: workspaceBiometric.isUpdating,
+                error: workspaceBiometric.forgetFailed ? t('settings:database.biometric.turnOffFailed') : undefined,
+                onTurnOff: workspaceBiometric.onForget,
+              }
+            : undefined,
+          autoLock: {
+            title: t('settings:database.autoLock.title'),
+            description: t('settings:database.autoLock.description'),
+            value: autoLock,
+            onChange: setAutoLock,
+          },
+        }
+      : undefined,
     metadata: [
       { label: t('settings:database.metadata.timezone'), value: settings.timezone },
       { label: t('settings:database.metadata.baseCurrency'), value: settings.baseCurrency },

@@ -45,6 +45,7 @@ function LocalAppBootstrap({ platform }: { readonly platform: Platform }): React
         repositories={bootstrap.state.repositories}
         queryClient={queryClient}
         onLockWorkspace={lock}
+        biometricKey={bootstrap.state.ref.id}
       >
         {isStarterPending ? <StarterCategories onDone={dismissStarter} /> : <ThemedRouter router={router} />}
       </AppStageProviders>
