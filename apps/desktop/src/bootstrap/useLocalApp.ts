@@ -27,6 +27,7 @@ import { routeTree } from '@repo/routes/routeTree';
 import { QueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useLocalWorkspaceSession } from './useLocalWorkspaceSession';
+import { useUpdatePrompt } from './useUpdatePrompt';
 
 // `platform` is created by the caller (LocalApp) and passed in, not built here: it must exist
 // one component higher than this hook, wrapped in `PlatformProvider`, since `useWorkspaceBootstrap`
@@ -82,6 +83,8 @@ export function useLocalApp(platform: Platform) {
       });
     }
   });
+
+  useUpdatePrompt(platform.capabilities.canUpdate ? platform.updater : undefined, session);
 
   const [queryClient] = useState(() => new QueryClient());
   // Memoized (unlike `opener` above): the router must stay the same instance across renders once

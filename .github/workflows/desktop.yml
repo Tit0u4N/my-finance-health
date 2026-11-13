@@ -144,7 +144,8 @@ jobs:
           Set-Content -Path $configPath -Value $config
           "TAURI_WINDOWS_SIGNING_CONFIG=$configPath" >> $env:GITHUB_ENV
 
-      # Only consumed once `bundle.createUpdaterArtifacts` is turned on; the updater stays off until then.
+      # With the key present, bundles also carry signed updater payloads (`bundle.createUpdaterArtifacts`,
+      # switched on here rather than in tauri.conf.json so local builds work without the private key).
       - name: Export Tauri updater key
         if: env.HAS_UPDATER_KEY == 'true'
         shell: bash
@@ -152,11 +153,14 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          config="$RUNNER_TEMP/tauri.updater.json"
+          echo '{"bundle":{"createUpdaterArtifacts":true}}' > "$config"
           {
             echo "TAURI_SIGNING_PRIVATE_KEY<<TAURI_KEY_EOF"
             echo "$TAURI_SIGNING_PRIVATE_KEY"
             echo "TAURI_KEY_EOF"
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+            echo "TAURI_UPDATER_CONFIG=$config"
           } >> "$GITHUB_ENV"
 
       # The frontend is built by `beforeBuildCommand` through Turbo, so an unchanged frontend is a cache hit.
@@ -172,7 +176,32 @@ jobs:
           if ($env:TAURI_WINDOWS_SIGNING_CONFIG) {
             $tauriArgs += @('--config', $env:TAURI_WINDOWS_SIGNING_CONFIG)
           }
+          if ($env:TAURI_UPDATER_CONFIG) {
+            $tauriArgs += @('--config', $env:TAURI_UPDATER_CONFIG)
+          }
           bun run tauri build @tauriArgs
+
+      # Updater payloads get one stable, space-free name per target: the release job points
+      # latest.json at them, and GitHub rewrites spaces in asset names. The Windows installer and
+      # the AppImage are their own update payloads, so they are moved (renamed), not copied.
+      - name: Stage updater payloads
+        if: env.HAS_UPDATER_KEY == 'true'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          case "$RUNNER_OS" in
+            macOS) files=("$BUNDLE_DIR"/macos/*.app.tar.gz); extension=app.tar.gz ;;
+            Windows) files=("$BUNDLE_DIR"/nsis/*-setup.exe); extension=setup.exe ;;
+            Linux) files=("$BUNDLE_DIR"/appimage/*.AppImage); extension=AppImage ;;
+          esac
+          if [ "${#files[@]}" -ne 1 ] || [ ! -f "${files[0]}.sig" ]; then
+            echo "::error::expected exactly one signed updater payload, found ${#files[@]}"
+            exit 1
+          fi
+          mkdir -p "$BUNDLE_DIR/updater"
+          target="$BUNDLE_DIR/updater/my-finance-health_${{ matrix.target }}.$extension"
+          mv "${files[0]}" "$target"
+          mv "${files[0]}.sig" "$target.sig"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -186,6 +215,7 @@ jobs:
             ${{ env.BUNDLE_DIR }}/deb/*.deb
             ${{ env.BUNDLE_DIR }}/rpm/*.rpm
             ${{ env.BUNDLE_DIR }}/appimage/*.AppImage
+            ${{ env.BUNDLE_DIR }}/updater/*
 
       - name: Prune unused Turbo cache entries
         if: github.ref == 'refs/heads/main'
@@ -205,11 +235,36 @@ jobs:
           pattern: desktop-*
           path: bundles
           merge-multiple: true
+      # The desktop updater reads `releases/latest/download/latest.json` (tauri.conf.json
+      # `plugins.updater`): drafts are never "latest", so installed apps only see the update once
+      # the draft is published. Skipped when the bundles carry no signatures (no updater key).
+      - name: Write updater manifest
+        run: |
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME"
+          platforms='{}'
+          add_platform() {
+            local file="bundles/my-finance-health_$2"
+            [ -f "$file.sig" ] || return 0
+            platforms=$(jq --arg key "$1" --arg url "$base/${file#bundles/}" --rawfile signature "$file.sig" \
+              '. + {($key): {signature: ($signature | rtrimstr("\n")), url: $url}}' <<<"$platforms")
+          }
+          add_platform darwin-aarch64 aarch64-apple-darwin.app.tar.gz
+          add_platform darwin-x86_64 x86_64-apple-darwin.app.tar.gz
+          add_platform windows-x86_64 x86_64-pc-windows-msvc.setup.exe
+          add_platform linux-x86_64 x86_64-unknown-linux-gnu.AppImage
+          if [ "$platforms" = '{}' ]; then
+            echo "No signed updater payload: latest.json not written."
+            exit 0
+          fi
+          jq -n --arg version "${GITHUB_REF_NAME#v}" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson platforms "$platforms" \
+            '{version: $version, notes: "", pub_date: $date, platforms: $platforms}' > bundles/latest.json
+          cat bundles/latest.json
+
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mapfile -d '' assets < <(find bundles -type f -print0)
+          mapfile -d '' assets < <(find bundles -type f ! -name '*.sig' -print0)
           gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --draft \
