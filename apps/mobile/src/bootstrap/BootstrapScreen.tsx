@@ -3,6 +3,7 @@
 // of apps/desktop's BootstrapScreen.tsx, native rather than DOM, so none of its components are
 // shared (start-roadmap.md §2, principle 2).
 
+import type { BiometricIntent } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { Platform } from '@repo/platform/platform';
@@ -35,12 +36,13 @@ type BootstrapScreenProps = {
   readonly platform: Platform;
   /** Cosmetic only — labels the spinner while `unlock`/`create` is in flight. */
   readonly progress: LocalBootstrapProgress;
+  readonly onBiometricIntent: (intent: BiometricIntent) => void;
 };
 
-export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScreenProps) {
+export function BootstrapScreen({ bootstrap, platform, progress, onBiometricIntent }: BootstrapScreenProps) {
   const { colors } = useColor();
   const insets = useSafeAreaInsets();
-  const screen = useBootstrapScreen(bootstrap, progress, platform);
+  const screen = useBootstrapScreen(bootstrap, progress, platform, onBiometricIntent);
 
   return (
     <KeyboardAvoidingView
@@ -51,7 +53,7 @@ export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScre
       ]}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {renderBody(screen.view, screen)}
+        {renderBody(screen.view, screen, platform)}
       </ScrollView>
       <CreateWorkspaceSheet
         isOpen={screen.isCreateOpen}
@@ -69,7 +71,7 @@ export function BootstrapScreen({ bootstrap, platform, progress }: BootstrapScre
   );
 }
 
-function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapScreen>) {
+function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapScreen>, platform: Platform) {
   switch (view.kind) {
     case 'loading':
       return <Progress label={view.label} />;
@@ -86,6 +88,7 @@ function renderBody(view: BootstrapView, screen: ReturnType<typeof useBootstrapS
     case 'unlock':
       return (
         <UnlockWorkspaceForm
+          biometricUnlock={platform.capabilities.hasBiometricUnlock ? platform.biometricUnlock : undefined}
           onChooseAnother={screen.onChooseAnother}
           onUnlock={screen.onUnlock}
           workspaceRef={view.workspaceRef}

@@ -3,6 +3,7 @@
 // to the one view the screen should show, and owns the two sheets (create, import) that sit on top
 // of the workspace list. Copy lives in the `bootstrap` i18n namespace.
 
+import type { BiometricIntent } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
 import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstrapError';
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
@@ -36,8 +37,13 @@ export type UseBootstrapScreenResult = {
   readonly onStartImport: () => void;
   readonly onCloseSheets: () => void;
   readonly onOpen: (ref: WorkspaceRef) => void;
-  readonly onUnlock: (ref: WorkspaceRef, secret: string) => void;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, backupFolder: string | null) => void;
+  readonly onUnlock: (ref: WorkspaceRef, secret: string, remember: boolean, sourcedFromBiometric: boolean) => void;
+  readonly onCreate: (
+    ref: WorkspaceRef,
+    input: CreateWorkspaceInput,
+    backupFolder: string | null,
+    remember: boolean,
+  ) => void;
   /** An imported workspace is opened like any remembered one — straight to its passphrase prompt. */
   readonly onImported: (ref: WorkspaceRef) => void;
   readonly onChooseAnother: () => void;
@@ -121,10 +127,13 @@ async function saveCreationCopy(platform: Platform, ref: WorkspaceRef, folder: s
   }
 }
 
+/** `onBiometricIntent` hands the Face ID store/forget decision to useLocalAppRoot, which outlives
+ * this screen — see useBiometricEnrollment.ts for why it can't be applied from in here. */
 export function useBootstrapScreen(
   bootstrap: UseWorkspaceBootstrapResult,
   progress: LocalBootstrapProgress,
   platform: Platform,
+  onBiometricIntent: (intent: BiometricIntent) => void,
 ): UseBootstrapScreenResult {
   const { t } = useTranslation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -160,9 +169,15 @@ export function useBootstrapScreen(
     onStartImport: () => setIsImportOpen(true),
     onCloseSheets,
     onOpen: (ref) => run(ref, () => bootstrap.open(ref)),
-    onUnlock: (ref, secret) => run(ref, () => bootstrap.unlock(ref, secret)),
-    onCreate: (ref, input, backupFolder) => {
+    onUnlock: (ref, secret, remember, sourcedFromBiometric) => {
+      onBiometricIntent({ key: ref.id, secret, remember, sourcedFromBiometric });
+      run(ref, () => bootstrap.unlock(ref, secret));
+    },
+    onCreate: (ref, input, backupFolder, remember) => {
       onCloseSheets();
+      if (input.secret) {
+        onBiometricIntent({ key: ref.id, secret: input.secret, remember, sourcedFromBiometric: false });
+      }
       run(ref, async () => {
         await bootstrap.create(ref, input);
         if (backupFolder !== null) {

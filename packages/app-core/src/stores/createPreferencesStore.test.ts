@@ -59,6 +59,18 @@ describe('createPreferencesStore', () => {
     expect(JSON.parse(raw ?? '{}')).toMatchObject({ language: 'fr' });
   });
 
+  it('auto-lock is off by default, and setAutoLock persists it across a reload', async () => {
+    const keyValueStore = buildKeyValueStore();
+    const store = createPreferencesStore(keyValueStore);
+    expect(store.getState().autoLock).toBe(false);
+
+    store.getState().setAutoLock(true);
+
+    const reloaded = createPreferencesStore(keyValueStore);
+    await hydratePreferencesStore(reloaded, keyValueStore);
+    expect(reloaded.getState().autoLock).toBe(true);
+  });
+
   it('setLanguage accepts the "system" sentinel', () => {
     const store = createPreferencesStore(buildKeyValueStore());
 

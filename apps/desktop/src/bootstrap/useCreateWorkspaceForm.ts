@@ -1,3 +1,4 @@
+import { useBiometricAvailability } from '@repo/app-core/bootstrap/biometric/useBiometricAvailability';
 import { describePassphraseFeedback } from '@repo/app-core/bootstrap/newPassphrase';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
@@ -8,7 +9,6 @@ import { timezoneSchema } from '@repo/domain/primitives/dateTime';
 import type { BiometricUnlockService } from '@repo/platform/services/biometricUnlock';
 import type { FileSystemService } from '@repo/platform/services/fileSystem';
 import { useState } from 'react';
-import { useBiometricAvailability } from './useBiometricAvailability';
 
 export type UseCreateWorkspaceFormDeps = {
   readonly fileSystem: FileSystemService;

@@ -15,6 +15,7 @@
 // Compiler flags as unsafe, even though the callback here only ever runs later, from a user
 // action.
 
+import { useBiometricEnrollment } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
 import { useFirstRunGate } from '@repo/app-core/bootstrap/useFirstRunGate';
 import { useWorkspaceBootstrap } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { createLocalWorkspaceOpener, type LocalWorkspaceSession } from '@repo/data/workspace/localWorkspaceOpener';
@@ -25,7 +26,6 @@ import { createAppRouter } from '@repo/router/createAppRouter';
 import { routeTree } from '@repo/routes/routeTree';
 import { QueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { useBiometricEnrollment } from './useBiometricEnrollment';
 import { useLocalWorkspaceSession } from './useLocalWorkspaceSession';
 
 // `platform` is created by the caller (LocalApp) and passed in, not built here: it must exist
@@ -49,7 +49,10 @@ export function useLocalApp(platform: Platform) {
 
   const { bootstrap, isStarterPending, dismissStarter } = useFirstRunGate(useWorkspaceBootstrap({ opener }));
   const [lockLost, setLockLost] = useState(false);
-  const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock);
+  const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock, (error) => {
+    // biome-ignore lint/suspicious/noConsole: enrollment failing must not break the unlock that just succeeded, but it must not be silent either
+    console.error('[biometricUnlock] enrollment failed', error);
+  });
 
   // Closes the real session (releases the occupancy lock, closes the SQL connection) before
   // flipping the bootstrap state machine back to `needs-unlock` for the same ref — mirrors

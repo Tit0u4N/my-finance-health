@@ -55,7 +55,19 @@
           "supportsOpeningDocumentsInPlace": true
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID to unlock your workspace."
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID to unlock your workspace."
+        }
+      ]
     ],
     "experiments": {
       "reactCompiler": true,

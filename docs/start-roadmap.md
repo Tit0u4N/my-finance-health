@@ -71,7 +71,7 @@ These five rules drive the whole structure. Violating any one of them compromise
 | Local persistence | not applicable | SQLite encrypted with SQLCipher, dedicated Rust module | SQLite encrypted with SQLCipher via `expo-sqlite` |
 | Available modes | online only | local or online | local or online |
 | Secrets vault | none | system keyring via the `keyring` library | `expo-secure-store` |
-| Biometric unlock | none | `tauri-plugin-biometry` (Touch ID / Windows Hello, opt-in — `docs/spec/open-questions.md` #23) | `expo-local-authentication`, not built |
+| Biometric unlock | none | `tauri-plugin-biometry` (Touch ID / Windows Hello, opt-in — `docs/spec/open-questions.md` #23) | `expo-secure-store` (`requireAuthentication`) + `expo-local-authentication` (Face ID / Touch ID / fingerprint, opt-in — `docs/spec/open-questions.md` #26) |
 | File system | not available | Tauri `fs` and `dialog` plugins | `expo-file-system` (files and folder picker) |
 | Key-value storage | `localStorage` | `localStorage` | `expo-sqlite/kv-store` |
 | UI tests | Vitest + Testing Library | Vitest + Testing Library | Vitest + `vitest-native` + Testing Library Native |

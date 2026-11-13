@@ -17,6 +17,8 @@ function createFakeService(overrides: Partial<BiometricUnlockService> = {}): Bio
   };
 }
 
+// Biometric behaviour (auto-prompt, cancel, remember default) is tested once, in @repo/app-core's
+// useBiometricUnlockForm.test.ts — this file only covers how desktop maps it onto onUnlock.
 describe('useUnlockWorkspaceForm', () => {
   it('auto-prompts once on an enrolled workspace and unlocks with the released secret', async () => {
     const service = createFakeService();
@@ -26,35 +28,6 @@ describe('useUnlockWorkspaceForm', () => {
     await waitFor(() => expect(onUnlock).toHaveBeenCalledTimes(1));
     expect(onUnlock).toHaveBeenCalledWith(ref, 'biometric-secret', true, true);
     expect(service.get).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not re-prompt after the user cancels the auto-prompt', async () => {
-    const service = createFakeService({ get: vi.fn(() => Promise.resolve(null)) });
-    const onUnlock = vi.fn();
-    const { result, rerender } = renderHook(() =>
-      useUnlockWorkspaceForm({ workspaceRef: ref, biometricUnlock: service, onUnlock }),
-    );
-
-    await waitFor(() => expect(service.get).toHaveBeenCalledTimes(1));
-    rerender();
-    rerender();
-
-    expect(service.get).toHaveBeenCalledTimes(1);
-    expect(onUnlock).not.toHaveBeenCalled();
-    expect(result.current.canSubmit).toBe(false);
-  });
-
-  it('defaults the remember checkbox to the current enrollment, but stops once the user touches it', async () => {
-    const service = createFakeService({ get: vi.fn(() => Promise.resolve(null)) });
-    const onUnlock = vi.fn();
-    const { result } = renderHook(() =>
-      useUnlockWorkspaceForm({ workspaceRef: ref, biometricUnlock: service, onUnlock }),
-    );
-
-    await waitFor(() => expect(result.current.remember).toBe(true));
-
-    act(() => result.current.onRememberChange(false));
-    expect(result.current.remember).toBe(false);
   });
 
   it('a manual passphrase submit is never marked as sourced from biometrics', () => {

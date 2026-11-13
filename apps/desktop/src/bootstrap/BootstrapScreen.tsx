@@ -1,3 +1,4 @@
+import type { BiometricIntent } from '@repo/app-core/bootstrap/biometric/useBiometricEnrollment';
 import { describeBootstrapError } from '@repo/app-core/bootstrap/describeBootstrapError';
 import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
@@ -10,7 +11,6 @@ import { BootstrapError } from './BootstrapError';
 import { BootstrapProgress } from './BootstrapProgress';
 import { CreateWorkspaceForm } from './CreateWorkspaceForm';
 import { UnlockWorkspaceForm } from './UnlockWorkspaceForm';
-import type { BiometricIntent } from './useBiometricEnrollment';
 import type { UseBootstrapScreenResult } from './useBootstrapScreen';
 import { useBootstrapScreen } from './useBootstrapScreen';
 import { WorkspacePicker } from './WorkspacePicker';

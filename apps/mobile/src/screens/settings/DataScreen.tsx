@@ -1,5 +1,5 @@
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
-import { ArrowLeft, Database, Lock, Repeat, Upload } from 'lucide-react-native';
+import { ArrowLeft, Database, Lock, Repeat, ScanFace, Timer, Upload } from 'lucide-react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SPACING } from '@/theme/tokens';
 import { useColor } from '@/theme/useColor';
@@ -7,6 +7,7 @@ import { EmptyState } from '@/ui/EmptyState';
 import { RoundButton } from '@/ui/RoundButton';
 import { SectionGroup } from '@/ui/SectionGroup';
 import { SettingsRow } from '@/ui/SettingsRow';
+import { Switch } from '@/ui/Switch';
 import { useDataScreen } from './useDataScreen';
 
 type DataScreenProps = {
@@ -50,6 +51,50 @@ export function DataScreen({ onBack }: DataScreenProps) {
               </View>
             ))}
           </SectionGroup>
+
+          {screen.security && (
+            <SectionGroup title={screen.security.title}>
+              {screen.security.biometric && (
+                <SettingsRow
+                  icon={ScanFace}
+                  iconColor={colors.pos}
+                  showSeparator
+                  subtitle={screen.security.biometric.description}
+                  title={screen.security.biometric.title}
+                  trailing={
+                    <Switch
+                      accessibilityLabel={screen.security.biometric.title}
+                      disabled={!screen.security.biometric.isEnrolled || screen.security.biometric.isUpdating}
+                      onValueChange={(next) => {
+                        if (!next) {
+                          screen.security?.biometric?.onTurnOff();
+                        }
+                      }}
+                      value={screen.security.biometric.isEnrolled}
+                    />
+                  }
+                />
+              )}
+              <SettingsRow
+                icon={Timer}
+                iconColor={colors.muted}
+                subtitle={screen.security.autoLock.description}
+                title={screen.security.autoLock.title}
+                trailing={
+                  <Switch
+                    accessibilityLabel={screen.security.autoLock.title}
+                    onValueChange={screen.security.autoLock.onChange}
+                    value={screen.security.autoLock.value}
+                  />
+                }
+              />
+            </SectionGroup>
+          )}
+          {screen.security?.biometric?.error && (
+            <Text accessibilityLiveRegion="polite" style={[styles.status, { color: colors.neg }]}>
+              {screen.security.biometric.error}
+            </Text>
+          )}
 
           {screen.fileActions && (
             <SectionGroup title={t('settings:database.transfer.title')}>

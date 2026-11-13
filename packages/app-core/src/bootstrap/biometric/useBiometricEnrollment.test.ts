@@ -1,4 +1,3 @@
-import type { UseWorkspaceBootstrapResult } from '@repo/app-core/bootstrap/useWorkspaceBootstrap';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { DomainError } from '@repo/domain/primitives/errors';
 import type { RepositorySet } from '@repo/domain/repositories/repositorySet';
@@ -6,6 +5,7 @@ import type { BiometricUnlockService } from '@repo/platform/services/biometricUn
 import { renderHook, waitFor } from '@testing-library/react';
 import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { UseWorkspaceBootstrapResult } from '../useWorkspaceBootstrap';
 import { useBiometricEnrollment } from './useBiometricEnrollment';
 
 const ref: WorkspaceRef = { mode: 'local', id: 'workspace-1', path: '/w1.mfhdb', label: 'My workspace' };
@@ -89,7 +89,9 @@ describe('useBiometricEnrollment — store/forget policy', () => {
     );
     rerender({ state: readyState });
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(biometricUnlock.set).not.toHaveBeenCalled();
     expect(biometricUnlock.remove).not.toHaveBeenCalled();
   });
@@ -138,7 +140,9 @@ describe('useBiometricEnrollment — store/forget policy', () => {
     );
     rerender({ state: failedState });
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(biometricUnlock.remove).not.toHaveBeenCalled();
     expect(biometricUnlock.set).not.toHaveBeenCalled();
   });

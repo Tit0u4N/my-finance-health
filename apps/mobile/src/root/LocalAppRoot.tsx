@@ -14,6 +14,7 @@ import { BootstrapScreen } from '@/bootstrap/BootstrapScreen';
 import { createMobilePlatform } from '@/platform/createMobilePlatform';
 import { StarterCategoriesScreen } from '@/screens/starter/StarterCategoriesScreen';
 import { ThemeModeSync } from '@/theme/ThemeModeSync';
+import { AutoLockOnBackground } from './AutoLockOnBackground';
 import { LockLostNotice } from './LockLostNotice';
 import { useLocalAppRoot } from './useLocalAppRoot';
 import { WorkspaceSessionContext } from './WorkspaceSessionContext';
@@ -52,6 +53,7 @@ function LocalAppRootBody({
     isStarterPending,
     dismissStarter,
     lockLost,
+    onBiometricIntent,
   } = useLocalAppRoot(platform);
 
   if (bootstrap.state.kind === 'ready' && session) {
@@ -64,8 +66,10 @@ function LocalAppRootBody({
           repositories={bootstrap.state.repositories}
           queryClient={queryClient}
           onLockWorkspace={lock}
+          biometricKey={bootstrap.state.ref.id}
         >
           <ThemeModeSync />
+          <AutoLockOnBackground onLock={lock} />
           {isStarterPending ? <StarterCategoriesScreen onDone={dismissStarter} /> : children}
         </AppStageProviders>
       </WorkspaceSessionContext.Provider>
@@ -75,7 +79,12 @@ function LocalAppRootBody({
   return (
     <BootstrapStageProviders platform={platform}>
       {lockLost && bootstrap.state.kind === 'needs-unlock' && <LockLostNotice />}
-      <BootstrapScreen bootstrap={bootstrap} platform={platform} progress={progress} />
+      <BootstrapScreen
+        bootstrap={bootstrap}
+        onBiometricIntent={onBiometricIntent}
+        platform={platform}
+        progress={progress}
+      />
     </BootstrapStageProviders>
   );
 }

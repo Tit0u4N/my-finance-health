@@ -4,10 +4,12 @@
 //     (`syncedDirectory()`, iCloudContainer.ts), plus folders the user picks for export/import, so
 //     `canWriteFile`/`canPickFile` are true but a remembered *picked* location is not resumable
 //     (`canResumeLocation`: a picked iOS folder only stays accessible for the session);
-//   - no secret vault and no biometric unlock yet — both stay off until their adapters exist
-//     (expo-secure-store / expo-local-authentication, start-roadmap.md §8).
+//   - no general-purpose secret vault (`hasSecretVault`, start-roadmap.md §8), but biometric
+//     unlock is on: an opt-in Face ID / Touch ID-bound copy of a workspace passphrase, kept in the
+//     Keychain / Keystore by expo-secure-store (open-questions.md #23 and #26).
 
 import type { Platform } from '@repo/platform/platform';
+import { createExpoBiometricUnlock } from '@repo/platform-expo/services/biometricUnlock';
 import { createExpoClock } from '@repo/platform-expo/services/clock';
 import { createExpoFileSystem } from '@repo/platform-expo/services/fileSystem';
 import { createExpoKeyValueStore } from '@repo/platform-expo/services/keyValueStore';
@@ -15,6 +17,7 @@ import { createExpoLocalization } from '@repo/platform-expo/services/localizatio
 import { createExpoRandom } from '@repo/platform-expo/services/random';
 import { createExpoSqlDriver } from '@repo/platform-expo/services/sqlDriver';
 import ky from 'ky';
+import { Platform as NativePlatform } from 'react-native';
 import { deriveArgon2id } from './argon2';
 import { createICloudContainer } from './iCloudContainer';
 
@@ -26,7 +29,7 @@ export function createMobilePlatform(): Platform {
       canPickFile: true,
       canResumeLocation: false,
       hasSecretVault: false,
-      hasBiometricUnlock: false,
+      hasBiometricUnlock: true,
       hasEncryptedSqlDriver: true,
       worksOffline: true,
       canControlWindow: false,
@@ -37,6 +40,7 @@ export function createMobilePlatform(): Platform {
     random: createExpoRandom(),
     localization: createExpoLocalization(),
     http: { instance: ky.create() },
+    biometricUnlock: createExpoBiometricUnlock({ os: NativePlatform.OS === 'android' ? 'android' : 'ios' }),
     fileSystem: createExpoFileSystem(cloud ? { cloud } : {}),
     sqlDriver: createExpoSqlDriver({ deriveKey: deriveArgon2id, ...(cloud ? { cloud } : {}) }),
   };

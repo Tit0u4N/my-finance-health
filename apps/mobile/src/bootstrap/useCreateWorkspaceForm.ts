@@ -9,6 +9,7 @@
 // "Mobile case"), so for a device workspace the user may instead ask for a copy to be saved there
 // right after creation — optional, and always possible later from Settings → Data.
 
+import { useBiometricAvailability } from '@repo/app-core/bootstrap/biometric/useBiometricAvailability';
 import { describePassphraseFeedback, MIN_PASSPHRASE_LENGTH } from '@repo/app-core/bootstrap/newPassphrase';
 import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import { workspaceLabelFromPath } from '@repo/data/local/workspacePaths';
@@ -27,7 +28,12 @@ export type WorkspaceLocation = 'device' | 'cloud';
 
 export type UseCreateWorkspaceFormDeps = {
   readonly platform: Platform;
-  readonly onCreate: (ref: WorkspaceRef, input: CreateWorkspaceInput, backupFolder: string | null) => void;
+  readonly onCreate: (
+    ref: WorkspaceRef,
+    input: CreateWorkspaceInput,
+    backupFolder: string | null,
+    remember: boolean,
+  ) => void;
 };
 
 export type UseCreateWorkspaceFormResult = {
@@ -57,6 +63,10 @@ export type UseCreateWorkspaceFormResult = {
   readonly isSubmitting: boolean;
   readonly onSubmit: () => Promise<void>;
   readonly minPassphraseLength: number;
+  /** Opt-in Face ID / Touch ID copy of the passphrase (open-questions.md #23), off by default. */
+  readonly remember: boolean;
+  readonly onRememberChange: (remember: boolean) => void;
+  readonly biometric: { readonly isSupported: boolean; readonly label: string };
 };
 
 export function useCreateWorkspaceForm({
@@ -74,6 +84,10 @@ export function useCreateWorkspaceForm({
   const [backupFolder, setBackupFolder] = useState<string | null>(null);
   const [syncedRoot, setSyncedRoot] = useState<string | null>(null);
   const [location, setLocation] = useState<WorkspaceLocation>('device');
+  const [remember, setRemember] = useState(false);
+  const biometric = useBiometricAvailability(
+    platform.capabilities.hasBiometricUnlock ? platform.biometricUnlock : undefined,
+  );
 
   useEffect(() => {
     let isCurrent = true;
@@ -121,6 +135,7 @@ export function useCreateWorkspaceForm({
         { mode: 'local', id: path, path, label: workspaceLabelFromPath(path) },
         { timezone, baseCurrency, secret },
         isCloud ? null : backupFolder,
+        remember && biometric.isSupported,
       );
     } catch {
       setError(t(isCloud ? 'bootstrap:error.prepareCloud' : 'bootstrap:error.prepareDevice'));
@@ -152,5 +167,8 @@ export function useCreateWorkspaceForm({
     isSubmitting,
     onSubmit,
     minPassphraseLength: MIN_PASSPHRASE_LENGTH,
+    remember,
+    onRememberChange: setRemember,
+    biometric,
   };
 }
