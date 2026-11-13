@@ -7,7 +7,8 @@ import { useThemeSync } from './useThemeSync';
 
 // A module-level check rather than a branch inside a hook: MockApp and LocalApp each call their
 // own hooks unconditionally, so no hook here is ever called conditionally.
-const IS_LOCAL_MODE = import.meta.env.VITE_STORAGE_MODE === 'classic';
+// `classic` (the real, encrypted workspace) is the default; the fixture demo is explicit opt-in.
+const IS_LOCAL_MODE = import.meta.env.VITE_STORAGE_MODE !== 'inMemory';
 
 export function App(): ReactElement {
   return IS_LOCAL_MODE ? <LocalApp /> : <MockApp />;

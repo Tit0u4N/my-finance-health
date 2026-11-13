@@ -13,6 +13,8 @@ export default mergeConfig(
     },
     test: {
       setupFiles: ['./vitest.setup.ts'],
+      // The app-level tests exercise the fixture workspace; the default mode is `classic`.
+      env: { VITE_STORAGE_MODE: 'inMemory' },
     },
   }),
 );

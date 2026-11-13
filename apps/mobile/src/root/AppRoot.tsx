@@ -11,7 +11,7 @@ import { FONT_SIZE, SPACING } from '@/theme/tokens';
 import { LocalAppRoot } from './LocalAppRoot';
 import { useAppRoot } from './useAppRoot';
 
-const STORAGE_MODE = process.env.EXPO_PUBLIC_STORAGE_MODE ?? 'inMemory';
+const STORAGE_MODE = process.env.EXPO_PUBLIC_STORAGE_MODE ?? 'classic';
 
 type AppRootProps = {
   readonly children: ReactNode;
