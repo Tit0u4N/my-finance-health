@@ -55,6 +55,8 @@ the same rendering-boundary reason).
 
 ## Bootstrap-adjacent
 
+> **2026-11-13:** the `/onboarding` route and the Settings → Data "Set up a new workspace" link were removed — they only ever added accounts/categories to the already-open workspace. The `screens/onboarding` component is kept unrouted, to be reworked as the post-creation first-run assistant (audit P1). "Switch workspace" remains the way to create/import another workspace.
+
 | Screen | Source | Purpose | Reads | Writes | Local-only UI state |
 |---|---|---|---|---|---|
 | Onboarding — choose workspace | `onboarding.jsx` step 0 | Still presentational inside the app stage — a workspace is already open by the time it shows. The real create/import/unlock lives in the **Bootstrap stage** below, which runs before the app stage under `EXPO_PUBLIC_STORAGE_MODE=classic`. | — | — | selected option (`create` \| `open`) |
