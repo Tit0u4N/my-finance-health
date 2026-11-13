@@ -55,7 +55,7 @@ the same rendering-boundary reason).
 
 ## Bootstrap-adjacent
 
-> **2026-11-13:** the `/onboarding` route and the Settings → Data "Set up a new workspace" link were removed — they only ever added accounts/categories to the already-open workspace. The `screens/onboarding` component is kept unrouted, to be reworked as the post-creation first-run assistant (audit P1). "Switch workspace" remains the way to create/import another workspace.
+> **2026-11-13:** the `/onboarding` route and the Settings → Data "Set up a new workspace" link were removed — they only ever added accounts/categories to the already-open workspace. The old `screens/onboarding` component was then replaced by `screens/starter/StarterCategoriesScreen`: shown once, right after a workspace is created under `classic` (gate: `useFirstRunGate`), it offers the shared starter category list (`@repo/app-core/starter`, FR/EN names) to tick. Starter accounts are not part of it, and custom categories are added afterwards in Settings → Categories (audit P1). "Switch workspace" remains the way to create/import another workspace.
 
 | Screen | Source | Purpose | Reads | Writes | Local-only UI state |
 |---|---|---|---|---|---|
