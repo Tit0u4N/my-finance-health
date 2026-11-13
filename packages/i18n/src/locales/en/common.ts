@@ -56,6 +56,9 @@ const common = {
   },
   category: {
     other: 'Other',
+    // Shown in place of an empty category grid: without a category, nothing can be submitted.
+    emptyExpense: 'No expense category yet. Add one in Settings → Categories.',
+    emptyIncome: 'No income category yet. Add one in Settings → Categories.',
   },
   brand: {
     name: 'My Finance Health',
