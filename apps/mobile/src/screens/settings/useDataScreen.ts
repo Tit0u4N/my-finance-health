@@ -50,7 +50,6 @@ export type UseDataScreenResult =
       readonly workspacePanelTitle: string;
       readonly workspacePanelSubtitle: string;
       readonly metadata: readonly DataMetadataRow[];
-      readonly newWorkspaceLabel: string;
     };
 
 export function useDataScreen(): UseDataScreenResult {
@@ -137,7 +136,6 @@ export function useDataScreen(): UseDataScreenResult {
       { label: t('settings:database.metadata.baseCurrency'), value: settings.baseCurrency },
       { label: t('settings:database.metadata.rows'), value: String(rowCount) },
     ],
-    newWorkspaceLabel: t('settings:database.actions.newWorkspace'),
     ready: true,
     title: t('settings:nav.data.label'),
     workspacePanelSubtitle: t('settings:database.workspacePanel.subtitle'),

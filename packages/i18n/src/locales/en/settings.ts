@@ -117,7 +117,6 @@ const settings = {
       createBackup: 'Create backup',
       // apps/mobile's Data screen — the one real affordance carried over from the old
       // SettingsPlaceholder route, now a real row rather than a placeholder link.
-      newWorkspace: 'Set up a new workspace',
     },
     // apps/mobile's Data screen: real read-only workspace facts shown regardless of file
     // capability, above the (desktop-only) file metadata block.
