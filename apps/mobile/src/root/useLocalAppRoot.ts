@@ -37,7 +37,7 @@ export function useLocalAppRoot(platform: Platform) {
 
   const gate = useFirstRunGate(useWorkspaceBootstrap({ opener }));
   const { bootstrap } = gate;
-  useLocalWorkspaceSession(session);
+  const [lockLost, setLockLost] = useState(false);
 
   // One QueryClient for the app's lifetime, emptied whenever a session ends: the next workspace
   // (or the same one, re-unlocked) must never paint the previous one's cached rows.
@@ -56,10 +56,24 @@ export function useLocalAppRoot(platform: Platform) {
       return;
     }
     const { ref } = bootstrap.state;
+    setLockLost(false);
     void closeSession().then(() => bootstrap.lock(ref));
   };
 
+  // Another device took the occupancy lock over: stop writing, release, and ask for the passphrase
+  // again with an explanation (audit P6). `session.ref` rather than `bootstrap.state`, which the
+  // heartbeat's closure may have captured before the workspace was `ready`.
+  useLocalWorkspaceSession(session, () => {
+    if (session) {
+      void closeSession().then(() => {
+        setLockLost(true);
+        bootstrap.lock(session.ref);
+      });
+    }
+  });
+
   const switchWorkspace = (): void => {
+    setLockLost(false);
     void closeSession().then(() => bootstrap.chooseAnother());
   };
 
@@ -70,6 +84,7 @@ export function useLocalAppRoot(platform: Platform) {
     session,
     lock,
     switchWorkspace,
+    lockLost,
     isStarterPending: gate.isStarterPending,
     dismissStarter: gate.dismissStarter,
   };

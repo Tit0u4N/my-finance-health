@@ -48,7 +48,7 @@ export function useLocalApp(platform: Platform) {
   });
 
   const { bootstrap, isStarterPending, dismissStarter } = useFirstRunGate(useWorkspaceBootstrap({ opener }));
-  useLocalWorkspaceSession(session);
+  const [lockLost, setLockLost] = useState(false);
   const { track: onBiometricIntent } = useBiometricEnrollment(bootstrap.state, platform.biometricUnlock);
 
   // Closes the real session (releases the occupancy lock, closes the SQL connection) before
@@ -61,11 +61,24 @@ export function useLocalApp(platform: Platform) {
       return;
     }
     const { ref } = bootstrap.state;
+    setLockLost(false);
     void session?.close().then(() => {
       setSession(null);
       bootstrap.lock(ref);
     });
   };
+
+  // Another device took the occupancy lock over: stop writing, release, and ask for the passphrase
+  // again with an explanation (audit P6).
+  useLocalWorkspaceSession(session, () => {
+    if (session) {
+      void session.close().then(() => {
+        setSession(null);
+        setLockLost(true);
+        bootstrap.lock(session.ref);
+      });
+    }
+  });
 
   const [queryClient] = useState(() => new QueryClient());
   // Memoized (unlike `opener` above): the router must stay the same instance across renders once
@@ -88,6 +101,7 @@ export function useLocalApp(platform: Platform) {
     lock,
     onBiometricIntent,
     isStarterPending,
+    lockLost,
     dismissStarter,
   };
 }

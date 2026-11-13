@@ -78,6 +78,8 @@ const bootstrap = {
     remember: 'Remember with {{label}}',
     rememberHere: 'Remember with {{label}} on this device',
     unlockWith: 'Unlock with {{label}}',
+    lockLost:
+      'This workspace was opened on another device, so it was locked here to protect your data. Unlock it again to continue.',
     biometricFallback: 'Biometric unlock',
   },
   import: {
