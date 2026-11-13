@@ -13,15 +13,24 @@
   "dependencies": {
     "@noble/hashes": "^2",
     "@repo/domain": "workspace:*",
-    "@repo/platform": "workspace:*",
-    "expo-crypto": "~57.0.3",
-    "expo-file-system": "~57.0.7",
-    "expo-localization": "~57.0.2",
-    "expo-sqlite": "~57.0.4"
+    "@repo/platform": "workspace:*"
+  },
+  "peerDependencies": {
+    "expo-crypto": "~58.0.8",
+    "expo-file-system": "~58.0.13",
+    "expo-localization": "~58.0.5",
+    "expo-sqlite": "~58.0.17"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
+    "expo": "~58.0.25",
+    "expo-crypto": "~58.0.8",
+    "expo-file-system": "~58.0.13",
+    "expo-localization": "~58.0.5",
+    "expo-sqlite": "~58.0.17",
+    "react": "catalog:native",
+    "react-native": "catalog:native",
     "vitest": "^4.1.11"
   }
 }
