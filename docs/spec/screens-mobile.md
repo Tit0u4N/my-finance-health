@@ -68,7 +68,10 @@ that seed rather than starting from empty — there's no real empty-workspace st
 against in `inMemory` mode. Under `classic` it resolves as predicted: a freshly created local
 workspace is genuinely empty, so steps 1–2 now seed a real, empty workspace.
 
-### Bootstrap stage (`EXPO_PUBLIC_STORAGE_MODE=classic`, 2026-10-07)
+### Bootstrap stage (`EXPO_PUBLIC_STORAGE_MODE=classic`, default since 2026-11-13)
+
+`classic` is the default mode; `EXPO_PUBLIC_STORAGE_MODE=inMemory` is the explicit opt-in demo
+(fixtures, nothing persisted). `classic` needs a development build (SQLCipher), not Expo Go.
 
 `@repo/platform-expo` is real, so mobile has a local mode (`open-questions.md` #25).
 `apps/mobile/src/root/LocalAppRoot.tsx` mirrors desktop's `LocalApp.tsx`: bootstrap stage (platform +

@@ -6,8 +6,8 @@ import { routeTree } from '@repo/routes/routeTree';
 import { QueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-// Only ever rendered for a non-'classic' VITE_STORAGE_MODE — App.tsx routes 'classic' to
-// LocalApp (../bootstrap/LocalApp.tsx) before this hook is called.
+// Only ever rendered for an explicit VITE_STORAGE_MODE=inMemory — App.tsx routes every other
+// value (including unset) to LocalApp (../bootstrap/LocalApp.tsx) before this hook is called.
 function createWorkspace() {
   const { platform, repositories } = createMockWorkspace();
   // The mock platform's keyValueStore is an in-memory Map (packages/platform/src/fakePlatform.ts)
