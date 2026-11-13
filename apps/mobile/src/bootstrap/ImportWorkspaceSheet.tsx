@@ -1,3 +1,4 @@
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { Platform } from '@repo/platform/platform';
 import { Database, FolderOpen } from 'lucide-react-native';
@@ -19,18 +20,21 @@ type ImportWorkspaceSheetProps = {
 
 export function ImportWorkspaceSheet({ isOpen, platform, onClose, onImported }: ImportWorkspaceSheetProps) {
   const { colors } = useColor();
+  const { t } = useTranslation();
   const importer = useImportWorkspace({ platform, onImported });
 
   return (
-    <Sheet closeLabel="Close" isOpen={isOpen} onClose={onClose} title="Import a workspace">
-      <Text style={[styles.hint, { color: colors.muted }]}>
-        Pick the folder holding an exported workspace — in iCloud Drive, Google Drive or anywhere in Files. A copy is
-        made on this device; the original is left untouched.
-      </Text>
+    <Sheet
+      closeLabel={t('bootstrap:create.close')}
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t('bootstrap:import.title')}
+    >
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('bootstrap:import.hint')}</Text>
       <Button
         disabled={importer.isBusy}
         icon={FolderOpen}
-        label="Choose folder…"
+        label={t('bootstrap:import.chooseFolder')}
         onPress={() => void importer.onPickFolder()}
         tone="outline"
       />
@@ -40,7 +44,7 @@ export function ImportWorkspaceSheet({ isOpen, platform, onClose, onImported }: 
         </Text>
       )}
       {importer.candidates.length > 0 && (
-        <SectionGroup title="Found">
+        <SectionGroup title={t('bootstrap:import.found')}>
           {importer.candidates.map((candidate, index) => (
             <SettingsRow
               icon={Database}

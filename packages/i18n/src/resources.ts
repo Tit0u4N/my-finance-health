@@ -5,6 +5,7 @@
 // `src`, so a declaration reached by import graph is what actually travels with it.
 
 import enAccounts from './locales/en/accounts';
+import enBootstrap from './locales/en/bootstrap';
 import enCommon from './locales/en/common';
 import enInvestments from './locales/en/investments';
 import enOverview from './locales/en/overview';
@@ -12,6 +13,7 @@ import enRecurring from './locales/en/recurring';
 import enSettings from './locales/en/settings';
 import enTransactions from './locales/en/transactions';
 import frAccounts from './locales/fr/accounts';
+import frBootstrap from './locales/fr/bootstrap';
 import frCommon from './locales/fr/common';
 import frInvestments from './locales/fr/investments';
 import frOverview from './locales/fr/overview';
@@ -21,6 +23,7 @@ import frTransactions from './locales/fr/transactions';
 
 const en = {
   common: enCommon,
+  bootstrap: enBootstrap,
   overview: enOverview,
   accounts: enAccounts,
   transactions: enTransactions,
@@ -31,6 +34,7 @@ const en = {
 
 const fr = {
   common: frCommon,
+  bootstrap: frBootstrap,
   overview: frOverview,
   accounts: frAccounts,
   transactions: frTransactions,
@@ -43,6 +47,7 @@ export const resources = { en, fr } as const;
 
 export const NAMESPACES = [
   'common',
+  'bootstrap',
   'overview',
   'accounts',
   'transactions',

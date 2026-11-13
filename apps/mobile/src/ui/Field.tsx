@@ -27,6 +27,8 @@ type FieldProps = {
   readonly isSecret?: boolean;
   /** Shown under the input in the negative tone; also announced as the field's error. */
   readonly error?: string;
+  /** Shown under the input in the positive tone — e.g. a confirmation that matches. Ignored while `error` is set. */
+  readonly success?: string;
   /** Fired by the keyboard's return key — submits a one-field form. */
   readonly onSubmitEditing?: () => void;
 };
@@ -48,6 +50,7 @@ export function Field({
   accessibilityLabel,
   isSecret = false,
   error,
+  success,
   onSubmitEditing,
 }: FieldProps) {
   const { colors } = useColor();
@@ -87,6 +90,11 @@ export function Field({
           </Pressable>
         )}
       </View>
+      {error === undefined && success !== undefined && (
+        <Text accessibilityLiveRegion="polite" style={[styles.error, { color: colors.pos }]}>
+          {success}
+        </Text>
+      )}
       {error !== undefined && (
         <Text accessibilityLiveRegion="polite" style={[styles.error, { color: colors.neg }]}>
           {error}

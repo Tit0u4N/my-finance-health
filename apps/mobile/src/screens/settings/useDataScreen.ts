@@ -80,14 +80,17 @@ export function useDataScreen(): UseDataScreenResult {
         });
         setExportStatus(
           isErr(exported)
-            ? { tone: 'error', text: describeBootstrapError(exported.error) }
+            ? { tone: 'error', text: describeBootstrapError(exported.error, t) }
             : {
                 tone: 'success',
-                text: `Saved “${exported.value.directory.split('/').pop()}” (${exported.value.fileCount} files).`,
+                text: t('settings:database.transfer.exportSaved', {
+                  name: exported.value.directory.split('/').pop() ?? '',
+                  count: exported.value.fileCount,
+                }),
               },
         );
       } catch {
-        setExportStatus({ tone: 'error', text: 'Could not open the folder picker.' });
+        setExportStatus({ tone: 'error', text: t('bootstrap:error.folderPicker') });
       } finally {
         setIsExporting(false);
       }

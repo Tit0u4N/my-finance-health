@@ -1,13 +1,16 @@
 import type { DomainError } from '@repo/domain/primitives/errors';
+import type { useTranslation } from '../i18n/useTranslation';
 
-/** Maps a DomainError from the local workspace opener to user-facing copy. English only for
- * this pass — the bootstrap flow is new UI without an i18n namespace yet. */
-export function describeBootstrapError(error: DomainError): string {
+type Translate = ReturnType<typeof useTranslation>['t'];
+
+/** Maps a DomainError from the local workspace opener to user-facing copy. The kinds the user can
+ * act on are translated; the rest pass the core's own message through. */
+export function describeBootstrapError(error: DomainError, t: Translate): string {
   switch (error.kind) {
     case 'not-found':
-      return "That file doesn't look like a my finance health workspace.";
+      return t('bootstrap:error.notFound');
     case 'integrity':
-      return `This workspace's files are missing or damaged: ${error.message}`;
+      return t('bootstrap:error.integrity', { detail: error.message });
     case 'conflict':
       return error.message;
     case 'validation':
@@ -19,7 +22,7 @@ export function describeBootstrapError(error: DomainError): string {
     case 'network':
       return error.message;
     case 'unsupported-capability':
-      return `This isn't a local workspace (${error.capability}).`;
+      return t('bootstrap:error.unsupportedCapability', { capability: error.capability });
     default:
       return error satisfies never;
   }

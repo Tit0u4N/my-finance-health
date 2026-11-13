@@ -1,3 +1,4 @@
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
@@ -23,44 +24,46 @@ export type CreateWorkspaceFormProps = {
 };
 
 export function CreateWorkspaceForm({ fileSystem, biometricUnlock, onCreate, onBack }: CreateWorkspaceFormProps) {
+  const { t } = useTranslation();
   const form = useCreateWorkspaceForm({ fileSystem, biometricUnlock, onCreate });
 
   return (
     <div className="flex flex-col gap-4">
       <Select
-        label="Base currency"
+        label={t('bootstrap:create.baseCurrency')}
         value={form.baseCurrency}
         onValueChange={form.onBaseCurrencyChange}
         options={CURRENCY_OPTIONS}
       />
       <Input
-        label="Passphrase"
+        label={t('bootstrap:passphrase.label')}
         type="password"
         value={form.secret}
         onChange={(event) => form.onSecretChange(event.target.value)}
+        {...(form.secretError === undefined ? {} : { error: form.secretError })}
       />
       <Input
-        label="Confirm passphrase"
+        label={t('bootstrap:passphrase.confirmLabel')}
         type="password"
         value={form.confirmSecret}
         onChange={(event) => form.onConfirmSecretChange(event.target.value)}
+        {...(form.confirmError === undefined ? {} : { error: form.confirmError })}
       />
-      <p className="text-body-sm text-muted">
-        This passphrase unlocks the file every time it's opened, on every device — write it down somewhere safe.
-      </p>
+      {form.confirmSuccess && <span className="text-body-sm text-pos">{form.confirmSuccess}</span>}
+      <p className="text-body-sm text-muted">{t('bootstrap:passphrase.warning')}</p>
       {form.biometric.isSupported && (
         <label className="flex items-center gap-sm text-body-sm text-muted">
           <Checkbox checked={form.remember} onCheckedChange={form.onRememberChange} />
-          Remember with {form.biometric.label} on this device
+          {t('bootstrap:unlock.rememberHere', { label: form.biometric.label })}
         </label>
       )}
       {form.error && <span className="text-body-sm text-neg">{form.error}</span>}
       <div className="flex gap-2">
         <Button tone="secondary" fullWidth onClick={onBack}>
-          Back
+          {t('bootstrap:create.back')}
         </Button>
         <Button tone="primary" fullWidth disabled={!form.canSubmit} onClick={form.onSubmit}>
-          Choose location & create
+          {t('bootstrap:create.submitDesktop')}
         </Button>
       </div>
     </div>

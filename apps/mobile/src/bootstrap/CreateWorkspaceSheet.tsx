@@ -1,3 +1,5 @@
+import { MIN_PASSPHRASE_LENGTH } from '@repo/app-core/bootstrap/newPassphrase';
+import { useTranslation } from '@repo/app-core/i18n/useTranslation';
 import type { CreateWorkspaceInput } from '@repo/data/workspace/workspaceOpener';
 import type { WorkspaceRef } from '@repo/data/workspace/workspaceRef';
 import type { CurrencyCode } from '@repo/domain/primitives/currency';
@@ -11,11 +13,6 @@ import { Field } from '@/ui/Field';
 import { OptionGrid, type OptionGridItem } from '@/ui/OptionGrid';
 import { Sheet } from '@/ui/Sheet';
 import { useCreateWorkspaceForm, type WorkspaceLocation } from './useCreateWorkspaceForm';
-
-const LOCATION_OPTIONS: readonly OptionGridItem<WorkspaceLocation>[] = [
-  { icon: Cloud, label: 'iCloud Drive', value: 'cloud' },
-  { icon: Smartphone, label: 'This device', value: 'device' },
-];
 
 const CURRENCY_OPTIONS: readonly OptionGridItem<CurrencyCode>[] = [
   { glyph: '€', label: 'EUR', value: 'EUR' },
@@ -34,39 +31,42 @@ type CreateWorkspaceSheetProps = {
  * recover the data without it (start-roadmap.md §9 — "never a silent device-keyring unlock"). */
 export function CreateWorkspaceSheet({ isOpen, platform, onClose, onCreate }: CreateWorkspaceSheetProps) {
   const { colors } = useColor();
+  const { t } = useTranslation();
   const form = useCreateWorkspaceForm({ platform, onCreate });
+  const locationOptions: readonly OptionGridItem<WorkspaceLocation>[] = [
+    { icon: Cloud, label: t('bootstrap:create.locationCloud'), value: 'cloud' },
+    { icon: Smartphone, label: t('bootstrap:create.locationDevice'), value: 'device' },
+  ];
 
   return (
     <Sheet
-      closeLabel="Close"
-      footer={<Button disabled={!form.canSubmit} label="Create workspace" onPress={() => void form.onSubmit()} />}
+      closeLabel={t('bootstrap:create.close')}
+      footer={
+        <Button disabled={!form.canSubmit} label={t('bootstrap:create.submit')} onPress={() => void form.onSubmit()} />
+      }
       isOpen={isOpen}
       onClose={onClose}
-      title="New workspace"
+      title={t('bootstrap:create.title')}
     >
-      <Text style={[styles.hint, { color: colors.muted }]}>
-        Always encrypted. There is no way to recover it without the passphrase.
-      </Text>
-      <Field label="Name" onChangeText={form.onNameChange} value={form.name} />
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('bootstrap:create.hint')}</Text>
+      <Field label={t('bootstrap:create.name')} onChangeText={form.onNameChange} value={form.name} />
       {form.isCloudAvailable && (
         <View style={styles.location}>
-          <Text style={[styles.locationTitle, { color: colors.foreground }]}>Location</Text>
+          <Text style={[styles.locationTitle, { color: colors.foreground }]}>{t('bootstrap:create.location')}</Text>
           <OptionGrid
-            accessibilityLabel="Location"
+            accessibilityLabel={t('bootstrap:create.location')}
             columns={2}
             onChange={form.onLocationChange}
-            options={LOCATION_OPTIONS}
+            options={locationOptions}
             value={form.location}
           />
           <Text style={[styles.hint, { color: colors.muted }]}>
-            {form.location === 'cloud'
-              ? 'Kept in iCloud Drive › my finance health and synced to your other devices. Open it on one device at a time.'
-              : 'Kept on this device only, in Files › On My iPhone › my finance health.'}
+            {form.location === 'cloud' ? t('bootstrap:create.cloudHint') : t('bootstrap:create.deviceHint')}
           </Text>
         </View>
       )}
       <OptionGrid
-        accessibilityLabel="Base currency"
+        accessibilityLabel={t('bootstrap:create.baseCurrency')}
         columns={3}
         onChange={form.onBaseCurrencyChange}
         options={CURRENCY_OPTIONS}
@@ -74,33 +74,44 @@ export function CreateWorkspaceSheet({ isOpen, platform, onClose, onCreate }: Cr
       />
       <Field
         isSecret
-        label={`Passphrase (${form.minPassphraseLength}+ characters)`}
+        label={t('bootstrap:passphrase.labelWithMin', { min: MIN_PASSPHRASE_LENGTH })}
         onChangeText={form.onSecretChange}
         value={form.secret}
+        {...(form.secretError === undefined ? {} : { error: form.secretError })}
       />
       <Field
         isSecret
-        label="Confirm passphrase"
+        label={t('bootstrap:passphrase.confirmLabel')}
         onChangeText={form.onConfirmSecretChange}
         value={form.confirmSecret}
-        {...(form.error === undefined ? {} : { error: form.error })}
+        {...(form.confirmError === undefined ? {} : { error: form.confirmError })}
+        {...(form.confirmSuccess === undefined ? {} : { success: form.confirmSuccess })}
       />
+      {form.error !== undefined && (
+        <Text accessibilityLiveRegion="polite" style={[styles.hint, { color: colors.neg }]}>
+          {form.error}
+        </Text>
+      )}
       {form.location === 'device' && (
         <View style={styles.location}>
-          <Text style={[styles.locationTitle, { color: colors.foreground }]}>Save a copy to</Text>
+          <Text style={[styles.locationTitle, { color: colors.foreground }]}>
+            {t('bootstrap:create.saveCopyTitle')}
+          </Text>
           <Text style={[styles.hint, { color: colors.muted }]}>
-            {form.backupFolder === null
-              ? 'Optional. Pick a folder — iCloud Drive, On My iPhone, another provider — and a copy is saved there as soon as the workspace is created.'
-              : 'A copy will be saved in the folder you picked as soon as the workspace is created.'}
+            {form.backupFolder === null ? t('bootstrap:create.saveCopyHint') : t('bootstrap:create.saveCopyHintChosen')}
           </Text>
           <Button
             icon={FolderOpen}
-            label={form.backupFolder === null ? 'Choose a folder…' : 'Choose another folder…'}
+            label={
+              form.backupFolder === null
+                ? t('bootstrap:create.chooseFolder')
+                : t('bootstrap:create.chooseAnotherFolder')
+            }
             onPress={() => void form.onChooseBackupFolder()}
             tone="outline"
           />
           {form.backupFolder !== null && (
-            <Button label="Don't save a copy" onPress={form.onClearBackupFolder} tone="outline" />
+            <Button label={t('bootstrap:create.noCopy')} onPress={form.onClearBackupFolder} tone="outline" />
           )}
         </View>
       )}
