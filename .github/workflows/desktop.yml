@@ -243,9 +243,12 @@ jobs:
           base="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME"
           platforms='{}'
           add_platform() {
-            local file="bundles/my-finance-health_$2"
-            [ -f "$file.sig" ] || return 0
-            platforms=$(jq --arg key "$1" --arg url "$base/${file#bundles/}" --rawfile signature "$file.sig" \
+            # download-artifact keeps each file's path below the uploaded bundle dir (the payloads
+            # land in bundles/updater/), while the release asset is named after the file alone.
+            local file
+            file=$(find bundles -type f -name "my-finance-health_$2" -print -quit)
+            [ -n "$file" ] && [ -f "$file.sig" ] || return 0
+            platforms=$(jq --arg key "$1" --arg url "$base/${file##*/}" --rawfile signature "$file.sig" \
               '. + {($key): {signature: ($signature | rtrimstr("\n")), url: $url}}' <<<"$platforms")
           }
           add_platform darwin-aarch64 aarch64-apple-darwin.app.tar.gz
