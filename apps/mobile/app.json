@@ -34,10 +34,11 @@
         "monochromeImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#635BFF"
       },
-      "permissions": [
+      "allowBackup": false,
+      "permissions": ["android.permission.INTERNET"],
+      "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.INTERNET"
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "plugins": [
